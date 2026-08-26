@@ -42,40 +42,14 @@
     .card-body { padding: 12px; display: flex; flex-direction: column; flex-grow: 1; gap: 6px; }
     .card h3 { font-size: 15px; color: var(--navy); font-weight: 800; }
     .card p { font-size: 12px; color: var(--muted); flex-grow: 1; line-height: 1.4; }
-    .card-qty { font-size: 11.5px; color: var(--green); font-weight: 800; background: #dcfce7; padding: 2px 8px; border-radius: 6px; width: fit-content; margin-top: 2px; }
     .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px solid #f1f5f9; gap: 5px; }
     .price { font-weight: 800; color: var(--navy); font-size: 13.5px; }
     .btn-add-cart { background: var(--orange); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; flex: 1; text-align: center; }
-    .btn-quick-edit { background: #eab308; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; flex: 1; text-align: center; }
-    .badge-status { padding: 3px 8px; border-radius: 20px; font-weight: 800; font-size: 10.5px; display: inline-block; }
-    .st-received { background: #e0f2fe; color: #0369a1; }
-    .st-processing { background: #fef3c7; color: #b45309; }
-    .st-shipped { background: #f3e8ff; color: #6b21a8; }
-    .st-delivered { background: #dcfce7; color: #15803d; }
-    .st-cancelled { background: #fee2e2; color: #b91c1c; }
-    .noti-header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
-    .noti-header-bar h2 { font-size: 16px; color: var(--navy); }
-    .btn-mark-all { background: #f1f5f9; color: var(--navy); border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
-    .btn-mark-all:hover { background: var(--navy); color: #fff; }
-    .noti-item { padding: 12px; border-radius: 10px; margin-bottom: 8px; font-size: 12.5px; cursor: pointer; transition: all 0.2s ease; border-right: 4px solid transparent; }
-    .noti-item.unread { background: #eff6ff; border-right-color: var(--blue); font-weight: bold; }
-    .noti-item.read { background: #f8fafc; border-right-color: #cbd5e1; opacity: 0.75; }
-    .noti-item:hover { background: #f1f5f9; }
-    .noti-item strong { color: var(--navy); display: block; margin-bottom: 3px; font-size: 13px; }
-    .noti-item small { color: var(--muted); font-size: 10px; display: block; margin-top: 4px; }
-    .chat-box { height: 250px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #fafafa; }
-    .chat-msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 12px; line-height: 1.4; }
-    .msg-user { background: var(--navy); color: #fff; align-self: flex-start; border-bottom-right-radius: 2px; }
-    .msg-admin { background: #e2e8f0; color: #000; align-self: flex-end; border-bottom-left-radius: 2px; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
     th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: right; }
     th { background: #f1f5f9; color: var(--navy); }
     .btn-sm { padding: 4px 8px; border-radius: 4px; border: none; color: #fff; font-size: 11px; cursor: pointer; font-weight: 700; }
     .btn-danger { background: var(--red); }
-    .btn-blue { background: var(--blue); }
-    .payment-info-box { background: #eff6ff; border: 1px solid #bfdbfe; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 12.5px; }
-    .perm-checkboxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
-    .perm-checkboxes label { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -94,7 +68,6 @@
 <header>
   <div class="nav-container">
     <div class="brand-box">
-      <!-- استبدل رابط اللوجو أسفله برابط اللوجو الخاص بك مستقبلاً إن أردت -->
       <img src="https://via.placeholder.com/50" id="mainLogo" class="brand-logo" alt="Logo">
       <div>
         <div class="brand-title" id="navStoreTitle">مكتبة بريسي</div>
@@ -105,15 +78,7 @@
         
     <div class="nav-actions">
       <span id="userGreeting" style="font-size: 12px; font-weight: 700;"></span>
-      <button class="btn-nav" id="userNotiBtn" onclick="openModal('userNotiModal')" style="display:none; background:#475569;">
-        🔔 الإشعارات <span class="badge-count" id="userNotiCount">0</span>
-      </button>
-      <button class="btn-nav" id="chatBtn" onclick="openModal('chatModal')" style="display:none; background:#0284c7;">💬 الدعم المباشر</button>
       <button class="btn-nav btn-cart" id="cartNavBtn" onclick="openModal('cartModal')">🛒 السلة <span class="badge-count" id="cartCount">0</span></button>
-      <button class="btn-nav" id="ordersBtn" onclick="openModal('userOrdersModal')" style="display:none; background:#0284c7;">📦 طلباتي</button>
-      <button class="btn-nav" id="adminNotiBtn" onclick="openModal('adminNotiModal')" style="display:none; background:#b91c1c;">
-        🚨 التنبيهات <span class="badge-count" id="adminNotiCount">0</span>
-      </button>
       <button class="btn-nav" id="adminPanelBtn" onclick="openModal('adminDashboardModal')" style="display:none; background:var(--navy); border: 1px solid var(--orange);">👑 لوحة التحكم</button>
             
       <div id="authButtonsGroup" style="display:inline-flex; gap:4px;">
@@ -179,25 +144,64 @@
     <span class="close-btn" onclick="closeModal('cartModal')">&times;</span>
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">🛒 سلة المشتريات والدفع</h2>
     <div id="cartItemsList"></div>
-    <div id="checkoutSection" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
-      <h3 style="font-size:13px; margin-bottom:8px;">اختر طريقة الدفع المناسبة:</h3>
-      <div class="form-group">
-        <label>طريقة الدفع:</label>
-        <select id="payMethodSelect" style="width:100%; padding:8px;"></select>
-      </div>
-      <div class="form-group"><label>رقمك المحول منه / حسابك:</label><input type="text" id="paySenderAcc" required placeholder="مثال: 01012345678"></div>
-      <button class="btn-submit" onclick="submitOrderProcess()">تأكيد وإرسال الطلب رسمياً 📦</button>
-    </div>
   </div>
 </div>
 
+<!-- لوحة التحكم الإدارية المحدثة بالكامل -->
 <div class="modal" id="adminDashboardModal">
   <div class="modal-content modal-lg">
     <span class="close-btn" onclick="closeModal('adminDashboardModal')">&times;</span>
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">👑 لوحة الإدارة الشاملة</h2>
-    <p style="padding: 10px; background: #eff6ff; border-radius: 8px; font-weight: bold; color: var(--navy);">
+    <p style="padding: 10px; background: #eff6ff; border-radius: 8px; font-weight: bold; color: var(--navy); margin-bottom: 15px;">
       ⚡ المتجر متصل لحظياً بـ Firebase Realtime Database. جميع التعديلات محفوظة ومباشرة.
     </p>
+
+    <!-- نموذج إضافة منتج جديد -->
+    <div style="border: 1px solid #cbd5e1; padding: 15px; border-radius: 10px; background: #fff; margin-bottom: 20px;">
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">➕ إضافة منتج جديد للمتجر</h3>
+      <form onsubmit="handleAddNewProduct(event)">
+        <div class="form-group">
+          <label>اسم المنتج</label>
+          <input type="text" id="pTitle" required placeholder="مثال: كشكول سلك 100 ورقة">
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>السعر (ج.م)</label>
+            <input type="number" id="pPrice" step="0.5" required placeholder="50">
+          </div>
+          <div class="form-group">
+            <label>رابط صورة المنتج (اخنياري)</label>
+            <input type="url" id="pImg" placeholder="https://i.ibb.co/xxxx/item.jpg">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>وصف المنتج</label>
+          <textarea id="pDesc" rows="2" placeholder="أكتب تفاصيل أو مواصفات المنتج..."></textarea>
+        </div>
+        <button type="submit" class="btn-submit" style="background: var(--navy);">حفظ ونشر المنتج فوراً 🚀</button>
+      </form>
+    </div>
+
+    <!-- جدول إدارة وحذف المنتجات الحالية -->
+    <div style="border: 1px solid #cbd5e1; padding: 15px; border-radius: 10px; background: #fff;">
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">📦 المنتجات المضافة حالياً</h3>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>اسم المنتج</th>
+              <th>السعر</th>
+              <th>الوصف</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="adminProductsTable">
+            <tr><td colspan="4" style="text-align:center;">جاري تحميل المنتجات...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -232,20 +236,26 @@
   function openModal(id) { document.getElementById(id).style.display = 'flex'; }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-  // الاستماع اللحظي للتغيرات في المنتجات
+  // الاستماع اللحظي للتغيرات في المنتجات لعرضها للمستخدم والأدمن
   dbProducts.on('value', (snapshot) => {
     const productsGrid = document.getElementById('productsGrid');
+    const adminTable = document.getElementById('adminProductsTable');
+    
     productsGrid.innerHTML = '';
+    adminTable.innerHTML = '';
+
     const data = snapshot.val();
     if (data) {
       Object.keys(data).forEach(key => {
         const item = data[key];
+
+        // 1. عرض المنتجات في الصفحة الرئيسية
         productsGrid.innerHTML += `
           <div class="card">
             <div class="card-img"><img src="${item.img || 'https://via.placeholder.com/150'}" alt="product"></div>
             <div class="card-body">
               <h3>${item.title}</h3>
-              <p>${item.desc}</p>
+              <p>${item.desc || 'لا يوجد وصف'}</p>
               <div class="card-footer">
                 <span class="price">${item.price} ج.م</span>
                 <button class="btn-add-cart" onclick="addToCart('${key}', '${item.title}', ${item.price})">إضافة للسلة 🛒</button>
@@ -253,13 +263,57 @@
             </div>
           </div>
         `;
+
+        // 2. عرض المنتجات في جدول لوحة التحكم لـ الأدمن
+        adminTable.innerHTML += `
+          <tr>
+            <td><strong>${item.title}</strong></td>
+            <td>${item.price} ج.م</td>
+            <td>${item.desc || '-'}</td>
+            <td>
+              <button class="btn-sm btn-danger" onclick="deleteProduct('${key}')">حذف 🗑️</button>
+            </td>
+          </tr>
+        `;
       });
     } else {
       productsGrid.innerHTML = '<p style="text-align:center; grid-column:1/-1;">لا يوجد منتجات حالياً. قم بإضافتها من لوحة التحكم.</p>';
+      adminTable.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا توجد منتجات مضافة بعد.</td></tr>';
     }
   });
 
-  // إضافة منتج جديد لسلة الشراء
+  // إضافة منتج جديد من لوحة التحكم
+  function handleAddNewProduct(e) {
+    e.preventDefault();
+    const newProduct = {
+      title: document.getElementById('pTitle').value,
+      price: parseFloat(document.getElementById('pPrice').value),
+      img: document.getElementById('pImg').value || 'https://via.placeholder.com/150',
+      desc: document.getElementById('pDesc').value,
+      createdAt: new Date().toISOString()
+    };
+
+    dbProducts.push(newProduct).then(() => {
+      alert('تم إضافة المنتج بنجاح وتحديث المتجر تلقائياً!');
+      document.getElementById('pTitle').value = '';
+      document.getElementById('pPrice').value = '';
+      document.getElementById('pImg').value = '';
+      document.getElementById('pDesc').value = '';
+    }).catch((err) => {
+      alert('حدث خطأ أثناء الإضافة: ' + err.message);
+    });
+  }
+
+  // حذف منتج من السحابة
+  function deleteProduct(id) {
+    if (confirm('هل أنت تأكد من رغبتك في حذف هذا المنتج؟')) {
+      dbProducts.child(id).remove().then(() => {
+        alert('تم حذف المنتج بنجاح!');
+      });
+    }
+  }
+
+  // إضافة منتج لسلة الشراء
   function addToCart(id, title, price) {
     cart.push({ id, title, price });
     document.getElementById('cartCount').innerText = cart.length;
