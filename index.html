@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="siteTitle">متجر مكتبة بريسي | MAKTABT BRESSY</title>
+<title id="siteTitle">متجر مكتبة بريسي  | MAKTABT BRESSY</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -117,7 +117,7 @@
     <div>
       <h1 id="storeDisplayTitle" style="font-size: 26px; font-weight: 900;">مكتبة بريسي</h1>
       <p id="storeDisplayDesc" style="font-size: 13.5px; opacity: 0.95;">أفضل الخدمات البرمجية والطباعة الإلكترونية</p>
-      <p id="storeDisplayAddr" style="font-size: 12px; margin-top: 4px; opacity: 0.85;">📍 العنوان: طهطا - سوهاج</p>
+      <p id="storeDisplayAddr" style="font-size: 12px; margin-top: 4px; opacity: 0.85;">📍 العنوان: غير محدد</p>
     </div>
   </div>
 </div>
@@ -129,7 +129,7 @@
       <div>
         <div class="brand-title" id="navStoreTitle">مكتبة بريسي</div>
         <div class="brand-sub">MAKTABT BRESSY STORE</div>
-        <div class="brand-address" id="navStoreAddress">📍 سوهاج - طهطا</div>
+        <div class="brand-address" id="navStoreAddress">📍 متجر الكتروني</div>
       </div>
     </div>
     
@@ -658,41 +658,41 @@
 
         <h4 style="font-size: 12.5px; margin: 10px 0 6px; color: var(--navy);">حدد الصلاحيات المتاحة:</h4>
         <div class="perm-checkboxes">
-          <label><input type="checkbox" id="permEditProd" checked> إضافة وتعديل المنتجات</label>
+          <label><input type="checkbox" id="permEditProd"> إضافة وتعديل المنتجات</label>
           <label><input type="checkbox" id="permDeleteProd"> حذف المنتجات</label>
-          <label><input type="checkbox" id="permOrders" checked> متابعة وتحديث الطلبات</label>
-          <label><input type="checkbox" id="permChat" checked> الرد على الدعم المباشر</label>
+          <label><input type="checkbox" id="permOrders"> متابعة وتحديث الطلبات</label>
+          <label><input type="checkbox" id="permChat"> الرد على الدعم المباشر</label>
         </div>
 
-        <button type="submit" class="btn-submit" style="background:var(--navy);">إنشاء أدمن فرعي جديد</button>
+        <button type="submit" class="btn-submit" style="background:var(--navy);">إضافة الأدمن الفرعي</button>
       </form>
 
-      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">👥 قائمة المشرفين والأدمن الفرعي</h3>
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">👥 قائمة الأدمن الفرعي الحاليين</h3>
       <div style="overflow-x:auto;">
         <table>
           <thead>
             <tr>
-              <th>الاسم والمسمى</th>
+              <th>الاسم والوظيفة</th>
               <th>الموبايل والقومي</th>
               <th>الصلاحيات</th>
               <th>إجراءات</th>
             </tr>
           </thead>
-          <tbody id="subAdminsTable"></tbody>
+          <tbody id="adminSubAdminsTable"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- إدارة العملاء -->
+    <!-- العملاء -->
     <div id="admUsersTab" style="display:none;">
       <div style="overflow-x:auto;">
         <table>
           <thead>
             <tr>
-              <th>اسم العميل</th>
-              <th>الموبايل والقومي</th>
+              <th>الاسم الكامل</th>
+              <th>رقم الهاتف / القومي</th>
               <th>البريد والعنوان</th>
-              <th>كلمة المرور</th>
+              <th>تاريخ التسجيل</th>
               <th>إجراءات</th>
             </tr>
           </thead>
@@ -701,25 +701,33 @@
       </div>
     </div>
 
-    <!-- الدعم والمحادثات للأدمن -->
+    <!-- الدعم الإداري -->
     <div id="admChatTab" style="display:none;">
-      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">💬 رسائل العملاء والدعم المباشر</h3>
-      <div id="adminChatList"></div>
+      <div style="display:flex; gap:10px; height:300px;">
+        <div style="width:30%; border-left:1px solid #ddd; overflow-y:auto;" id="adminChatUserList"></div>
+        <div style="width:70%; display:flex; flex-direction:column;">
+          <div class="chat-box" id="adminChatMessages" style="flex:1;"></div>
+          <div style="display:flex; gap:5px; margin-top:10px;">
+            <input type="text" id="adminChatInput" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px;" placeholder="رد الأدمن...">
+            <button onclick="sendAdminChatMessage()" style="background:var(--navy); color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:700;">إرسال</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- تغيير كلمة مرور الأدمن الأساسي -->
+    <!-- تغيير حساب الأدمن الأساسي -->
     <div id="admAccountTab" style="display:none;">
-      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">🔐 تغيير بيانات دخول Super Admin</h3>
-      <form onsubmit="handleSaveMainAdminCreds(event)" style="background:#f8fafc; padding:15px; border-radius:8px;">
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">🔐 تغيير بيانات دخول الأدمن الرئيسي (Super Admin)</h3>
+      <form onsubmit="changeSuperAdminCredentials(event)" style="background:#f8fafc; padding:15px; border-radius:8px;">
         <div class="form-group">
-          <label>اسم المستخدم الحالي / الجديد (Username)</label>
-          <input type="text" id="mainAdminUserInp" required>
+          <label>اسم المستخدم الجديد (Username)</label>
+          <input type="text" id="newSuperUser" required placeholder="admin">
         </div>
         <div class="form-group">
           <label>كلمة المرور الجديدة</label>
-          <input type="text" id="mainAdminPassInp" required>
+          <input type="password" id="newSuperPass" required placeholder="******">
         </div>
-        <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ بيانات الدخول الجديدة</button>
+        <button type="submit" class="btn-submit" style="background:var(--navy);">تحديث بيانات الأدمن</button>
       </form>
     </div>
 
@@ -727,273 +735,407 @@
 </div>
 
 <script>
-  // Dynamic State & Local Storage Initialization
-  const defaultState = {
-    settings: {
-      titleAr: "مكتبة بريسي",
-      titleEn: "MAKTABT BRESSY STORE",
-      descAr: "أفضل الخدمات البرمجية والطباعة الإلكترونية",
-      addressAr: "طهطا - سوهاج",
-      addressEn: "Tahta, Sohag",
-      logo: "https://via.placeholder.com/50",
-      banner: ""
+  // Dynamic State Initialization & LocalStorage Support
+  let state = {
+    settings: JSON.parse(localStorage.getItem('bressy_settings')) || {
+      titleAr: 'مكتبة بريسي',
+      titleEn: 'MAKTABT BRESSY',
+      descAr: 'أفضل الخدمات البرمجية والطباعة الإلكترونية',
+      addressAr: 'سوهاج - طهطا',
+      addressEn: 'Sohag, Tahta',
+      logo: 'https://via.placeholder.com/50',
+      banner: ''
     },
-    adminCreds: { user: "admin", pass: "123456" },
-    categories: [
-      { key: "all", titleAr: "الكل" },
-      { key: "software", titleAr: "برمجيات Access" },
-      { key: "printing", titleAr: "خدمات طباعة" }
+    superAdmin: JSON.parse(localStorage.getItem('bressy_super_admin')) || { user: 'admin', pass: '123456' },
+    categories: JSON.parse(localStorage.getItem('bressy_cats')) || [
+      { key: 'all', title: 'الكل' },
+      { key: 'software', title: 'برمجيات Access' },
+      { key: 'print', title: 'خدمات الطباعة' }
     ],
-    products: [],
-    users: [],
-    subAdmins: [],
-    orders: [],
-    paymentMethods: [
-      { id: 1, name: "محفظة فودافون كاش", accounts: "01128670029" },
-      { id: 2, name: "انستا باي InstaPay", accounts: "bressy@instapay" }
+    products: JSON.parse(localStorage.getItem('bressy_products')) || [],
+    payments: JSON.parse(localStorage.getItem('bressy_payments')) || [
+      { id: 1, name: 'فودافون كاش', accounts: ['01128670029'] },
+      { id: 2, name: 'إنستا باي (InstaPay)', accounts: ['bressy@instapay'] }
     ],
-    userNotis: [],
-    adminNotis: [],
-    chatMessages: []
+    users: JSON.parse(localStorage.getItem('bressy_users')) || [],
+    subAdmins: JSON.parse(localStorage.getItem('bressy_subadmins')) || [],
+    orders: JSON.parse(localStorage.getItem('bressy_orders')) || [],
+    chats: JSON.parse(localStorage.getItem('bressy_chats')) || {},
+    userNotis: JSON.parse(localStorage.getItem('bressy_user_notis')) || [],
+    adminNotis: JSON.parse(localStorage.getItem('bressy_admin_notis')) || [],
+    currentUser: JSON.parse(localStorage.getItem('bressy_current_user')) || null,
+    currentAdmin: JSON.parse(localStorage.getItem('bressy_current_admin')) || null,
+    selectedCategory: 'all',
+    activeChatUser: null,
+    tempProdImg: '',
+    tempEditProdImg: '',
+    tempReceiptImg: ''
   };
 
-  let DB = JSON.parse(localStorage.getItem('bressy_db')) || defaultState;
-  let currentUser = JSON.parse(localStorage.getItem('bressy_current_user')) || null;
-  let currentAdmin = JSON.parse(localStorage.getItem('bressy_current_admin')) || null;
-  let currentCategory = 'all';
-  let cart = [];
-  let tempImage = "";
-  let tempEditImage = "";
-  let tempReceiptImage = "";
-
-  function saveDB() {
-    localStorage.setItem('bressy_db', JSON.stringify(DB));
+  function saveData() {
+    localStorage.setItem('bressy_settings', JSON.stringify(state.settings));
+    localStorage.setItem('bressy_super_admin', JSON.stringify(state.superAdmin));
+    localStorage.setItem('bressy_cats', JSON.stringify(state.categories));
+    localStorage.setItem('bressy_products', JSON.stringify(state.products));
+    localStorage.setItem('bressy_payments', JSON.stringify(state.payments));
+    localStorage.setItem('bressy_users', JSON.stringify(state.users));
+    localStorage.setItem('bressy_subadmins', JSON.stringify(state.subAdmins));
+    localStorage.setItem('bressy_orders', JSON.stringify(state.orders));
+    localStorage.setItem('bressy_chats', JSON.stringify(state.chats));
+    localStorage.setItem('bressy_user_notis', JSON.stringify(state.userNotis));
+    localStorage.setItem('bressy_admin_notis', JSON.stringify(state.adminNotis));
+    localStorage.setItem('bressy_current_user', JSON.stringify(state.currentUser));
+    localStorage.setItem('bressy_current_admin', JSON.stringify(state.currentAdmin));
+    renderApp();
   }
 
-  // Core Render & UI
-  function initApp() {
-    renderStoreHeader();
-    renderCategoriesTabs();
+  // Helper Functions
+  function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+  function renderApp() {
+    // Header & Banner Settings
+    document.getElementById('storeDisplayTitle').innerText = state.settings.titleAr;
+    document.getElementById('storeDisplayDesc').innerText = state.settings.descAr;
+    document.getElementById('storeDisplayAddr').innerText = '📍 العنوان: ' + (state.settings.addressAr || 'غير محدد');
+    document.getElementById('navStoreTitle').innerText = state.settings.titleAr;
+    document.getElementById('navStoreAddress').innerText = '📍 ' + (state.settings.addressAr || 'متجر الكتروني');
+    document.getElementById('mainLogo').src = state.settings.logo || 'https://via.placeholder.com/50';
+    
+    if (state.settings.banner) {
+      document.getElementById('heroBanner').style.backgroundImage = `url(${state.settings.banner})`;
+    }
+
+    // UI Auth State
+    const authGroup = document.getElementById('authButtonsGroup');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userGreeting = document.getElementById('userGreeting');
+    const adminPanelBtn = document.getElementById('adminPanelBtn');
+    const adminNotiBtn = document.getElementById('adminNotiBtn');
+    const userNotiBtn = document.getElementById('userNotiBtn');
+    const ordersBtn = document.getElementById('ordersBtn');
+    const chatBtn = document.getElementById('chatBtn');
+
+    if (state.currentAdmin) {
+      authGroup.style.display = 'none';
+      logoutBtn.style.display = 'inline-flex';
+      adminPanelBtn.style.display = 'inline-flex';
+      adminNotiBtn.style.display = 'inline-flex';
+      userNotiBtn.style.display = 'none';
+      ordersBtn.style.display = 'none';
+      chatBtn.style.display = 'none';
+      userGreeting.innerText = `مرحباً الأدمن (${state.currentAdmin.name || 'الرئيسي'})`;
+      
+      // Control sub-admin tabs visibility
+      if (state.currentAdmin.isSub) {
+        document.getElementById('tabSubAdminsBtn').style.display = 'none';
+        document.getElementById('tabAdminAccBtn').style.display = 'none';
+      } else {
+        document.getElementById('tabSubAdminsBtn').style.display = 'inline-block';
+        document.getElementById('tabAdminAccBtn').style.display = 'inline-block';
+      }
+    } else if (state.currentUser) {
+      authGroup.style.display = 'none';
+      logoutBtn.style.display = 'inline-flex';
+      adminPanelBtn.style.display = 'none';
+      adminNotiBtn.style.display = 'none';
+      userNotiBtn.style.display = 'inline-flex';
+      ordersBtn.style.display = 'inline-flex';
+      chatBtn.style.display = 'inline-flex';
+      userGreeting.innerText = `أهلاً، ${state.currentUser.name}`;
+    } else {
+      authGroup.style.display = 'inline-flex';
+      logoutBtn.style.display = 'none';
+      adminPanelBtn.style.display = 'none';
+      adminNotiBtn.style.display = 'none';
+      userNotiBtn.style.display = 'none';
+      ordersBtn.style.display = 'none';
+      chatBtn.style.display = 'none';
+      userGreeting.innerText = '';
+    }
+
+    renderCategories();
     renderProducts();
-    updateAuthUI();
+    renderCart();
+    renderUserNotis();
+    renderAdminNotis();
+    renderOrders();
+    renderAdminTables();
   }
 
-  function openModal(id) {
-    document.getElementById(id).style.display = 'flex';
-    if(id === 'cartModal') renderCart();
-    if(id === 'userOrdersModal') renderUserOrders();
-    if(id === 'userNotiModal') renderUserNotis();
-    if(id === 'adminNotiModal') renderAdminNotis();
-    if(id === 'chatModal') renderChat();
-    if(id === 'adminDashboardModal') renderAdminDashboard();
-  }
-
-  function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
-  }
-
-  function renderStoreHeader() {
-    document.getElementById('siteTitle').innerText = `${DB.settings.titleAr} | ${DB.settings.titleEn}`;
-    document.getElementById('storeDisplayTitle').innerText = DB.settings.titleAr;
-    document.getElementById('storeDisplayDesc').innerText = DB.settings.descAr;
-    document.getElementById('storeDisplayAddr').innerText = `📍 العنوان: ${DB.settings.addressAr}`;
-    document.getElementById('navStoreTitle').innerText = DB.settings.titleAr;
-    document.getElementById('navStoreAddress').innerText = `📍 ${DB.settings.addressAr}`;
-    if(DB.settings.logo) document.getElementById('mainLogo').src = DB.settings.logo;
-    if(DB.settings.banner) document.getElementById('heroBanner').style.backgroundImage = `url(${DB.settings.banner})`;
-  }
-
-  function renderCategoriesTabs() {
-    const tabsBar = document.getElementById('categoriesTabsBar');
-    const catSelect = document.getElementById('pCatSelect');
+  // Categories & Filtering
+  function renderCategories() {
+    const bar = document.getElementById('categoriesTabsBar');
+    const pCatSelect = document.getElementById('pCatSelect');
     const editCatSelect = document.getElementById('editProdCatSelect');
 
-    tabsBar.innerHTML = DB.categories.map(c => 
-      `<button class="tab-btn ${currentCategory === c.key ? 'active' : ''}" onclick="selectCategory('${c.key}')">${c.titleAr}</button>`
+    bar.innerHTML = state.categories.map(c => 
+      `<button class="tab-btn ${state.selectedCategory === c.key ? 'active' : ''}" onclick="selectCategory('${c.key}')">${c.title}</button>`
     ).join('');
 
-    const optionsHTML = DB.categories.filter(c => c.key !== 'all').map(c => 
-      `<option value="${c.key}">${c.titleAr}</option>`
-    ).join('');
-
-    if(catSelect) catSelect.innerHTML = optionsHTML;
-    if(editCatSelect) editCatSelect.innerHTML = optionsHTML;
+    const options = state.categories.filter(c => c.key !== 'all').map(c => `<option value="${c.key}">${c.title}</option>`).join('');
+    if (pCatSelect) pCatSelect.innerHTML = options;
+    if (editCatSelect) editCatSelect.innerHTML = options;
   }
 
   function selectCategory(key) {
-    currentCategory = key;
-    renderCategoriesTabs();
+    state.selectedCategory = key;
     renderProducts();
+    renderCategories();
   }
 
+  // Products
   function renderProducts() {
     const grid = document.getElementById('productsGrid');
-    const filtered = currentCategory === 'all' 
-      ? DB.products 
-      : DB.products.filter(p => p.category === currentCategory);
+    const filtered = state.selectedCategory === 'all' 
+      ? state.products 
+      : state.products.filter(p => p.category === state.selectedCategory);
 
-    if(filtered.length === 0) {
-      grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px 0;">لا يوجد منتجات حالياً. قم بإضافتها من لوحة التحكم.</p>`;
+    if (filtered.length === 0) {
+      grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:30px; color:var(--muted);">لا توجد منتجات معروضة حالياً في هذا القسم.</p>`;
       return;
     }
 
-    grid.innerHTML = filtered.map(p => `
-      <div class="card">
-        <div class="card-img">
-          <img src="${p.image || DB.settings.logo}" alt="${p.title}">
-        </div>
-        <div class="card-body">
-          <h3>${p.title}</h3>
-          <p>${p.desc}</p>
-          ${p.qty ? `<div class="card-qty">المتاح: ${p.qty}</div>` : ''}
-          <div class="card-footer">
-            <span class="price">${p.price} ج.م</span>
-            <button class="btn-add-cart" onclick="addToCart('${p.id}')">🛒 إضافة</button>
-            ${currentAdmin ? `<button class="btn-quick-edit" onclick="openEditProductModal('${p.id}')">✏️ تعديل</button>` : ''}
+    grid.innerHTML = filtered.map(p => {
+      const img = p.image || state.settings.logo || 'https://via.placeholder.com/150';
+      const qtyBadge = (p.qty !== undefined && p.qty !== null && p.qty !== '') ? `<span class="card-qty">الكمية: ${p.qty}</span>` : '';
+      const canEdit = state.currentAdmin && (!state.currentAdmin.isSub || state.currentAdmin.perms.editProd);
+      
+      return `
+        <div class="card">
+          <div class="card-img"><img src="${img}" alt="${p.title}"></div>
+          <div class="card-body">
+            <h3>${p.title}</h3>
+            <p>${p.desc}</p>
+            ${qtyBadge}
+            <div class="card-footer">
+              <span class="price">${p.price} ج.م</span>
+              ${canEdit ? `<button class="btn-quick-edit" onclick="openEditProductModal(${p.id})">✏️ تعديل</button>` : ''}
+              <button class="btn-add-cart" onclick="addToCart(${p.id})">🛒 للطلب</button>
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
-  // Cart & Orders
+  // Cart & Checkout
+  let cart = [];
   function addToCart(pId) {
-    const prod = DB.products.find(p => p.id === pId);
-    if(!prod) return;
+    const prod = state.products.find(p => p.id === pId);
+    if (!prod) return;
     cart.push(prod);
     document.getElementById('cartCount').innerText = cart.length;
     document.getElementById('cartCount').style.display = 'inline-block';
-    alert(`تمت إضافة "${prod.title}" إلى السلة بنجاح`);
+    alert('تمت إضافة ' + prod.title + ' إلى السلة!');
   }
 
   function renderCart() {
     const list = document.getElementById('cartItemsList');
-    const checkout = document.getElementById('checkoutSection');
-    
-    if(cart.length === 0) {
-      list.innerHTML = `<p style="text-align:center; padding:20px; color:var(--muted);">سلة المشتريات فارغة</p>`;
-      checkout.style.display = 'none';
+    const checkoutSec = document.getElementById('checkoutSection');
+
+    if (cart.length === 0) {
+      list.innerHTML = `<p style="text-align:center; padding:15px; color:var(--muted);">السلة فارغة حالياً.</p>`;
+      checkoutSec.style.display = 'none';
       return;
     }
 
-    let total = cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
-    list.innerHTML = cart.map((item, idx) => `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee;">
-        <div><strong>${item.title}</strong> - ${item.price} ج.م</div>
-        <button class="btn-sm btn-danger" onclick="removeFromCart(${idx})">حذف</button>
-      </div>
-    `).join('') + `<div style="margin-top:10px; font-weight:800; text-align:left;">الإجمالي: ${total} ج.م</div>`;
+    let total = 0;
+    list.innerHTML = cart.map((item, idx) => {
+      total += parseFloat(item.price) || 0;
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding:8px 0;">
+          <div><strong>${item.title}</strong> - ${item.price} ج.م</div>
+          <button class="btn-sm btn-danger" onclick="removeFromCart(${idx})">حذف</button>
+        </div>
+      `;
+    }).join('') + `<div style="text-align:left; font-weight:800; padding:10px 0; font-size:14px;">الإجمالي: ${total} ج.م</div>`;
 
-    checkout.style.display = 'block';
+    checkoutSec.style.display = 'block';
 
+    // Render payment options dropdown
     const paySelect = document.getElementById('payMethodSelect');
-    paySelect.innerHTML = DB.paymentMethods.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+    paySelect.innerHTML = state.payments.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     renderCheckoutAccounts();
   }
 
   function removeFromCart(idx) {
     cart.splice(idx, 1);
     document.getElementById('cartCount').innerText = cart.length;
-    if(cart.length === 0) document.getElementById('cartCount').style.display = 'none';
+    if (cart.length === 0) document.getElementById('cartCount').style.display = 'none';
     renderCart();
   }
 
   function renderCheckoutAccounts() {
-    const selectedId = document.getElementById('payMethodSelect').value;
-    const method = DB.paymentMethods.find(m => m.id == selectedId);
-    const display = document.getElementById('payAccountsDisplay');
-    if(method) {
-      display.innerHTML = `<strong>الأرقام/الحسابات المتاحة للتحويل:</strong><br>${method.accounts}`;
+    const payId = document.getElementById('payMethodSelect').value;
+    const method = state.payments.find(p => p.id == payId);
+    const box = document.getElementById('payAccountsDisplay');
+
+    if (method) {
+      box.innerHTML = `<strong>حول المبلغ إلى أحد الحسابات التالية:</strong><br>${method.accounts.join(' <br> ')}`;
+    } else {
+      box.innerHTML = '';
     }
   }
 
   function previewReceiptImage(e) {
     const file = e.target.files[0];
-    if(file) {
-      const r = new FileReader();
-      r.onload = () => tempReceiptImage = r.result;
-      r.readAsDataURL(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => { state.tempReceiptImg = evt.target.result; };
+      reader.readAsDataURL(file);
     }
   }
 
   function submitOrderProcess() {
-    if(!currentUser) {
-      alert("برجاء تسجيل الدخول أولاً لتأكيد الطلب");
+    if (!state.currentUser) {
+      alert('رجاءً سجل دخولك كعميل أولاً لتتمكن من إتمام الطلب!');
+      closeModal('cartModal');
       openModal('loginModal');
       return;
     }
 
-    const paySelect = document.getElementById('payMethodSelect');
-    const method = DB.paymentMethods.find(m => m.id == paySelect.value);
-    const sender = document.getElementById('paySenderAcc').value;
-    const ref = document.getElementById('payRefNo').value;
-
-    if(!sender) {
-      alert("برجاء إدخال الرقم/الحساب المحول منه");
+    const senderAcc = document.getElementById('paySenderAcc').value.trim();
+    if (!senderAcc) {
+      alert('يرجى إدخال رقمك المحول منه أو اسم حسابك لتأكيد الدفع.');
       return;
     }
 
+    const payMethodId = document.getElementById('payMethodSelect').value;
+    const payMethod = state.payments.find(p => p.id == payMethodId);
+
     const newOrder = {
-      id: 'ORD-' + Date.now(),
-      userId: currentUser.phone,
-      userName: currentUser.name,
-      userPhone: currentUser.phone,
+      id: Date.now(),
+      userId: state.currentUser.id,
+      userName: state.currentUser.name,
+      userPhone: state.currentUser.phone,
       items: [...cart],
-      total: cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0),
-      paymentMethod: method ? method.name : "",
-      senderAcc: sender,
-      refNo: ref,
-      receiptImg: tempReceiptImage,
+      total: cart.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0),
+      paymentMethod: payMethod ? payMethod.name : 'غير محدد',
+      senderAcc: senderAcc,
+      refNo: document.getElementById('payRefNo').value.trim(),
+      receiptImg: state.tempReceiptImg,
       status: 'received',
-      adminNote: 'تم استلام طلبك وجاري مراجعته',
+      adminNote: '',
       date: new Date().toLocaleString('ar-EG')
     };
 
-    DB.orders.unshift(newOrder);
-    
+    state.orders.push(newOrder);
+
     // Notify Admin
-    DB.adminNotis.unshift({
+    state.adminNotis.push({
       id: Date.now(),
-      title: "طلب جديد وارد 📦",
-      body: `قام العميل ${currentUser.name} بطلب بقيمة ${newOrder.total} ج.م`,
+      title: '📦 طلب جديد مقدم',
+      msg: `قام العميل ${state.currentUser.name} بطلب بقيمة ${newOrder.total} ج.م`,
       read: false,
       date: new Date().toLocaleTimeString('ar-EG')
     });
 
-    saveDB();
     cart = [];
-    tempReceiptImage = "";
+    state.tempReceiptImg = '';
     document.getElementById('cartCount').innerText = '0';
     document.getElementById('cartCount').style.display = 'none';
+
+    saveData();
     closeModal('cartModal');
-    alert("تم إرسال طلبك بنجاح! يمكنك تتبعه من قسم 'طلباتي'.");
+    alert('تم إرسال طلبك بنجاح! يمكنك تتبعه من قائمة "طلباتي".');
   }
 
-  function renderUserOrders() {
-    if(!currentUser) return;
-    const tbody = document.getElementById('userOrdersTable');
-    const userOrders = DB.orders.filter(o => o.userId === currentUser.phone);
+  // Notifications
+  function renderUserNotis() {
+    if (!state.currentUser) return;
+    const myNotis = state.userNotis.filter(n => n.userId === state.currentUser.id);
+    const unread = myNotis.filter(n => !n.read).length;
+    
+    const countBadge = document.getElementById('userNotiCount');
+    countBadge.innerText = unread;
+    countBadge.style.display = unread > 0 ? 'inline-block' : 'none';
 
-    if(userOrders.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">لا توجد طلبات سابقة</td></tr>`;
+    const list = document.getElementById('userNotiList');
+    if (myNotis.length === 0) {
+      list.innerHTML = `<p style="text-align:center; padding:15px; color:var(--muted);">لا توجد إشعارات حالياً.</p>`;
       return;
     }
 
-    const statusBadges = {
+    list.innerHTML = myNotis.map(n => `
+      <div class="noti-item ${n.read ? 'read' : 'unread'}" onclick="markUserNotiRead(${n.id})">
+        <strong>${n.title}</strong>
+        ${n.msg}
+        <small>📅 ${n.date}</small>
+      </div>
+    `).join('');
+  }
+
+  function markUserNotiRead(id) {
+    const noti = state.userNotis.find(n => n.id === id);
+    if (noti) { noti.read = true; saveData(); }
+  }
+
+  function markAllUserNotisRead() {
+    if (!state.currentUser) return;
+    state.userNotis.forEach(n => { if(n.userId === state.currentUser.id) n.read = true; });
+    saveData();
+  }
+
+  function renderAdminNotis() {
+    if (!state.currentAdmin) return;
+    const unread = state.adminNotis.filter(n => !n.read).length;
+    
+    const countBadge = document.getElementById('adminNotiCount');
+    countBadge.innerText = unread;
+    countBadge.style.display = unread > 0 ? 'inline-block' : 'none';
+
+    const list = document.getElementById('adminNotiList');
+    if (state.adminNotis.length === 0) {
+      list.innerHTML = `<p style="text-align:center; padding:15px; color:var(--muted);">لا توجد تنبيهات جديدة للإدارة.</p>`;
+      return;
+    }
+
+    list.innerHTML = state.adminNotis.map(n => `
+      <div class="noti-item ${n.read ? 'read' : 'unread'}" onclick="markAdminNotiRead(${n.id})">
+        <strong>${n.title}</strong>
+        ${n.msg}
+        <small>📅 ${n.date}</small>
+      </div>
+    `).join('');
+  }
+
+  function markAdminNotiRead(id) {
+    const noti = state.adminNotis.find(n => n.id === id);
+    if (noti) { noti.read = true; saveData(); }
+  }
+
+  function markAllAdminNotisRead() {
+    state.adminNotis.forEach(n => n.read = true);
+    saveData();
+  }
+
+  // Order Tracking for User
+  function renderOrders() {
+    if (!state.currentUser) return;
+    const myOrders = state.orders.filter(o => o.userId === state.currentUser.id);
+    const tbody = document.getElementById('userOrdersTable');
+
+    if (myOrders.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px;">لم تقم بأي طلبات بعد.</td></tr>`;
+      return;
+    }
+
+    const statusMap = {
       received: '<span class="badge-status st-received">تم الاستلام</span>',
-      processing: '<span class="badge-status st-processing">جاري التنفيذ</span>',
-      shipped: '<span class="badge-status st-shipped">تم الشحن</span>',
+      processing: '<span class="badge-status st-processing">قيد التنفيذ</span>',
+      shipped: '<span class="badge-status st-shipped">تم الشحن/التجهيز</span>',
       delivered: '<span class="badge-status st-delivered">تم التسليم</span>',
       cancelled: '<span class="badge-status st-cancelled">ملغي</span>'
     };
 
-    tbody.innerHTML = userOrders.map(o => `
+    tbody.innerHTML = myOrders.map(o => `
       <tr>
-        <td>${o.id}</td>
+        <td>#${o.id.toString().slice(-5)}</td>
         <td>${o.items.map(i => i.title).join(', ')}</td>
         <td>${o.total} ج.م</td>
-        <td>${statusBadges[o.status] || o.status}</td>
-        <td>${o.adminNote || '-'}</td>
+        <td>${statusMap[o.status] || o.status}</td>
+        <td>${o.adminNote || 'لا توجد ملاحظات'}</td>
         <td>${o.date}</td>
       </tr>
     `).join('');
@@ -1002,524 +1144,372 @@
   // Auth Functions
   function handleUserRegister(e) {
     e.preventDefault();
-    const name = document.getElementById('regName').value;
-    const phone = document.getElementById('regPhone').value;
-    const nationalId = document.getElementById('regNationalId').value;
-    const email = document.getElementById('regEmail').value;
-    const address = document.getElementById('regAddress').value;
-    const pass = document.getElementById('regPass').value;
+    const newUser = {
+      id: Date.now(),
+      name: document.getElementById('regName').value.trim(),
+      phone: document.getElementById('regPhone').value.trim(),
+      nationalId: document.getElementById('regNationalId').value.trim(),
+      email: document.getElementById('regEmail').value.trim(),
+      address: document.getElementById('regAddress').value.trim(),
+      pass: document.getElementById('regPass').value,
+      regDate: new Date().toLocaleDateString('ar-EG')
+    };
 
-    if(DB.users.some(u => u.phone === phone)) {
-      alert("رقم الهاتف مسجل بالفعل!");
+    if (state.users.some(u => u.phone === newUser.phone || u.email === newUser.email)) {
+      alert('رقم المحمول أو البريد الإلكتروني مستخدم بالفعل!');
       return;
     }
 
-    const newUser = { name, phone, nationalId, email, address, pass };
-    DB.users.push(newUser);
-    saveDB();
-    
-    currentUser = newUser;
-    localStorage.setItem('bressy_current_user', JSON.stringify(currentUser));
-    updateAuthUI();
+    state.users.push(newUser);
+    state.currentUser = newUser;
+    saveData();
     closeModal('registerModal');
-    alert("تم إنشاء الحساب وتسجيل الدخول بنجاح!");
+    alert('تم إنشاء الحساب وتسجيل الدخول بنجاح!');
   }
 
   function handleUserLogin(e) {
     e.preventDefault();
-    const key = document.getElementById('loginKey').value;
+    const key = document.getElementById('loginKey').value.trim();
     const pass = document.getElementById('loginPass').value;
 
-    const user = DB.users.find(u => (u.phone === key || u.email === key) && u.pass === pass);
-    if(user) {
-      currentUser = user;
-      localStorage.setItem('bressy_current_user', JSON.stringify(currentUser));
-      updateAuthUI();
+    const user = state.users.find(u => (u.phone === key || u.email === key) && u.pass === pass);
+    if (user) {
+      state.currentUser = user;
+      state.currentAdmin = null;
+      saveData();
       closeModal('loginModal');
-      alert(`مرحباً بك مجدداً ${user.name}`);
+      alert('مرحباً بك مجدداً، ' + user.name);
     } else {
-      alert("بيانات الدخول غير صحيحة");
+      alert('بيانات الدخول غير صحيحة!');
     }
   }
 
   function handleAdminLogin(e) {
     e.preventDefault();
-    const user = document.getElementById('adminUser').value;
+    const user = document.getElementById('adminUser').value.trim();
     const pass = document.getElementById('adminPass').value;
 
-    if(user === DB.adminCreds.user && pass === DB.adminCreds.pass) {
-      currentAdmin = { role: 'super', name: 'المدير العام' };
-      localStorage.setItem('bressy_current_admin', JSON.stringify(currentAdmin));
-      updateAuthUI();
+    // Check Main Super Admin
+    if (user === state.superAdmin.user && pass === state.superAdmin.pass) {
+      state.currentAdmin = { name: 'الأدمن الرئيسي', isSub: false };
+      state.currentUser = null;
+      saveData();
       closeModal('adminLoginModal');
-      renderProducts();
-      alert("تم تسجيل دخول الأدمن بنجاح");
+      openModal('adminDashboardModal');
       return;
     }
 
-    const sub = DB.subAdmins.find(s => s.phone === user && s.pass === pass);
-    if(sub) {
-      currentAdmin = { role: 'sub', ...sub };
-      localStorage.setItem('bressy_current_admin', JSON.stringify(currentAdmin));
-      updateAuthUI();
+    // Check Sub Admins
+    const sub = state.subAdmins.find(s => s.phone === user && s.pass === pass);
+    if (sub) {
+      state.currentAdmin = { ...sub, isSub: true };
+      state.currentUser = null;
+      saveData();
       closeModal('adminLoginModal');
-      renderProducts();
-      alert(`مرحباً بك ${sub.name}`);
+      openModal('adminDashboardModal');
       return;
     }
 
-    alert("خطأ في اسم المستخدم أو كلمة المرور للأدمن");
+    alert('اسم المستخدم أو كلمة المرور الخاصة بالأدمن غير صحيحة!');
   }
 
   function logout() {
-    currentUser = null;
-    currentAdmin = null;
-    localStorage.removeItem('bressy_current_user');
-    localStorage.removeItem('bressy_current_admin');
-    updateAuthUI();
-    renderProducts();
-    alert("تم تسجيل الخروج");
+    state.currentUser = null;
+    state.currentAdmin = null;
+    saveData();
+    alert('تم تسجيل الخروج.');
   }
 
-  function updateAuthUI() {
-    const authGroup = document.getElementById('authButtonsGroup');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const greeting = document.getElementById('userGreeting');
-    const userNotiBtn = document.getElementById('userNotiBtn');
-    const ordersBtn = document.getElementById('ordersBtn');
-    const chatBtn = document.getElementById('chatBtn');
-    const adminNotiBtn = document.getElementById('adminNotiBtn');
-    const adminPanelBtn = document.getElementById('adminPanelBtn');
-
-    if(currentUser || currentAdmin) {
-      authGroup.style.display = 'none';
-      logoutBtn.style.display = 'inline-flex';
-      greeting.innerText = currentUser ? `أهلاً، ${currentUser.name}` : `👑 ${currentAdmin.name}`;
-    } else {
-      authGroup.style.display = 'inline-flex';
-      logoutBtn.style.display = 'none';
-      greeting.innerText = '';
-    }
-
-    userNotiBtn.style.display = currentUser ? 'inline-flex' : 'none';
-    ordersBtn.style.display = currentUser ? 'inline-flex' : 'none';
-    chatBtn.style.display = (currentUser || currentAdmin) ? 'inline-flex' : 'none';
-
-    adminNotiBtn.style.display = currentAdmin ? 'inline-flex' : 'none';
-    adminPanelBtn.style.display = currentAdmin ? 'inline-flex' : 'none';
-
-    updateNotiCounts();
-  }
-
-  // Notifications
-  function updateNotiCounts() {
-    if(currentUser) {
-      const uCount = DB.userNotis.filter(n => n.userId === currentUser.phone && !n.read).length;
-      const el = document.getElementById('userNotiCount');
-      el.innerText = uCount;
-      el.style.display = uCount > 0 ? 'inline-block' : 'none';
-    }
-    if(currentAdmin) {
-      const aCount = DB.adminNotis.filter(n => !n.read).length;
-      const el = document.getElementById('adminNotiCount');
-      el.innerText = aCount;
-      el.style.display = aCount > 0 ? 'inline-block' : 'none';
-    }
-  }
-
-  function renderUserNotis() {
-    if(!currentUser) return;
-    const list = document.getElementById('userNotiList');
-    const notis = DB.userNotis.filter(n => n.userId === currentUser.phone);
-    if(notis.length === 0) {
-      list.innerHTML = `<p style="text-align:center; padding:20px; color:var(--muted);">لا توجد إشعارات حالية</p>`;
-      return;
-    }
-    list.innerHTML = notis.map(n => `
-      <div class="noti-item ${n.read ? 'read' : 'unread'}">
-        <strong>${n.title}</strong>
-        <div>${n.body}</div>
-        <small>${n.date}</small>
-      </div>
-    `).join('');
-  }
-
-  function markAllUserNotisRead() {
-    if(!currentUser) return;
-    DB.userNotis.forEach(n => { if(n.userId === currentUser.phone) n.read = true; });
-    saveDB();
-    updateNotiCounts();
-    renderUserNotis();
-  }
-
-  function renderAdminNotis() {
-    const list = document.getElementById('adminNotiList');
-    if(DB.adminNotis.length === 0) {
-      list.innerHTML = `<p style="text-align:center; padding:20px; color:var(--muted);">لا توجد تنبيهات جديدة</p>`;
-      return;
-    }
-    list.innerHTML = DB.adminNotis.map(n => `
-      <div class="noti-item ${n.read ? 'read' : 'unread'}">
-        <strong>${n.title}</strong>
-        <div>${n.body}</div>
-        <small>${n.date}</small>
-      </div>
-    `).join('');
-  }
-
-  function markAllAdminNotisRead() {
-    DB.adminNotis.forEach(n => n.read = true);
-    saveDB();
-    updateNotiCounts();
-    renderAdminNotis();
-  }
-
-  // Live Chat
-  function renderChat() {
-    const box = document.getElementById('chatMessages');
-    const msgs = DB.chatMessages;
-    if(msgs.length === 0) {
-      box.innerHTML = `<p style="text-align:center; color:var(--muted); font-size:12px; margin-auto;">ابدأ المحادثة مع الدعم الفني...</p>`;
-      return;
-    }
-    box.innerHTML = msgs.map(m => `
-      <div class="chat-msg ${m.sender === 'admin' ? 'msg-admin' : 'msg-user'}">
-        <small style="display:block; font-size:9px; opacity:0.8;">${m.senderName}</small>
-        ${m.text}
-      </div>
-    `).join('');
-    box.scrollTop = box.scrollHeight;
-  }
-
-  function sendChatMessage() {
-    const inp = document.getElementById('chatInput');
-    const text = inp.value.trim();
-    if(!text) return;
-
-    const sender = currentAdmin ? 'admin' : 'user';
-    const senderName = currentAdmin ? currentAdmin.name : (currentUser ? currentUser.name : 'زائر');
-
-    DB.chatMessages.push({
-      sender,
-      senderName,
-      text,
-      time: new Date().toLocaleTimeString('ar-EG')
-    });
-
-    saveDB();
-    inp.value = '';
-    renderChat();
-  }
-
-  // Admin Panel Management
-  function renderAdminDashboard() {
-    switchAdminTab('admOrders');
-    
-    // Tab permissions based on Super / Sub Admin
-    if(currentAdmin && currentAdmin.role === 'sub') {
-      document.getElementById('tabSubAdminsBtn').style.display = 'none';
-      document.getElementById('tabAdminAccBtn').style.display = 'none';
-    } else {
-      document.getElementById('tabSubAdminsBtn').style.display = 'inline-block';
-      document.getElementById('tabAdminAccBtn').style.display = 'inline-block';
-    }
-
-    renderAdminOrdersTable();
-    renderAdminPaymentsTable();
-    renderAdminCategoriesTable();
-    renderAdminSubAdminsTable();
-    renderAdminUsersTable();
-
-    // Populate Store Settings Form
-    document.getElementById('stTitleAr').value = DB.settings.titleAr;
-    document.getElementById('stTitleEn').value = DB.settings.titleEn;
-    document.getElementById('stAddressAr').value = DB.settings.addressAr;
-    document.getElementById('stAddressEn').value = DB.settings.addressEn;
-    document.getElementById('stDescAr').value = DB.settings.descAr;
-    
-    document.getElementById('mainAdminUserInp').value = DB.adminCreds.user;
-    document.getElementById('mainAdminPassInp').value = DB.adminCreds.pass;
-  }
-
+  // Admin Dashboard Functions & Switching
   function switchAdminTab(tabId) {
     const tabs = ['admOrders', 'admPayments', 'admCategories', 'admSettings', 'admProducts', 'admSubAdmins', 'admUsers', 'admChat', 'admAccount'];
     tabs.forEach(t => {
       const el = document.getElementById(t + 'Tab');
-      if(el) el.style.display = (t === tabId) ? 'block' : 'none';
+      if (el) el.style.display = (t === tabId) ? 'block' : 'none';
     });
   }
 
-  // Admin - Orders
-  function renderAdminOrdersTable() {
-    const tbody = document.getElementById('adminOrdersTable');
-    if(DB.orders.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">لا توجد طلبات مسجلة</td></tr>`;
-      return;
-    }
+  function renderAdminTables() {
+    if (!state.currentAdmin) return;
 
-    tbody.innerHTML = DB.orders.map(o => `
-      <tr>
-        <td>
-          <strong>${o.userName}</strong><br>
-          📱 ${o.userPhone}
-        </td>
-        <td>
-          📦 ${o.items.map(i => i.title).join(', ')}<br>
-          💰 ${o.total} ج.م | 💳 ${o.paymentMethod}<br>
-          🔢 ${o.senderAcc} ${o.refNo ? `(مرجع: ${o.refNo})` : ''}
-          ${o.receiptImg ? `<br><a href="${o.receiptImg}" target="_blank" style="color:var(--blue);">📄 عرض الإيصال</a>` : ''}
-        </td>
-        <td><span class="badge-status st-${o.status}">${o.status}</span></td>
-        <td>
-          <div style="display:flex; gap:4px; flex-direction:column;">
-            <select id="stSelect_${o.id}" style="padding:4px; font-size:11px;">
+    // Render Admin Orders
+    const ordersTbody = document.getElementById('adminOrdersTable');
+    if (ordersTbody) {
+      ordersTbody.innerHTML = state.orders.map(o => `
+        <tr>
+          <td>
+            <strong>${o.userName}</strong><br>
+            📞 ${o.userPhone}
+          </td>
+          <td>
+            📦 ${o.items.map(i => i.title).join(', ')}<br>
+            💰 المبلغ: ${o.total} ج.م (${o.paymentMethod})<br>
+            💳 المحول منه: ${o.senderAcc} | مرجع: ${o.refNo || 'لا يوجد'}<br>
+            ${o.receiptImg ? `<a href="${o.receiptImg}" target="_blank" style="color:var(--blue); font-weight:bold;">🖼️ عرض الإيصال</a>` : 'لا يوجد إيصال'}
+          </td>
+          <td>${o.status}</td>
+          <td>
+            <select onchange="updateOrderStatus(${o.id}, this.value)">
               <option value="received" ${o.status==='received'?'selected':''}>تم الاستلام</option>
-              <option value="processing" ${o.status==='processing'?'selected':''}>جاري التنفيذ</option>
-              <option value="shipped" ${o.status==='shipped'?'selected':''}>تم الشحن</option>
+              <option value="processing" ${o.status==='processing'?'selected':''}>قيد التنفيذ</option>
+              <option value="shipped" ${o.status==='shipped'?'selected':''}>تم الشحن/التجهيز</option>
               <option value="delivered" ${o.status==='delivered'?'selected':''}>تم التسليم</option>
               <option value="cancelled" ${o.status==='cancelled'?'selected':''}>إلغاء الطلب</option>
             </select>
-            <input type="text" id="stNote_${o.id}" placeholder="ملاحظة للعميل..." value="${o.adminNote || ''}" style="padding:4px; font-size:11px;">
-            <button class="btn-sm btn-blue" onclick="updateOrderStatus('${o.id}')">حفظ التحديث</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
+            <input type="text" placeholder="إضافة ملاحظة للعميل..." value="${o.adminNote || ''}" onchange="updateOrderNote(${o.id}, this.value)" style="margin-top:4px; font-size:11px;">
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Render Payments
+    const payTbody = document.getElementById('adminPaymentsTable');
+    if (payTbody) {
+      payTbody.innerHTML = state.payments.map(p => `
+        <tr>
+          <td><strong>${p.name}</strong></td>
+          <td>${p.accounts.join(', ')}</td>
+          <td><button class="btn-sm btn-danger" onclick="deletePaymentMethod(${p.id})">حذف</button></td>
+        </tr>
+      `).join('');
+    }
+
+    // Render Categories
+    const catTbody = document.getElementById('adminCategoriesTable');
+    if (catTbody) {
+      catTbody.innerHTML = state.categories.map(c => `
+        <tr>
+          <td>${c.key}</td>
+          <td>${c.title}</td>
+          <td>${c.key !== 'all' ? `<button class="btn-sm btn-danger" onclick="deleteCategory('${c.key}')">حذف</button>` : 'أساسي'}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Render Sub Admins
+    const subTbody = document.getElementById('adminSubAdminsTable');
+    if (subTbody) {
+      subTbody.innerHTML = state.subAdmins.map(s => `
+        <tr>
+          <td><strong>${s.name}</strong><br><small>${s.job}</small></td>
+          <td>${s.phone}<br><small>${s.nationalId}</small></td>
+          <td>
+            ${s.perms.editProd ? '✏️ تعديل منتجات ' : ''}
+            ${s.perms.deleteProd ? '🗑️ حذف ' : ''}
+            ${s.perms.orders ? '📦 طلبات ' : ''}
+            ${s.perms.chat ? '💬 دعم ' : ''}
+          </td>
+          <td>
+            <button class="btn-sm btn-blue" onclick="openEditSubAdminModal(${s.id})">تعديل</button>
+            <button class="btn-sm btn-danger" onclick="deleteSubAdmin(${s.id})">حذف</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Render Users
+    const usersTbody = document.getElementById('adminUsersTable');
+    if (usersTbody) {
+      usersTbody.innerHTML = state.users.map(u => `
+        <tr>
+          <td><strong>${u.name}</strong></td>
+          <td>📞 ${u.phone}<br>🆔 ${u.nationalId}</td>
+          <td>✉️ ${u.email}<br>📍 ${u.address}</td>
+          <td>${u.regDate}</td>
+          <td>
+            <button class="btn-sm btn-blue" onclick="openEditUserModal(${u.id})">تعديل</button>
+            <button class="btn-sm btn-danger" onclick="deleteUser(${u.id})">حذف</button>
+          </td>
+        </tr>
+      `).join('');
+    }
   }
 
-  function updateOrderStatus(oId) {
-    const order = DB.orders.find(o => o.id === oId);
-    if(!order) return;
-    
-    const newSt = document.getElementById(`stSelect_${oId}`).value;
-    const newNote = document.getElementById(`stNote_${oId}`).value;
-
-    order.status = newSt;
-    order.adminNote = newNote;
-
-    // Send notification to user
-    DB.userNotis.unshift({
-      id: Date.now(),
-      userId: order.userPhone,
-      title: "تحديث بشأن طلبك 📦",
-      body: `تم تغيير حالة الطلب ${oId} إلى (${newSt}). ملاحظة: ${newNote}`,
-      read: false,
-      date: new Date().toLocaleTimeString('ar-EG')
-    });
-
-    saveDB();
-    renderAdminOrdersTable();
-    alert("تم تحديث حالة الطلب وإرسال إشعار للعميل");
+  // Order Updates
+  function updateOrderStatus(id, status) {
+    const order = state.orders.find(o => o.id === id);
+    if (order) {
+      order.status = status;
+      state.userNotis.push({
+        id: Date.now(),
+        userId: order.userId,
+        title: '📦 تحديث حالة الطلب',
+        msg: `تم تغيير حالة طلبك رقم #${id.toString().slice(-5)} إلى: ${status}`,
+        read: false,
+        date: new Date().toLocaleTimeString('ar-EG')
+      });
+      saveData();
+    }
   }
 
-  // Admin - Products & Images
+  function updateOrderNote(id, note) {
+    const order = state.orders.find(o => o.id === id);
+    if (order) {
+      order.adminNote = note;
+      saveData();
+    }
+  }
+
+  // Manage Payment Methods
+  function addNewPaymentMethod(e) {
+    e.preventDefault();
+    const name = document.getElementById('newPayName').value.trim();
+    const accs = document.getElementById('newPayAccounts').value.split(',').map(a => a.trim()).filter(a => a);
+
+    state.payments.push({ id: Date.now(), name, accounts: accs });
+    saveData();
+    document.getElementById('newPayName').value = '';
+    document.getElementById('newPayAccounts').value = '';
+    alert('تمت إضافة طريقة الدفع بنجاح!');
+  }
+
+  function deletePaymentMethod(id) {
+    state.payments = state.payments.filter(p => p.id !== id);
+    saveData();
+  }
+
+  // Manage Categories
+  function addNewCategory(e) {
+    e.preventDefault();
+    const key = document.getElementById('catKeyInp').value.trim().toLowerCase();
+    const title = document.getElementById('catTitleArInp').value.trim();
+
+    if (state.categories.some(c => c.key === key)) {
+      alert('معرف القسم موجود بالفعل!');
+      return;
+    }
+
+    state.categories.push({ key, title });
+    saveData();
+    document.getElementById('catKeyInp').value = '';
+    document.getElementById('catTitleArInp').value = '';
+    alert('تمت إضافة القسم الجديد!');
+  }
+
+  function deleteCategory(key) {
+    state.categories = state.categories.filter(c => c.key !== key);
+    saveData();
+  }
+
+  // Add Product
   function previewImage(e) {
     const file = e.target.files[0];
-    if(file) {
-      const r = new FileReader();
-      r.onload = () => tempImage = r.result;
-      r.readAsDataURL(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => { state.tempProdImg = evt.target.result; };
+      reader.readAsDataURL(file);
     }
   }
 
   function addProduct(e) {
     e.preventDefault();
-    const title = document.getElementById('pTitle').value;
-    const category = document.getElementById('pCatSelect').value;
-    const price = document.getElementById('pPrice').value;
-    const qty = document.getElementById('pQty').value;
-    const desc = document.getElementById('pDesc').value;
-
     const newProd = {
-      id: 'P-' + Date.now(),
-      title, category, price, qty, desc,
-      image: tempImage || DB.settings.logo
+      id: Date.now(),
+      title: document.getElementById('pTitle').value.trim(),
+      category: document.getElementById('pCatSelect').value,
+      price: document.getElementById('pPrice').value.trim(),
+      qty: document.getElementById('pQty').value,
+      desc: document.getElementById('pDesc').value.trim(),
+      image: state.tempProdImg || ''
     };
 
-    DB.products.unshift(newProd);
-    saveDB();
-    tempImage = "";
-    e.target.reset();
-    renderProducts();
-    alert("تمت إضافة المنتج بنجاح إلى المتجر!");
+    state.products.push(newProd);
+    state.tempProdImg = '';
+    saveData();
+    alert('تم نشر المنتج بنجاح في المتجر!');
   }
 
-  function openEditProductModal(pId) {
-    const prod = DB.products.find(p => p.id === pId);
-    if(!prod) return;
+  // Edit Product Modal
+  function openEditProductModal(id) {
+    const p = state.products.find(item => item.id === id);
+    if (!p) return;
 
-    document.getElementById('editProdId').value = prod.id;
-    document.getElementById('editProdTitle').value = prod.title;
-    document.getElementById('editProdPrice').value = prod.price;
-    document.getElementById('editProdQty').value = prod.qty || '';
-    document.getElementById('editProdDesc').value = prod.desc;
-    document.getElementById('editProdCatSelect').value = prod.category;
+    document.getElementById('editProdId').value = p.id;
+    document.getElementById('editProdTitle').value = p.title;
+    document.getElementById('editProdPrice').value = p.price;
+    document.getElementById('editProdCatSelect').value = p.category;
+    document.getElementById('editProdQty').value = p.qty || '';
+    document.getElementById('editProdDesc').value = p.desc;
     document.getElementById('removeImgCheckbox').checked = false;
-    tempEditImage = "";
+    state.tempEditProdImg = p.image || '';
 
     openModal('editProductModal');
   }
 
   function previewEditProductImage(e) {
     const file = e.target.files[0];
-    if(file) {
-      const r = new FileReader();
-      r.onload = () => tempEditImage = r.result;
-      r.readAsDataURL(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => { state.tempEditProdImg = evt.target.result; };
+      reader.readAsDataURL(file);
     }
   }
 
   function handleSaveProductEdit(e) {
     e.preventDefault();
-    const id = document.getElementById('editProdId').value;
-    const prod = DB.products.find(p => p.id === id);
-    if(!prod) return;
+    const id = parseInt(document.getElementById('editProdId').value);
+    const p = state.products.find(item => item.id === id);
 
-    prod.title = document.getElementById('editProdTitle').value;
-    prod.price = document.getElementById('editProdPrice').value;
-    prod.qty = document.getElementById('editProdQty').value;
-    prod.desc = document.getElementById('editProdDesc').value;
-    prod.category = document.getElementById('editProdCatSelect').value;
+    if (p) {
+      p.title = document.getElementById('editProdTitle').value.trim();
+      p.price = document.getElementById('editProdPrice').value.trim();
+      p.category = document.getElementById('editProdCatSelect').value;
+      p.qty = document.getElementById('editProdQty').value;
+      p.desc = document.getElementById('editProdDesc').value.trim();
 
-    if(document.getElementById('removeImgCheckbox').checked) {
-      prod.image = DB.settings.logo;
-    } else if(tempEditImage) {
-      prod.image = tempEditImage;
+      if (document.getElementById('removeImgCheckbox').checked) {
+        p.image = '';
+      } else if (state.tempEditProdImg) {
+        p.image = state.tempEditProdImg;
+      }
+
+      saveData();
+      closeModal('editProductModal');
+      alert('تم تحديث بيانات المنتج بنجاح!');
     }
-
-    saveDB();
-    renderProducts();
-    closeModal('editProductModal');
-    alert("تم حفظ تعديلات المنتج بنجاح");
   }
 
-  // Admin - Payments Management
-  function renderAdminPaymentsTable() {
-    const tbody = document.getElementById('adminPaymentsTable');
-    tbody.innerHTML = DB.paymentMethods.map(m => `
-      <tr>
-        <td><strong>${m.name}</strong></td>
-        <td>${m.accounts}</td>
-        <td><button class="btn-sm btn-danger" onclick="deletePaymentMethod(${m.id})">حذف</button></td>
-      </tr>
-    `).join('');
-  }
-
-  function addNewPaymentMethod(e) {
-    e.preventDefault();
-    const name = document.getElementById('newPayName').value;
-    const accounts = document.getElementById('newPayAccounts').value;
-
-    DB.paymentMethods.push({ id: Date.now(), name, accounts });
-    saveDB();
-    e.target.reset();
-    renderAdminPaymentsTable();
-  }
-
-  function deletePaymentMethod(id) {
-    DB.paymentMethods = DB.paymentMethods.filter(m => m.id !== id);
-    saveDB();
-    renderAdminPaymentsTable();
-  }
-
-  // Admin - Categories
-  function renderAdminCategoriesTable() {
-    const tbody = document.getElementById('adminCategoriesTable');
-    tbody.innerHTML = DB.categories.filter(c => c.key !== 'all').map(c => `
-      <tr>
-        <td>${c.key}</td>
-        <td>${c.titleAr}</td>
-        <td><button class="btn-sm btn-danger" onclick="deleteCategory('${c.key}')">حذف</button></td>
-      </tr>
-    `).join('');
-  }
-
-  function addNewCategory(e) {
-    e.preventDefault();
-    const key = document.getElementById('catKeyInp').value;
-    const titleAr = document.getElementById('catTitleArInp').value;
-
-    if(DB.categories.some(c => c.key === key)) {
-      alert("معرف القسم موجود بالفعل");
-      return;
-    }
-
-    DB.categories.push({ key, titleAr });
-    saveDB();
-    e.target.reset();
-    renderCategoriesTabs();
-    renderAdminCategoriesTable();
-  }
-
-  function deleteCategory(key) {
-    DB.categories = DB.categories.filter(c => c.key !== key);
-    saveDB();
-    renderCategoriesTabs();
-    renderAdminCategoriesTable();
-  }
-
-  // Store Customization & Settings
+  // Store Settings
   function uploadLogo(e) {
     const file = e.target.files[0];
-    if(file) {
-      const r = new FileReader();
-      r.onload = () => DB.settings.logo = r.result;
-      r.readAsDataURL(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => { state.settings.logo = evt.target.result; saveData(); };
+      reader.readAsDataURL(file);
     }
   }
 
   function uploadBanner(e) {
     const file = e.target.files[0];
-    if(file) {
-      const r = new FileReader();
-      r.onload = () => DB.settings.banner = r.result;
-      r.readAsDataURL(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => { state.settings.banner = evt.target.result; saveData(); };
+      reader.readAsDataURL(file);
     }
   }
 
   function saveStoreSettings(e) {
     e.preventDefault();
-    DB.settings.titleAr = document.getElementById('stTitleAr').value;
-    DB.settings.titleEn = document.getElementById('stTitleEn').value;
-    DB.settings.addressAr = document.getElementById('stAddressAr').value;
-    DB.settings.addressEn = document.getElementById('stAddressEn').value;
-    DB.settings.descAr = document.getElementById('stDescAr').value;
+    state.settings.titleAr = document.getElementById('stTitleAr').value.trim();
+    state.settings.titleEn = document.getElementById('stTitleEn').value.trim();
+    state.settings.addressAr = document.getElementById('stAddressAr').value.trim();
+    state.settings.addressEn = document.getElementById('stAddressEn').value.trim();
+    state.settings.descAr = document.getElementById('stDescAr').value.trim();
 
-    saveDB();
-    renderStoreHeader();
-    alert("تم حفظ إعدادات المتجر والهوية بنجاح");
+    saveData();
+    alert('تم حفظ إعدادات المتجر بنجاح!');
   }
 
-  // Sub-Admins Management
-  function renderAdminSubAdminsTable() {
-    const tbody = document.getElementById('subAdminsTable');
-    if(DB.subAdmins.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">لا يوجد مشرفين حالياً</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = DB.subAdmins.map(s => `
-      <tr>
-        <td><strong>${s.name}</strong><br><small>${s.job}</small></td>
-        <td>📱 ${s.phone}<br>🆔 ${s.nationalId}</td>
-        <td>
-          ${s.perms.editProd ? '✓ منتجات ' : ''}
-          ${s.perms.orders ? '✓ طلبات ' : ''}
-          ${s.perms.chat ? '✓ دعم' : ''}
-        </td>
-        <td><button class="btn-sm btn-danger" onclick="deleteSubAdmin('${s.phone}')">حذف</button></td>
-      </tr>
-    `).join('');
-  }
-
+  // Sub-Admins
   function handleAddSubAdmin(e) {
     e.preventDefault();
     const newSub = {
-      name: document.getElementById('subName').value,
-      phone: document.getElementById('subPhone').value,
-      nationalId: document.getElementById('subNationalId').value,
-      address: document.getElementById('subAddress').value,
-      job: document.getElementById('subJob').value,
+      id: Date.now(),
+      name: document.getElementById('subName').value.trim(),
+      phone: document.getElementById('subPhone').value.trim(),
+      nationalId: document.getElementById('subNationalId').value.trim(),
+      address: document.getElementById('subAddress').value.trim(),
+      job: document.getElementById('subJob').value.trim(),
       pass: document.getElementById('subPass').value,
       perms: {
         editProd: document.getElementById('permEditProd').checked,
@@ -1529,54 +1519,195 @@
       }
     };
 
-    DB.subAdmins.push(newSub);
-    saveDB();
-    e.target.reset();
-    renderAdminSubAdminsTable();
-    alert("تم إضافة المشرف الفرعي بنجاح");
+    state.subAdmins.push(newSub);
+    saveData();
+    alert('تم إضافة الأدمن الفرعي بنجاح!');
   }
 
-  function deleteSubAdmin(phone) {
-    DB.subAdmins = DB.subAdmins.filter(s => s.phone !== phone);
-    saveDB();
-    renderAdminSubAdminsTable();
+  function openEditSubAdminModal(id) {
+    const sub = state.subAdmins.find(s => s.id === id);
+    if (!sub) return;
+
+    document.getElementById('editSubId').value = sub.id;
+    document.getElementById('editSubName').value = sub.name;
+    document.getElementById('editSubPhone').value = sub.phone;
+    document.getElementById('editSubNationalId').value = sub.nationalId;
+    document.getElementById('editSubJob').value = sub.job;
+    document.getElementById('editSubAddress').value = sub.address;
+    document.getElementById('editSubPass').value = sub.pass;
+
+    document.getElementById('editPermEditProd').checked = sub.perms.editProd;
+    document.getElementById('editPermDeleteProd').checked = sub.perms.deleteProd;
+    document.getElementById('editPermOrders').checked = sub.perms.orders;
+    document.getElementById('editPermChat').checked = sub.perms.chat;
+
+    openModal('editSubAdminModal');
   }
 
-  // Users Management
-  function renderAdminUsersTable() {
-    const tbody = document.getElementById('adminUsersTable');
-    if(DB.users.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">لا يوجد عملاء مسجلين</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = DB.users.map(u => `
-      <tr>
-        <td><strong>${u.name}</strong></td>
-        <td>📱 ${u.phone}<br>🆔 ${u.nationalId}</td>
-        <td>📧 ${u.email}<br>📍 ${u.address}</td>
-        <td><code>${u.pass}</code></td>
-        <td><button class="btn-sm btn-danger" onclick="deleteUser('${u.phone}')">حذف</button></td>
-      </tr>
-    `).join('');
-  }
-
-  function deleteUser(phone) {
-    DB.users = DB.users.filter(u => u.phone !== phone);
-    saveDB();
-    renderAdminUsersTable();
-  }
-
-  function handleSaveMainAdminCreds(e) {
+  function handleSaveSubAdminEdit(e) {
     e.preventDefault();
-    DB.adminCreds.user = document.getElementById('mainAdminUserInp').value;
-    DB.adminCreds.pass = document.getElementById('mainAdminPassInp').value;
-    saveDB();
-    alert("تم تحديث بيانات دخول الأدمن الرئيسي بنجاح!");
+    const id = parseInt(document.getElementById('editSubId').value);
+    const sub = state.subAdmins.find(s => s.id === id);
+
+    if (sub) {
+      sub.name = document.getElementById('editSubName').value.trim();
+      sub.phone = document.getElementById('editSubPhone').value.trim();
+      sub.nationalId = document.getElementById('editSubNationalId').value.trim();
+      sub.job = document.getElementById('editSubJob').value.trim();
+      sub.address = document.getElementById('editSubAddress').value.trim();
+      sub.pass = document.getElementById('editSubPass').value;
+
+      sub.perms = {
+        editProd: document.getElementById('editPermEditProd').checked,
+        deleteProd: document.getElementById('editPermDeleteProd').checked,
+        orders: document.getElementById('editPermOrders').checked,
+        chat: document.getElementById('editPermChat').checked
+      };
+
+      saveData();
+      closeModal('editSubAdminModal');
+      alert('تم تحديث بيانات الأدمن الفرعي!');
+    }
   }
 
-  // Initialize App on Load
-  window.onload = initApp;
+  function deleteSubAdmin(id) {
+    state.subAdmins = state.subAdmins.filter(s => s.id !== id);
+    saveData();
+  }
+
+  // User Management
+  function openEditUserModal(id) {
+    const u = state.users.find(item => item.id === id);
+    if (!u) return;
+
+    document.getElementById('editUserId').value = u.id;
+    document.getElementById('editUserName').value = u.name;
+    document.getElementById('editUserPhone').value = u.phone;
+    document.getElementById('editUserNationalId').value = u.nationalId;
+    document.getElementById('editUserEmail').value = u.email;
+    document.getElementById('editUserAddress').value = u.address;
+    document.getElementById('editUserPass').value = u.pass;
+
+    openModal('editUserModal');
+  }
+
+  function handleSaveUserEdit(e) {
+    e.preventDefault();
+    const id = parseInt(document.getElementById('editUserId').value);
+    const u = state.users.find(item => item.id === id);
+
+    if (u) {
+      u.name = document.getElementById('editUserName').value.trim();
+      u.phone = document.getElementById('editUserPhone').value.trim();
+      u.nationalId = document.getElementById('editUserNationalId').value.trim();
+      u.email = document.getElementById('editUserEmail').value.trim();
+      u.address = document.getElementById('editUserAddress').value.trim();
+      u.pass = document.getElementById('editUserPass').value;
+
+      saveData();
+      closeModal('editUserModal');
+      alert('تم تحديث بيانات العميل بنجاح!');
+    }
+  }
+
+  function deleteUser(id) {
+    state.users = state.users.filter(u => u.id !== id);
+    saveData();
+  }
+
+  // Super Admin Credentials
+  function changeSuperAdminCredentials(e) {
+    e.preventDefault();
+    const user = document.getElementById('newSuperUser').value.trim();
+    const pass = document.getElementById('newSuperPass').value;
+
+    state.superAdmin = { user, pass };
+    saveData();
+    alert('تم تغيير بيانات دخول الأدمن الرئيسي بنجاح!');
+  }
+
+  // Live Chat Management
+  function sendChatMessage() {
+    if (!state.currentUser) return;
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    const uId = state.currentUser.id;
+    if (!state.chats[uId]) state.chats[uId] = [];
+
+    state.chats[uId].push({ sender: 'user', text: msg, time: new Date().toLocaleTimeString('ar-EG') });
+    input.value = '';
+    saveData();
+    renderChat();
+  }
+
+  function sendAdminChatMessage() {
+    if (!state.activeChatUser) return;
+    const input = document.getElementById('adminChatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    const uId = state.activeChatUser;
+    if (!state.chats[uId]) state.chats[uId] = [];
+
+    state.chats[uId].push({ sender: 'admin', text: msg, time: new Date().toLocaleTimeString('ar-EG') });
+    input.value = '';
+    saveData();
+    renderAdminChat();
+  }
+
+  function renderChat() {
+    if (!state.currentUser) return;
+    const box = document.getElementById('chatMessages');
+    const msgs = state.chats[state.currentUser.id] || [];
+
+    box.innerHTML = msgs.map(m => `
+      <div class="chat-msg ${m.sender === 'user' ? 'msg-user' : 'msg-admin'}">
+        ${m.text}
+      </div>
+    `).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function renderAdminChat() {
+    const list = document.getElementById('adminChatUserList');
+    const box = document.getElementById('adminChatMessages');
+
+    const chatUserIds = Object.keys(state.chats);
+    list.innerHTML = chatUserIds.map(uId => {
+      const u = state.users.find(usr => usr.id == uId) || { name: 'عميل مجهول' };
+      return `<div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; background:${state.activeChatUser == uId ? '#e2e8f0' : '#fff'};" onclick="selectAdminChatUser(${uId})">
+        <strong>${u.name}</strong>
+      </div>`;
+    }).join('');
+
+    if (state.activeChatUser && state.chats[state.activeChatUser]) {
+      box.innerHTML = state.chats[state.activeChatUser].map(m => `
+        <div class="chat-msg ${m.sender === 'admin' ? 'msg-user' : 'msg-admin'}">
+          ${m.text}
+        </div>
+      `).join('');
+      box.scrollTop = box.scrollHeight;
+    } else {
+      box.innerHTML = `<p style="text-align:center; padding:20px; color:var(--muted);">اختر محادثة لعرض الرسائل</p>`;
+    }
+  }
+
+  function selectAdminChatUser(uId) {
+    state.activeChatUser = uId;
+    renderAdminChat();
+  }
+
+  // Initialize UI Values on Load
+  window.onload = () => {
+    document.getElementById('stTitleAr').value = state.settings.titleAr || '';
+    document.getElementById('stTitleEn').value = state.settings.titleEn || '';
+    document.getElementById('stAddressAr').value = state.settings.addressAr || '';
+    document.getElementById('stAddressEn').value = state.settings.addressEn || '';
+    document.getElementById('stDescAr').value = state.settings.descAr || '';
+    renderApp();
+  };
 </script>
 </body>
 </html>
