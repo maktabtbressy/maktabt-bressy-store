@@ -43,6 +43,7 @@
   .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; padding: 15px; }
   .modal-content { background: #fff; border-radius: 16px; padding: 22px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; position: relative; }
   .modal-lg { max-width: 980px; }
+  /* هذه النوافذ بتتفتح فوق لوحة التحكم، فلازم تبقى طبقتها أعلى من طبقة لوحة التحكم نفسها */
   #editProductModal, #editUserModal, #editSubAdminModal { z-index: 210; }
   .close-btn { position: absolute; left: 15px; top: 15px; font-size: 20px; cursor: pointer; color: var(--muted); }
 
@@ -170,21 +171,38 @@
   <div class="grid" id="productsGrid"></div>
 </main>
 
-<!-- النوافذ المنبثقة Modals -->
 <!-- 1. تسجيل حساب جديد -->
 <div class="modal" id="registerModal">
   <div class="modal-content">
     <span class="close-btn" onclick="closeModal('registerModal')">&times;</span>
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">📝 تسجيل حساب جديد</h2>
     <form onsubmit="handleUserRegister(event)">
-      <div class="form-group"><label>الاسم الكامل</label><input type="text" id="regName" required></div>
-      <div class="form-grid">
-        <div class="form-group"><label>رقم المحمول</label><input type="tel" id="regPhone" required placeholder="01128670029"></div>
-        <div class="form-group"><label>الرقم القومي (14 رقم)</label><input type="text" id="regNationalId" maxlength="14" pattern="\d{14}" required></div>
+      <div class="form-group">
+        <label>الاسم الكامل</label>
+        <input type="text" id="regName" required>
       </div>
-      <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="regEmail" required></div>
-      <div class="form-group"><label>العنوان التفصيلي</label><textarea id="regAddress" rows="2" required></textarea></div>
-      <div class="form-group"><label>كلمة المرور</label><input type="password" id="regPass" required></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>رقم المحمول</label>
+          <input type="tel" id="regPhone" required placeholder="01128670029">
+        </div>
+        <div class="form-group">
+          <label>الرقم القومي (14 رقم)</label>
+          <input type="text" id="regNationalId" maxlength="14" pattern="\d{14}" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="regEmail" required>
+      </div>
+      <div class="form-group">
+        <label>العنوان التفصيلي</label>
+        <textarea id="regAddress" rows="2" required></textarea>
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input type="password" id="regPass" required>
+      </div>
       <button type="submit" class="btn-submit">تأكيد وإنشاء الحساب</button>
     </form>
   </div>
@@ -196,8 +214,14 @@
     <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">🔑 تسجيل الدخول</h2>
     <form onsubmit="handleUserLogin(event)">
-      <div class="form-group"><label>المحمول / البريد الإلكتروني</label><input type="text" id="loginKey" required></div>
-      <div class="form-group"><label>كلمة المرور</label><input type="password" id="loginPass" required></div>
+      <div class="form-group">
+        <label>المحمول / البريد الإلكتروني</label>
+        <input type="text" id="loginKey" required>
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input type="password" id="loginPass" required>
+      </div>
       <button type="submit" class="btn-submit">تسجيل الدخول</button>
     </form>
   </div>
@@ -209,26 +233,243 @@
     <span class="close-btn" onclick="closeModal('adminLoginModal')">&times;</span>
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">🔐 تسجيل دخول الأدمن</h2>
     <form onsubmit="handleAdminLogin(event)">
-      <div class="form-group"><label>المعرف (Username)</label><input type="text" id="adminUser" required placeholder="admin"></div>
-      <div class="form-group"><label>كلمة المرور</label><input type="password" id="adminPass" required placeholder="123456"></div>
+      <div class="form-group">
+        <label>المعرف (Username)</label>
+        <input type="text" id="adminUser" required placeholder="admin">
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input type="password" id="adminPass" required placeholder="123456">
+      </div>
       <button type="submit" class="btn-submit" style="background:var(--navy);">دخول</button>
     </form>
   </div>
 </div>
 
-<!-- 4. سلة المشتريات -->
+<!-- 4. سلة المشتريات والدفع الديناميكي -->
 <div class="modal" id="cartModal">
   <div class="modal-content">
     <span class="close-btn" onclick="closeModal('cartModal')">&times;</span>
-    <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">🛒 سلة المشتريات</h2>
+    <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">🛒 سلة المشتريات والدفع</h2>
     <div id="cartItemsList"></div>
+    
     <div id="checkoutSection" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+      <h3 style="font-size:13px; margin-bottom:8px;">اختر طريقة الدفع المناسبة:</h3>
+      
+      <div class="form-group">
+        <label>طريقة الدفع:</label>
+        <select id="payMethodSelect" onchange="renderCheckoutAccounts()" style="width:100%; padding:8px;"></select>
+      </div>
+
+      <div id="payAccountsDisplay" class="payment-info-box"></div>
+
+      <div class="form-group">
+        <label>رقمك المحول منه / حسابك:</label>
+        <input type="text" id="paySenderAcc" required placeholder="مثال: 01012345678 أو اسم حساب انستا باي">
+      </div>
+      <div class="form-group">
+        <label>رقم المعاملة / المرجع (اختياري):</label>
+        <input type="text" id="payRefNo" placeholder="رقم العملية أو المرجع">
+      </div>
+      <div class="form-group" style="background:#f1f5f9; padding:8px; border-radius:8px; margin-top:5px;">
+        <label>📄 ارفق صورة إيصال التحويل (اختياري ولكن يفضل للسرعة):</label>
+        <input type="file" accept="image/*" onchange="previewReceiptImage(event)">
+      </div>
+
       <button class="btn-submit" onclick="submitOrderProcess()">تأكيد وإرسال الطلب رسمياً 📦</button>
     </div>
   </div>
 </div>
 
-<!-- 12. لوحة تحكم الأدمن الشاملة (تكملة الكود الناقص) -->
+<!-- 5. تتبع طلبات العميل -->
+<div class="modal" id="userOrdersModal">
+  <div class="modal-content modal-lg">
+    <span class="close-btn" onclick="closeModal('userOrdersModal')">&times;</span>
+    <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">📦 حالة الطلبات والملاحظات</h2>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>رقم الطلب</th>
+            <th>الخدمة</th>
+            <th>السعر</th>
+            <th>حالة الطلب</th>
+            <th>ملاحظات الإدارة / سبب الإلغاء</th>
+            <th>التاريخ</th>
+          </tr>
+        </thead>
+        <tbody id="userOrdersTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 6. إشعارات العميل المحدثة -->
+<div class="modal" id="userNotiModal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal('userNotiModal')">&times;</span>
+    <div class="noti-header-bar">
+      <h2>🔔 تنبيهاتك وإشعاراتك</h2>
+      <button class="btn-mark-all" onclick="markAllUserNotisRead()">✓ تعيين الكل كمقروء</button>
+    </div>
+    <div id="userNotiList"></div>
+  </div>
+</div>
+
+<!-- 7. إشعارات الأدمن المحدثة -->
+<div class="modal" id="adminNotiModal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal('adminNotiModal')">&times;</span>
+    <div class="noti-header-bar">
+      <h2>🚨 تنبيهات الإدارة</h2>
+      <button class="btn-mark-all" onclick="markAllAdminNotisRead()">✓ تعيين الكل كمقروء</button>
+    </div>
+    <div id="adminNotiList"></div>
+  </div>
+</div>
+
+<!-- 8. الشات المباشر -->
+<div class="modal" id="chatModal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal('chatModal')">&times;</span>
+    <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">💬 الدعم المباشر مع إدارة المتجر</h2>
+    <div class="chat-box" id="chatMessages"></div>
+    <div style="display:flex; gap:5px; margin-top:10px;">
+      <input type="text" id="chatInput" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px;" placeholder="اكتب رسالتك هنا...">
+      <button onclick="sendChatMessage()" style="background:var(--navy); color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:700;">إرسال</button>
+    </div>
+  </div>
+</div>
+
+<!-- 9. نافذة تعديل المنتج للأدمن مع إدارة الصور -->
+<div class="modal" id="editProductModal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal('editProductModal')">&times;</span>
+    <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">✏️ تعديل بيانات المنتج والفيجوال</h2>
+    <form onsubmit="handleSaveProductEdit(event)">
+      <input type="hidden" id="editProdId">
+      <div class="form-group">
+        <label>اسم المنتج / الخدمة</label>
+        <input type="text" id="editProdTitle" required>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>السعر</label>
+          <input type="text" id="editProdPrice" required>
+        </div>
+        <div class="form-group">
+          <label>القسم</label>
+          <select id="editProdCatSelect"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>الكمية المتاحة (اتركها فارغة لعدم الإظهار):</label>
+        <input type="number" id="editProdQty" placeholder="مثال: 10">
+      </div>
+      
+      <div class="form-group" style="background:#f1f5f9; padding:10px; border-radius:8px; margin: 5px 0;">
+        <label style="color:var(--navy);">🖼️ تغيير أو اختيار صورة جديدة للمنتج:</label>
+        <input type="file" accept="image/*" onchange="previewEditProductImage(event)">
+        <label style="margin-top:8px; font-size:12px; color:var(--red); cursor:pointer;">
+          <input type="checkbox" id="removeImgCheckbox"> 🗑️ حذف الصورة الحالية والاعتماد على لوجو الصفحة الافتراضي
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>الوصف</label>
+        <textarea id="editProdDesc" rows="3" required></textarea>
+      </div>
+      <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ التحديثات</button>
+    </form>
+  </div>
+</div>
+
+<!-- 10. تعديل بيانات العميل من Super Admin -->
+<div class="modal" id="editUserModal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal('editUserModal')">&times;</span>
+    <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">✏️ تعديل بيانات العميل</h2>
+    <form onsubmit="handleSaveUserEdit(event)">
+      <input type="hidden" id="editUserId">
+      <div class="form-group">
+        <label>الاسم الكامل</label>
+        <input type="text" id="editUserName" required>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>رقم المحمول</label>
+          <input type="tel" id="editUserPhone" required>
+        </div>
+        <div class="form-group">
+          <label>الرقم القومي (14 رقم)</label>
+          <input type="text" id="editUserNationalId" maxlength="14" pattern="\d{14}" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="editUserEmail" required>
+      </div>
+      <div class="form-group">
+        <label>العنوان التفصيلي</label>
+        <textarea id="editUserAddress" rows="2" required></textarea>
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور الجديدة (أو ابقها كما هي)</label>
+        <input type="text" id="editUserPass" required>
+      </div>
+      <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ التعديلات</button>
+    </form>
+  </div>
+</div>
+
+<!-- 11. تعديل بيانات الأدمن الفرعي -->
+<div class="modal" id="editSubAdminModal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal('editSubAdminModal')">&times;</span>
+    <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">✏️ تعديل بيانات وصلاحيات الأدمن الفرعي</h2>
+    <form onsubmit="handleSaveSubAdminEdit(event)">
+      <input type="hidden" id="editSubId">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>الاسم الكامل</label>
+          <input type="text" id="editSubName" required>
+        </div>
+        <div class="form-group">
+          <label>رقم الموبايل (مُعرف الدخول)</label>
+          <input type="tel" id="editSubPhone" required>
+        </div>
+        <div class="form-group">
+          <label>الرقم القومي</label>
+          <input type="text" id="editSubNationalId" maxlength="14" pattern="\d{14}" required>
+        </div>
+        <div class="form-group">
+          <label>الوظيفة</label>
+          <input type="text" id="editSubJob" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>العنوان</label>
+        <input type="text" id="editSubAddress" required>
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input type="text" id="editSubPass" required>
+      </div>
+
+      <h4 style="font-size: 12.5px; margin: 10px 0 6px; color: var(--navy);">الصلاحيات:</h4>
+      <div class="perm-checkboxes">
+        <label><input type="checkbox" id="editPermEditProd"> إضافة وتعديل المنتجات</label>
+        <label><input type="checkbox" id="editPermDeleteProd"> حذف المنتجات</label>
+        <label><input type="checkbox" id="editPermOrders"> متابعة وتحديث الطلبات</label>
+        <label><input type="checkbox" id="editPermChat"> الرد على الدعم المباشر</label>
+      </div>
+
+      <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ التعديلات</button>
+    </form>
+  </div>
+</div>
+
+<!-- 12. لوحة تحكم الأدمن الشاملة -->
 <div class="modal" id="adminDashboardModal">
   <div class="modal-content modal-lg">
     <span class="close-btn" onclick="closeModal('adminDashboardModal')">&times;</span>
@@ -236,65 +477,1329 @@
     
     <div class="tabs" style="justify-content: flex-start; margin-bottom: 15px;">
       <button class="tab-btn active" onclick="switchAdminTab('admOrders')">📦 الطلبات</button>
-      <button class="tab-btn" onclick="switchAdminTab('admPayments')">💳 طرق الدفع</button>
-      <button class="tab-btn" onclick="switchAdminTab('admCategories')">🗂️ الأقسام</button>
-      <button class="tab-btn" onclick="switchAdminTab('admSettings')">⚙️ الإعدادات</button>
+      <button class="tab-btn" onclick="switchAdminTab('admPayments')">💳 طرق وأرقام الدفع</button>
+      <button class="tab-btn" onclick="switchAdminTab('admCategories')">🗂️ إدارة الأقسام</button>
+      <button class="tab-btn" onclick="switchAdminTab('admSettings')">⚙️ بيانات ومتجر بريسي</button>
       <button class="tab-btn" onclick="switchAdminTab('admProducts')">➕ المنتجات</button>
       <button class="tab-btn" onclick="switchAdminTab('admSubAdmins')" id="tabSubAdminsBtn">👥 الأدمن الفرعي</button>
       <button class="tab-btn" onclick="switchAdminTab('admUsers')">👥 العملاء</button>
+      <button class="tab-btn" onclick="switchAdminTab('admChat')">💬 الدعم</button>
+      <button class="tab-btn" onclick="switchAdminTab('admAccount')" id="tabAdminAccBtn" style="background:#0f172a; color:#fff;">🔐 حسابي الأدمن</button>
     </div>
 
-    <!-- جميع التبويبات التي تمت إضافتها في الكود السابق تبقى هنا بشكل مبسط للتوضيح -->
+    <!-- إدارة الطلبات -->
     <div id="admOrdersTab">
       <div style="overflow-x:auto;">
         <table>
           <thead>
-            <tr><th>رقم الطلب</th><th>المنتج</th><th>الحالة</th></tr>
+            <tr>
+              <th>العميل</th>
+              <th>المنتج والدفع والإيصال</th>
+              <th>الحالة الحالية</th>
+              <th>تحديث الحالة مع تعليق للعميل</th>
+            </tr>
           </thead>
-          <tbody id="adminOrdersTable"><tr><td colspan="3">لا توجد طلبات حالياً</td></tr></tbody>
+          <tbody id="adminOrdersTable"></tbody>
         </table>
       </div>
     </div>
-    
-    <div id="admPaymentsTab" style="display:none;">جاري تطوير طرق الدفع...</div>
-    <div id="admCategoriesTab" style="display:none;">جاري تطوير الأقسام...</div>
-    <div id="admSettingsTab" style="display:none;">جاري تطوير الإعدادات...</div>
-    <div id="admProductsTab" style="display:none;">
-      <form onsubmit="addProduct(event)">
+
+    <!-- إدارة أرقام الدفع -->
+    <div id="admPaymentsTab" style="display:none;">
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">➕ إضافة طريقة دفع جديدة</h3>
+      <form onsubmit="addNewPaymentMethod(event)" style="margin-bottom: 20px; background:#f8fafc; padding:12px; border-radius:8px;">
         <div class="form-grid">
-          <div class="form-group"><label>اسم الخدمة</label><input type="text" id="pTitle" required></div>
-          <div class="form-group"><label>السعر</label><input type="text" id="pPrice" required></div>
+          <div class="form-group">
+            <label>اسم طريقة الدفع</label>
+            <input type="text" id="newPayName" required placeholder="محفظة فودافون كاش">
+          </div>
+          <div class="form-group">
+            <label>الأرقام/الحسابات المتاحة (افصل بينها بفواصل ,)</label>
+            <input type="text" id="newPayAccounts" required placeholder="01128670029, 01012345678">
+          </div>
         </div>
-        <button type="submit" class="btn-submit">حفظ وإضافة</button>
+        <button type="submit" class="btn-submit" style="background:var(--navy);">إضافة طريقة الدفع</button>
+      </form>
+
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">💳 طرق وأرقام الدفع الحالية</h3>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>طريقة الدفع</th>
+              <th>الأرقام/الحسابات المسجلة</th>
+              <th>إجراءات والتعديل</th>
+            </tr>
+          </thead>
+          <tbody id="adminPaymentsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- إدارة الأقسام -->
+    <div id="admCategoriesTab" style="display:none;">
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">➕ إضافة / تعديل الأقسام</h3>
+      <form onsubmit="addNewCategory(event)" style="margin-bottom: 20px; background:#f8fafc; padding:12px; border-radius:8px;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>معرف القسم (Key e.g. software)</label>
+            <input type="text" id="catKeyInp" required placeholder="software">
+          </div>
+          <div class="form-group">
+            <label>اسم القسم (بالعربية)</label>
+            <input type="text" id="catTitleArInp" required placeholder="برمجيات Access">
+          </div>
+        </div>
+        <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ القسم الجديد</button>
+      </form>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>معرف القسم</th>
+              <th>اسم القسم</th>
+              <th>حذف</th>
+            </tr>
+          </thead>
+          <tbody id="adminCategoriesTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- إعدادات المتجر -->
+    <div id="admSettingsTab" style="display:none;">
+      <form onsubmit="saveStoreSettings(event)">
+        <h3 style="font-size: 14px; margin-bottom: 10px;">🎨 الهوية والبصرية</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>تغيير اللوجو (صورة):</label>
+            <input type="file" accept="image/*" onchange="uploadLogo(event)">
+          </div>
+          <div class="form-group">
+            <label>تغيير الغلاف (Banner):</label>
+            <input type="file" accept="image/*" onchange="uploadBanner(event)">
+          </div>
+        </div>
+
+        <h3 style="font-size: 14px; margin: 15px 0 10px;">📍 بيانات وعنوان المتجر</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>اسم المتجر (بالعربية):</label>
+            <input type="text" id="stTitleAr" required>
+          </div>
+          <div class="form-group">
+            <label>اسم المتجر (English):</label>
+            <input type="text" id="stTitleEn" required>
+          </div>
+          <div class="form-group">
+            <label>عنوان المتجر الجغرافي (بالعربية):</label>
+            <input type="text" id="stAddressAr" placeholder="سوهاج - طهطا">
+          </div>
+          <div class="form-group">
+            <label>عنوان المتجر (English):</label>
+            <input type="text" id="stAddressEn" placeholder="Sohag, Tahta">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>وصف المتجر:</label>
+          <input type="text" id="stDescAr" required>
+        </div>
+
+        <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ التعديلات والتحديث</button>
       </form>
     </div>
 
-    <!-- تكملة كود الأدمن الفرعي الذي توقف عنده الكود الخاص بك -->
+    <!-- إضافة المنتجات -->
+    <div id="admProductsTab" style="display:none;">
+      <form onsubmit="addProduct(event)">
+        <div class="form-grid">
+          <div class="form-group"><label>اسم الخدمة/المنتج</label><input type="text" id="pTitle" required></div>
+          <div class="form-group"><label>القسم</label>
+            <select id="pCatSelect"></select>
+          </div>
+          <div class="form-group"><label>السعر</label><input type="text" id="pPrice" required></div>
+          <div class="form-group"><label>الكمية (اتركها فارغة لعدم العرض)</label><input type="number" id="pQty" placeholder="مثال: 15"></div>
+          <div class="form-group"><label>الصورة (اختياري)</label><input type="file" accept="image/*" onchange="previewImage(event)"></div>
+        </div>
+        <div class="form-group"><label>الوصف</label><textarea id="pDesc" rows="2" required></textarea></div>
+        <button type="submit" class="btn-submit">نشر في المتجر</button>
+      </form>
+    </div>
+
+    <!-- الأدمن الفرعي -->
     <div id="admSubAdminsTab" style="display:none;">
       <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">➕ إضافة أدمن فرعي جديد</h3>
       <form onsubmit="handleAddSubAdmin(event)" style="margin-bottom: 20px; background:#f8fafc; padding:12px; border-radius:8px;">
         <div class="form-grid">
-          <div class="form-group"><label>الاسم الكامل</label><input type="text" id="subName" required></div>
-          <div class="form-group"><label>رقم الموبايل</label><input type="tel" id="subPhone" required></div>
-          <div class="form-group"><label>الرقم القومي</label><input type="text" id="subNationalId" maxlength="14" required></div>
-          <div class="form-group"><label>العنوان</label><input type="text" id="subAddress" required></div>
-          <div class="form-group"><label>الوظيفة</label><input type="text" id="subJob" required placeholder="مشرف مبيعات"></div>
-          <div class="form-group"><label>كلمة المرور</label><input type="password" id="subPass" required></div>
+          <div class="form-group">
+            <label>الاسم الكامل</label>
+            <input type="text" id="subName" required>
+          </div>
+          <div class="form-group">
+            <label>رقم الموبايل (مُعرف الدخول)</label>
+            <input type="tel" id="subPhone" required>
+          </div>
+          <div class="form-group">
+            <label>الرقم القومي (14 رقم)</label>
+            <input type="text" id="subNationalId" maxlength="14" pattern="\d{14}" required>
+          </div>
+          <div class="form-group">
+            <label>العنوان</label>
+            <input type="text" id="subAddress" required>
+          </div>
+          <div class="form-group">
+            <label>الوظيفة / المسمى الوظيفي</label>
+            <input type="text" id="subJob" required placeholder="مشرف مبيعات">
+          </div>
+          <div class="form-group">
+            <label>كلمة المرور</label>
+            <input type="password" id="subPass" required>
+          </div>
         </div>
-        <h4 style="font-size: 12.5px; margin: 10px 0 6px;">الصلاحيات:</h4>
+
+        <h4 style="font-size: 12.5px; margin: 10px 0 6px; color: var(--navy);">حدد الصلاحيات المتاحة:</h4>
         <div class="perm-checkboxes">
-          <label><input type="checkbox" id="permEditProd"> تعديل المنتجات</label>
-          <label><input type="checkbox" id="permOrders"> متابعة الطلبات</label>
+          <label><input type="checkbox" id="permEditProd" checked> إضافة وتعديل المنتجات</label>
+          <label><input type="checkbox" id="permDeleteProd"> حذف المنتجات</label>
+          <label><input type="checkbox" id="permOrders" checked> متابعة وتحديث الطلبات</label>
+          <label><input type="checkbox" id="permChat" checked> الرد على الدعم المباشر</label>
         </div>
-        <button type="submit" class="btn-submit" style="background:var(--navy);">إضافة</button>
+
+        <button type="submit" class="btn-submit" style="background:var(--navy);">تعيين الأدمن الفرعي</button>
+      </form>
+
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">👥 قائمة الأدمن الفرعي</h3>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>الاسم</th><th>الهاتف</th><th>القومي</th><th>الوظيفة</th><th>الصلاحيات</th><th>إجراء</th>
+            </tr>
+          </thead>
+          <tbody id="adminSubAdminsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- العملاء -->
+    <div id="admUsersTab" style="display:none;">
+      <div class="form-group" style="margin-bottom:10px;">
+        <label>🔍 بحث في قائمة العملاء (بالاسم / الهاتف / الرقم القومي / البريد)</label>
+        <input type="text" id="userSearchInput" oninput="renderAdminUsers()" placeholder="اكتب هنا للبحث الفوري...">
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>الاسم</th><th>الهاتف</th><th>القومي</th><th>البريد</th><th>العنوان</th><th>إجراءات الإدارة</th>
+            </tr>
+          </thead>
+          <tbody id="adminUsersTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- الشات والدعم -->
+    <div id="admChatTab" style="display:none;">
+      <div class="form-group">
+        <label>اختر عميل للرد عليه:</label>
+        <select id="adminChatUserSelect" onchange="loadAdminChat()"></select>
+      </div>
+      <div class="chat-box" id="adminChatMessages"></div>
+      <div style="display:flex; gap:5px; margin-top:10px;">
+        <input type="text" id="adminChatInput" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px;" placeholder="اكتب رد الأدمن...">
+        <button onclick="sendAdminChatMessage()" style="background:var(--green); color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:700;">إرسال الرد</button>
+      </div>
+    </div>
+
+    <!-- تعديل حساب الأدمن الرئيسي -->
+    <div id="admAccountTab" style="display:none;">
+      <h3 style="font-size: 14px; margin-bottom: 12px; color: var(--navy);">🔐 تعديل اسم وكلمة مرور الأدمن الرئيسي (Super Admin)</h3>
+      <form onsubmit="handleSaveSuperAdminCreds(event)" style="background:#f8fafc; padding:15px; border-radius:8px;">
+        <div class="form-group">
+          <label>اسم الأدمن الرئيسي:</label>
+          <input type="text" id="superAdminNameInput" required>
+        </div>
+        <div class="form-group">
+          <label>اسم المستخدم للدخول (Username):</label>
+          <input type="text" id="superAdminUserInput" required>
+        </div>
+        <div class="form-group">
+          <label>كلمة المرور الجديدة:</label>
+          <input type="text" id="superAdminPassInput" required>
+        </div>
+        <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ بيانات الأدمن</button>
       </form>
     </div>
-    
-    <div id="admUsersTab" style="display:none;">
-      <p>قائمة العملاء المسجلين ستظهر هنا.</p>
-    </div>
+
   </div>
 </div>
+
+<script>
+let registeredUsers = JSON.parse(localStorage.getItem('brs_v4_users')) || [];
+let subAdmins = JSON.parse(localStorage.getItem('brs_v4_subadmins')) || [];
+let currentUser = JSON.parse(localStorage.getItem('brs_v4_curr_user')) || null;
+let cart = JSON.parse(localStorage.getItem('brs_v4_cart')) || [];
+
+let defaultSuperAdminCreds = {
+  name: 'الإدارة الرئيسية (Super Admin)',
+  user: 'admin',
+  pass: '123456'
+};
+
+let superAdminCreds = JSON.parse(localStorage.getItem('brs_v4_super_creds')) || defaultSuperAdminCreds;
+
+let categories = JSON.parse(localStorage.getItem('brs_v4_categories')) || [
+  { key: 'all', titleAr: 'الكل' },
+  { key: 'software', titleAr: '🖥️ برمجيات Access' },
+  { key: 'services', titleAr: '🌐 خدمات إلكترونية' },
+  { key: 'print', titleAr: '🖨️ طباعة ومستندات' }
+];
+
+let paymentMethods = JSON.parse(localStorage.getItem('brs_v4_payments')) || [
+  { id: 1, name: '📱 محفظة إلكترونية (فودافون/اتصالات كاش)', accounts: ['01128670029', '011122222111'] },
+  { id: 2, name: '⚡ انستا باي InstaPay', accounts: ['01128670029', 'bressy@instapay'] }
+];
+
+let products = JSON.parse(localStorage.getItem('brs_v4_products')) || [
+  { id: 1, cat: 'software', title: 'برنامج إدارة المحلات Access', desc: 'قاعدة بيانات متكاملة للحسابات.', price: '250 ج.م', quantity: 10, img: '' },
+  { id: 2, cat: 'services', title: 'خدمة التقديمات والتنسيق الإلكتروني', desc: 'استخراج وتعبئة استمارات أونلاين.', price: '50 ج.م', quantity: null, img: '' }
+];
+
+let orders = JSON.parse(localStorage.getItem('brs_v4_orders')) || [];
+let userNotis = JSON.parse(localStorage.getItem('brs_v4_u_notis')) || [];
+let adminNotis = JSON.parse(localStorage.getItem('brs_v4_a_notis')) || [];
+let chatMessages = JSON.parse(localStorage.getItem('brs_v4_chats')) || [];
+
+let storeSettings = JSON.parse(localStorage.getItem('brs_v4_settings')) || {
+  titleAr: "مكتبة بريسي", titleEn: "MAKTABT BRESSY",
+  descAr: "أفضل الخدمات البرمجية والطباعة الإلكترونية", descEn: "Official Software & Printing Store",
+  addressAr: "مصر - سوهاج", addressEn: "Egypt - Sohag",
+  logo: "", banner: ""
+};
+
+let uploadedImgBase64 = "";
+let editUploadedImgBase64 = null;
+let receiptImgBase64 = "";
+
+function saveData() {
+  localStorage.setItem('brs_v4_users', JSON.stringify(registeredUsers));
+  localStorage.setItem('brs_v4_subadmins', JSON.stringify(subAdmins));
+  localStorage.setItem('brs_v4_curr_user', JSON.stringify(currentUser));
+  localStorage.setItem('brs_v4_cart', JSON.stringify(cart));
+  localStorage.setItem('brs_v4_categories', JSON.stringify(categories));
+  localStorage.setItem('brs_v4_payments', JSON.stringify(paymentMethods));
+  localStorage.setItem('brs_v4_products', JSON.stringify(products));
+  localStorage.setItem('brs_v4_orders', JSON.stringify(orders));
+  localStorage.setItem('brs_v4_u_notis', JSON.stringify(userNotis));
+  localStorage.setItem('brs_v4_a_notis', JSON.stringify(adminNotis));
+  localStorage.setItem('brs_v4_chats', JSON.stringify(chatMessages));
+  localStorage.setItem('brs_v4_settings', JSON.stringify(storeSettings));
+  localStorage.setItem('brs_v4_super_creds', JSON.stringify(superAdminCreds));
+}
+
+function applySettings() {
+  document.getElementById('navStoreTitle').innerText = storeSettings.titleAr;
+  document.getElementById('storeDisplayTitle').innerText = storeSettings.titleAr;
+  document.getElementById('storeDisplayDesc').innerText = storeSettings.descAr;
+  
+  const addrText = storeSettings.addressAr ? `📍 ${storeSettings.addressAr}` : '📍 متجر الكتروني';
+  document.getElementById('navStoreAddress').innerText = addrText;
+  document.getElementById('storeDisplayAddr').innerText = addrText;
+
+  if(storeSettings.logo) document.getElementById('mainLogo').src = storeSettings.logo;
+  if(storeSettings.banner) document.getElementById('heroBanner').style.backgroundImage = `url('${storeSettings.banner}')`;
+
+  document.getElementById('stTitleAr').value = storeSettings.titleAr;
+  document.getElementById('stTitleEn').value = storeSettings.titleEn;
+  document.getElementById('stAddressAr').value = storeSettings.addressAr || '';
+  document.getElementById('stAddressEn').value = storeSettings.addressEn || '';
+  document.getElementById('stDescAr').value = storeSettings.descAr;
+}
+
+function renderCategoriesBar() {
+  const bar = document.getElementById('categoriesTabsBar');
+  bar.innerHTML = categories.map((c, i) => `
+    <button class="tab-btn ${i === 0 ? 'active' : ''}" onclick="filterCat('${c.key}', event)">${c.titleAr}</button>
+  `).join('');
+
+  const options = categories.filter(c => c.key !== 'all').map(c => `<option value="${c.key}">${c.titleAr}</option>`).join('');
+  document.getElementById('pCatSelect').innerHTML = options;
+  document.getElementById('editProdCatSelect').innerHTML = options;
+}
+
+function handleUserRegister(e) {
+  e.preventDefault();
+  const name = document.getElementById('regName').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const nationalId = document.getElementById('regNationalId').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const address = document.getElementById('regAddress').value.trim();
+  const pass = document.getElementById('regPass').value.trim();
+
+  if(registeredUsers.some(u => u.phone === phone || u.nationalId === nationalId || u.email === email)) {
+    return alert("❌ البيانات مكررة! يوجد مستخدم بنفس الهاتف أو الرقم القومي أو البريد.");
+  }
+
+  const newUser = { id: Date.now(), name, phone, nationalId, email, address, pass, isAdmin: false, isSubAdmin: false };
+  registeredUsers.push(newUser);
+  currentUser = newUser;
+
+  adminNotis.unshift({ id: Date.now() + 1, type: 'user', refId: newUser.id, title: "👤 مستخدم جديد", body: `قام ${name} (${phone}) بإنشاء حساب جديد.`, date: new Date().toLocaleTimeString('ar-EG'), read: false });
+
+  saveData();
+  updateUI();
+  closeModal('registerModal');
+  alert(`✅ أهلاً بك يا ${name}`);
+}
+
+function handleUserLogin(e) {
+  e.preventDefault();
+  const key = document.getElementById('loginKey').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+
+  let user = registeredUsers.find(u => (u.phone === key || u.email === key) && u.pass === pass);
+  if (user) {
+    currentUser = user;
+    saveData();
+    updateUI();
+    closeModal('loginModal');
+  } else alert("❌ البيانات غير صحيحة!");
+}
+
+/* --- دالة دخول الأدمن --- */
+function handleAdminLogin(e) {
+  e.preventDefault();
+  const uKey = document.getElementById('adminUser').value.trim();
+  const uPass = document.getElementById('adminPass').value.trim();
+
+  // 1. مطابقة الأدمن الرئيسي
+  if (uKey.toLowerCase() === superAdminCreds.user.toLowerCase() && uPass === superAdminCreds.pass) {
+    currentUser = { name: superAdminCreds.name, isAdmin: true, isSuperAdmin: true, isSubAdmin: false };
+    saveData();
+    updateUI();
+    closeModal('adminLoginModal');
+    openModal('adminDashboardModal');
+    return;
+  }
+
+  // 2. مطابقة الأدمن الفرعي
+  let sub = subAdmins.find(s => s.phone.trim() === uKey && s.pass.trim() === uPass);
+  if (sub) {
+    currentUser = { ...sub, isAdmin: true, isSuperAdmin: false, isSubAdmin: true };
+    saveData();
+    updateUI();
+    closeModal('adminLoginModal');
+    openModal('adminDashboardModal');
+    return;
+  }
+
+  // 3. رسالة الخطأ في حالة عدم المطابقة
+  alert("❌ خطأ في دخول الأدمن! اسم المستخدم أو كلمة المرور غير صحيحة.");
+}
+
+function logout() {
+  currentUser = null;
+  saveData();
+  updateUI();
+  location.reload();
+}
+
+function updateUI() {
+  applySettings();
+  renderCategoriesBar();
+
+  const greeting = document.getElementById('userGreeting');
+  const authGroup = document.getElementById('authButtonsGroup');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const adminBtn = document.getElementById('adminPanelBtn');
+  const ordersBtn = document.getElementById('ordersBtn');
+  const chatBtn = document.getElementById('chatBtn');
+  const userNotiBtn = document.getElementById('userNotiBtn');
+  const adminNotiBtn = document.getElementById('adminNotiBtn');
+  const cartNavBtn = document.getElementById('cartNavBtn');
+  const tabSubAdminsBtn = document.getElementById('tabSubAdminsBtn');
+  const tabAdminAccBtn = document.getElementById('tabAdminAccBtn');
+
+  if (currentUser) {
+    greeting.innerText = currentUser.isAdmin ? `👑 ${currentUser.name}` : `👤 ${currentUser.name}`;
+    authGroup.style.display = "none";
+    logoutBtn.style.display = "inline-flex";
+    
+    if(currentUser.isAdmin) {
+      adminBtn.style.display = "inline-flex";
+      adminNotiBtn.style.display = "inline-flex";
+      ordersBtn.style.display = "none";
+      chatBtn.style.display = "none";
+      userNotiBtn.style.display = "none";
+      cartNavBtn.style.display = "none";
+
+      if(tabSubAdminsBtn) tabSubAdminsBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
+      if(tabAdminAccBtn) tabAdminAccBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
+    } else {
+      ordersBtn.style.display = "inline-flex";
+      chatBtn.style.display = "inline-flex";
+      userNotiBtn.style.display = "inline-flex";
+      cartNavBtn.style.display = "inline-flex";
+      adminBtn.style.display = "none";
+      adminNotiBtn.style.display = "none";
+    }
+  } else {
+    greeting.innerText = "";
+    authGroup.style.display = "inline-flex";
+    logoutBtn.style.display = "none";
+    adminBtn.style.display = "none";
+    ordersBtn.style.display = "none";
+    chatBtn.style.display = "none";
+    userNotiBtn.style.display = "none";
+    cartNavBtn.style.display = "inline-flex";
+  }
+
+  const cartBadge = document.getElementById('cartCount');
+  cartBadge.innerText = cart.length;
+  cartBadge.style.display = cart.length > 0 ? "inline-block" : "none";
+
+  if(currentUser && !currentUser.isAdmin) {
+    const unreadUserCount = userNotis.filter(n => n.userPhone === currentUser.phone && !n.read).length;
+    const userBadge = document.getElementById('userNotiCount');
+    userBadge.innerText = unreadUserCount;
+    userBadge.style.display = unreadUserCount > 0 ? "inline-block" : "none";
+  }
+
+  const unreadAdminCount = getVisibleAdminNotis().filter(n => !n.read).length;
+  const adminBadge = document.getElementById('adminNotiCount');
+  adminBadge.innerText = unreadAdminCount;
+  adminBadge.style.display = unreadAdminCount > 0 ? "inline-block" : "none";
+
+  renderProducts();
+}
+
+function addToCart(id) {
+  if (!currentUser) return openModal('loginModal');
+  cart.push(products.find(p => p.id === id));
+  saveData();
+  updateUI();
+  alert("تمت الإضافة للسلة!");
+}
+
+function previewReceiptImage(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      receiptImgBase64 = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function renderCart() {
+  const container = document.getElementById('cartItemsList');
+  const checkout = document.getElementById('checkoutSection');
+  if (cart.length === 0) {
+    container.innerHTML = "<p style='text-align:center;'>السلة فارغة.</p>";
+    checkout.style.display = "none";
+    return;
+  }
+  container.innerHTML = cart.map((item, i) => `
+    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #ddd;">
+      <div><strong>${item.title}</strong> - ${item.price}</div>
+      <button onclick="cart.splice(${i},1); saveData(); updateUI(); renderCart();" style="color:red; background:none; border:none; cursor:pointer;">حذف</button>
+    </div>
+  `).join('');
+  
+  const paySelect = document.getElementById('payMethodSelect');
+  paySelect.innerHTML = paymentMethods.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+  renderCheckoutAccounts();
+  checkout.style.display = "block";
+}
+
+function renderCheckoutAccounts() {
+  const selectedId = parseInt(document.getElementById('payMethodSelect').value);
+  const method = paymentMethods.find(p => p.id === selectedId);
+  const displayBox = document.getElementById('payAccountsDisplay');
+
+  if(method && method.accounts.length > 0) {
+    displayBox.innerHTML = `
+      <strong>📌 قم بالتحويل على أحد الأرقام/الحسابات التالية المعتمدة:</strong>
+      <ul style="margin-right: 20px; margin-top:5px;">
+        ${method.accounts.map(acc => `<li style="font-size:13px; font-weight:800; color:var(--navy);">${acc}</li>`).join('')}
+      </ul>
+    `;
+  } else {
+    displayBox.innerHTML = "لا توجد أرقام مسجلة حالياً لطريقة الدفع هذه.";
+  }
+}
+
+function submitOrderProcess() {
+  const senderAcc = document.getElementById('paySenderAcc').value.trim();
+  if(!senderAcc) return alert("يرجى إدخال رقمك أو اسم حسابك المحول منه!");
+
+  const methodId = parseInt(document.getElementById('payMethodSelect').value);
+  const method = paymentMethods.find(p => p.id === methodId);
+
+  cart.forEach(item => {
+    const ord = {
+      orderId: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
+      userName: currentUser.name, userPhone: currentUser.phone,
+      productTitle: item.title, price: item.price,
+      payMethod: method ? method.name : 'غير محدد',
+      senderAcc: senderAcc, refNo: document.getElementById('payRefNo').value || 'بدون مرجع',
+      receiptImg: receiptImgBase64 || '',
+      status: 'تم استلام الطلب', note: 'جاري مراجعة الدفع والإيصال',
+      date: new Date().toLocaleDateString('ar-EG')
+    };
+    orders.unshift(ord);
+
+    adminNotis.unshift({ id: Date.now() + Math.floor(Math.random() * 1000), type: 'order', refId: ord.orderId, title: "📦 طلب جديد وارد", body: `طلب جديد من ${currentUser.name} - ${item.title} (${ord.price})`, date: new Date().toLocaleTimeString('ar-EG'), read: false });
+  });
+
+  cart = [];
+  receiptImgBase64 = "";
+  saveData();
+  updateUI();
+  closeModal('cartModal');
+  alert("🎉 تم إرسال الطلب بنجاح!");
+}
+
+function openQuickEditProduct(id) {
+  const p = products.find(item => item.id === id);
+  if(!p) return;
+
+  editUploadedImgBase64 = null;
+  document.getElementById('editProdId').value = p.id;
+  document.getElementById('editProdTitle').value = p.title;
+  document.getElementById('editProdPrice').value = p.price;
+  document.getElementById('editProdCatSelect').value = p.cat;
+  document.getElementById('editProdQty').value = (p.quantity !== null && p.quantity !== undefined) ? p.quantity : '';
+  document.getElementById('editProdDesc').value = p.desc;
+  document.getElementById('removeImgCheckbox').checked = false;
+
+  openModal('editProductModal');
+}
+
+function previewEditProductImage(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(event) { editUploadedImgBase64 = event.target.result; };
+    reader.readAsDataURL(file);
+  }
+}
+
+function handleSaveProductEdit(e) {
+  e.preventDefault();
+  const id = parseInt(document.getElementById('editProdId').value);
+  const p = products.find(item => item.id === id);
+
+  if (p) {
+    p.title = document.getElementById('editProdTitle').value.trim();
+    p.price = document.getElementById('editProdPrice').value.trim();
+    p.cat = document.getElementById('editProdCatSelect').value;
+    
+    const qtyVal = document.getElementById('editProdQty').value.trim();
+    p.quantity = (qtyVal === '' || qtyVal === null) ? null : parseInt(qtyVal);
+    
+    p.desc = document.getElementById('editProdDesc').value.trim();
+
+    const isRemoveImage = document.getElementById('removeImgCheckbox').checked;
+    if (isRemoveImage) {
+      p.img = '';
+    } else if (editUploadedImgBase64 !== null) {
+      p.img = editUploadedImgBase64;
+    }
+
+    saveData();
+    renderProducts();
+    closeModal('editProductModal');
+    alert("✅ تم تعديل بيانات المنتج بنجاح!");
+  }
+}
+
+function renderProducts(filter = 'all') {
+  let list = filter === 'all' ? products : products.filter(p => p.cat === filter);
+  const defaultLogo = storeSettings.logo || 'https://via.placeholder.com/150?text=MAKTABT+BRESSY';
+
+  document.getElementById('productsGrid').innerHTML = list.map(p => {
+    let qtyHtml = '';
+    if (p.quantity !== null && p.quantity !== undefined && p.quantity !== '') {
+      qtyHtml = `<div class="card-qty">المتاح: ${p.quantity}</div>`;
+    }
+
+    const displayImgSrc = p.img ? p.img : defaultLogo;
+
+    let actionBtnHtml = '';
+    if (currentUser && currentUser.isAdmin) {
+      actionBtnHtml = `<button class="btn-quick-edit" onclick="openQuickEditProduct(${p.id})">✏️ تعديل المنتج</button>`;
+    } else {
+      actionBtnHtml = `<button class="btn-add-cart" onclick="addToCart(${p.id})">طلب الخدمة 🛒</button>`;
+    }
+
+    return `
+      <div class="card">
+        <div class="card-img"><img src="${displayImgSrc}" alt="${p.title}"></div>
+        <div class="card-body">
+          <h3>${p.title}</h3>
+          <p>${p.desc}</p>
+          ${qtyHtml}
+          <div class="card-footer">
+            <span class="price">${p.price}</span>
+            ${actionBtnHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function handleAddSubAdmin(e) {
+  e.preventDefault();
+  const name = document.getElementById('subName').value.trim();
+  const phone = document.getElementById('subPhone').value.trim();
+  const nationalId = document.getElementById('subNationalId').value.trim();
+  const address = document.getElementById('subAddress').value.trim();
+  const job = document.getElementById('subJob').value.trim();
+  const pass = document.getElementById('subPass').value.trim();
+
+  if (subAdmins.some(s => s.phone === phone)) {
+    return alert("❌ يوجد أدمن فرعي مسجل بهذا الهاتف بالفعل!");
+  }
+
+  const newSub = {
+    id: Date.now(),
+    name, phone, nationalId, address, job, pass,
+    perms: {
+      canEditProd: document.getElementById('permEditProd').checked,
+      canDeleteProd: document.getElementById('permDeleteProd').checked,
+      canOrders: document.getElementById('permOrders').checked,
+      canChat: document.getElementById('permChat').checked
+    }
+  };
+
+  subAdmins.push(newSub);
+  saveData();
+  renderAdminSubAdmins();
+
+  adminNotis.unshift({ id: Date.now(), type: 'subadmin', title: "👥 أدمن فرعي جديد", body: `تم تعيين ${name} (${phone}) كأدمن فرعي بوظيفة ${job}.`, date: new Date().toLocaleTimeString('ar-EG'), read: false });
+  saveData();
+  updateUI();
+  
+  document.getElementById('subName').value = "";
+  document.getElementById('subPhone').value = "";
+  document.getElementById('subNationalId').value = "";
+  document.getElementById('subAddress').value = "";
+  document.getElementById('subJob').value = "";
+  document.getElementById('subPass').value = "";
+  alert("✅ تم إضافة الأدمن الفرعي وتخصيص صلاحياته بنجاح!");
+}
+
+function openEditSubAdminModal(id) {
+  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+  const s = subAdmins.find(x => x.id === id);
+  if (!s) return;
+
+  document.getElementById('editSubId').value = s.id;
+  document.getElementById('editSubName').value = s.name;
+  document.getElementById('editSubPhone').value = s.phone;
+  document.getElementById('editSubNationalId').value = s.nationalId;
+  document.getElementById('editSubAddress').value = s.address;
+  document.getElementById('editSubJob').value = s.job;
+  document.getElementById('editSubPass').value = s.pass;
+
+  document.getElementById('editPermEditProd').checked = s.perms ? s.perms.canEditProd : true;
+  document.getElementById('editPermDeleteProd').checked = s.perms ? s.perms.canDeleteProd : false;
+  document.getElementById('editPermOrders').checked = s.perms ? s.perms.canOrders : true;
+  document.getElementById('editPermChat').checked = s.perms ? s.perms.canChat : true;
+
+  openModal('editSubAdminModal');
+}
+
+function handleSaveSubAdminEdit(e) {
+  e.preventDefault();
+  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+
+  const id = parseInt(document.getElementById('editSubId').value);
+  let s = subAdmins.find(x => x.id === id);
+  if (s) {
+    s.name = document.getElementById('editSubName').value.trim();
+    s.phone = document.getElementById('editSubPhone').value.trim();
+    s.nationalId = document.getElementById('editSubNationalId').value.trim();
+    s.address = document.getElementById('editSubAddress').value.trim();
+    s.job = document.getElementById('editSubJob').value.trim();
+    s.pass = document.getElementById('editSubPass').value.trim();
+
+    s.perms = {
+      canEditProd: document.getElementById('editPermEditProd').checked,
+      canDeleteProd: document.getElementById('editPermDeleteProd').checked,
+      canOrders: document.getElementById('editPermOrders').checked,
+      canChat: document.getElementById('editPermChat').checked
+    };
+
+    saveData();
+    renderAdminSubAdmins();
+    closeModal('editSubAdminModal');
+    alert("✅ تم تحديث بيانات الأدمن الفرعي بنجاح!");
+  }
+}
+
+function deleteSubAdmin(id) {
+  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ خيار الحذف متاح فقط للأدمن الرئيسي!");
+  if (confirm("هل أنت تأكد من حذف حساب الأدمن الفرعي هذا؟")) {
+    subAdmins = subAdmins.filter(s => s.id !== id);
+    saveData();
+    renderAdminSubAdmins();
+  }
+}
+
+function renderAdminSubAdmins() {
+  document.getElementById('adminSubAdminsTable').innerHTML = subAdmins.map(s => `
+    <tr>
+      <td><b>${s.name}</b></td>
+      <td>${s.phone}</td>
+      <td>${s.nationalId}</td>
+      <td>${s.job}</td>
+      <td style="font-size:10.5px;">
+        ${s.perms && s.perms.canEditProd ? '✏️ تعديل | ' : ''}
+        ${s.perms && s.perms.canDeleteProd ? '🗑️ حذف | ' : ''}
+        ${s.perms && s.perms.canOrders ? '📦 الطلبات | ' : ''}
+        ${s.perms && s.perms.canChat ? '💬 الدعم' : ''}
+      </td>
+      <td>
+        ${currentUser && currentUser.isSuperAdmin ? `
+          <button class="btn-sm btn-blue" onclick="openEditSubAdminModal(${s.id})">تعديل ✏️</button>
+          <button class="btn-sm btn-danger" onclick="deleteSubAdmin(${s.id})">حذف 🗑️</button>
+        ` : 'حساب فرعي'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function addNewPaymentMethod(e) {
+  e.preventDefault();
+  const name = document.getElementById('newPayName').value.trim();
+  const accs = document.getElementById('newPayAccounts').value.split(',').map(a => a.trim()).filter(a => a);
+
+  paymentMethods.push({ id: Date.now(), name, accounts: accs });
+  saveData();
+  renderAdminPayments();
+  document.getElementById('newPayName').value = "";
+  document.getElementById('newPayAccounts').value = "";
+  alert("تمت إضافة طريقة الدفع بنجاح!");
+}
+
+function updatePaymentAccounts(id, inputId) {
+  const accsText = document.getElementById(inputId).value;
+  const accs = accsText.split(',').map(a => a.trim()).filter(a => a);
+  let p = paymentMethods.find(x => x.id === id);
+  if(p) {
+    p.accounts = accs;
+    saveData();
+    alert("تم تحديث أرقام/حسابات الدفع!");
+  }
+}
+
+function deletePaymentMethod(id) {
+  if(confirm("هل أنت تأكد من حذف طريقة الدفع هذه؟")) {
+    paymentMethods = paymentMethods.filter(p => p.id !== id);
+    saveData();
+    renderAdminPayments();
+  }
+}
+
+function renderAdminPayments() {
+  document.getElementById('adminPaymentsTable').innerHTML = paymentMethods.map((p, idx) => `
+    <tr>
+      <td><b>${p.name}</b></td>
+      <td>
+        <input type="text" id="pmAcc_${idx}" value="${p.accounts.join(', ')}" style="width:100%; font-size:11px; padding:4px;">
+      </td>
+      <td>
+        <button class="btn-sm btn-blue" onclick="updatePaymentAccounts(${p.id}, 'pmAcc_${idx}')">حفظ التعديل</button>
+        <button class="btn-sm btn-danger" onclick="deletePaymentMethod(${p.id})">حذف</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function addNewCategory(e) {
+  e.preventDefault();
+  const key = document.getElementById('catKeyInp').value.trim();
+  const titleAr = document.getElementById('catTitleArInp').value.trim();
+
+  if(categories.some(c => c.key === key)) return alert("معرف القسم موجود بالفعل!");
+
+  categories.push({ key, titleAr });
+  saveData();
+  renderCategoriesBar();
+  renderAdminCategories();
+  document.getElementById('catKeyInp').value = "";
+  document.getElementById('catTitleArInp').value = "";
+  alert("تم إدراج القسم الجديد بنجاح!");
+}
+
+function deleteCategory(key) {
+  if(key === 'all') return alert("لا يمكن حذف قسم الكل!");
+  if(confirm("هل تريد حذف هذا القسم؟")) {
+    categories = categories.filter(c => c.key !== key);
+    saveData();
+    renderCategoriesBar();
+    renderAdminCategories();
+  }
+}
+
+function renderAdminCategories() {
+  document.getElementById('adminCategoriesTable').innerHTML = categories.map(c => `
+    <tr>
+      <td>${c.key}</td>
+      <td>${c.titleAr}</td>
+      <td>${c.key !== 'all' ? `<button class="btn-sm btn-danger" onclick="deleteCategory('${c.key}')">حذف</button>` : 'أساسي'}</td>
+    </tr>
+  `).join('');
+}
+
+function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
+  const noteText = document.getElementById(noteInputId).value.trim();
+  let ord = orders.find(o => o.orderId === orderId);
+  if(ord && newStatus) {
+    ord.status = newStatus;
+    if(noteText) ord.note = noteText;
+
+    userNotis.unshift({
+      id: Date.now(),
+      userPhone: ord.userPhone,
+      title: `تحديث طلب: ${ord.orderId}`,
+      body: `حالة طلبك الان: (${newStatus}). ${noteText ? 'ملاحظة: ' + noteText : ''}`,
+      date: new Date().toLocaleTimeString('ar-EG'),
+      read: false
+    });
+
+    saveData();
+    renderAdminOrders();
+    alert("تم التحديث وإبلاغ العميل!");
+  }
+}
+
+function renderUserOrders() {
+  const myOrders = orders.filter(o => o.userPhone === currentUser.phone);
+  document.getElementById('userOrdersTable').innerHTML = myOrders.map(o => `
+    <tr>
+      <td><b>${o.orderId}</b></td>
+      <td>${o.productTitle}</td>
+      <td>${o.price}</td>
+      <td>${getStatusBadge(o.status)}</td>
+      <td style="color:var(--red); font-weight:700;">${o.note || 'لا يوجد'}</td>
+      <td>${o.date}</td>
+    </tr>
+  `).join('');
+}
+
+function renderAdminOrders() {
+  document.getElementById('adminOrdersTable').innerHTML = orders.map((o, idx) => {
+    let receiptHtml = o.receiptImg 
+      ? `<br><a href="${o.receiptImg}" target="_blank"><img src="${o.receiptImg}" style="width:45px; height:45px; border-radius:4px; object-fit:cover; border:1px solid #ccc; margin-top:3px;" title="اضغط للتكبير"></a>`
+      : '<br><small style="color:var(--muted)">بدون إيصال مرفق</small>';
+
+    return `
+      <tr id="orderRow_${o.orderId}">
+        <td>${o.userName}<br><small>${o.userPhone}</small></td>
+        <td>${o.productTitle} (${o.price})<br><small>${o.payMethod} | ${o.senderAcc}</small>${receiptHtml}</td>
+        <td>${getStatusBadge(o.status)}<br><small>ملاحظة: ${o.note || 'لاشيء'}</small></td>
+        <td>
+          <select id="stSel_${idx}" style="font-size:11px; padding:3px;">
+            <option value="">تغيير الحالة...</option>
+            <option value="تم استلام الطلب">📥 تم استلام الطلب</option>
+            <option value="جاري التحضير والتنفيذ">⚙️ جاري التجهيز</option>
+            <option value="تم الشحن / جاري التوصيل">🚚 جاري التوصيل</option>
+            <option value="تم التسليم بنجاح">✅ تم التسليم بنجاح</option>
+            <option value="ملغي">❌ إلغاء الطلب</option>
+          </select>
+          <input type="text" id="ntInp_${idx}" placeholder="سبب الإلغاء / ملاحظة للعميل" style="font-size:11px; padding:3px; margin-top:3px; width:100%;">
+          <button class="btn-sm btn-blue" onclick="updateOrderStatusWithNote('${o.orderId}', document.getElementById('stSel_${idx}').value, 'ntInp_${idx}')" style="margin-top:3px; width:100%;">تحديث</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function getStatusBadge(st) {
+  if(st === 'تم استلام الطلب') return `<span class="badge-status st-received">📥 تم الاستلام</span>`;
+  if(st === 'جاري التحضير والتنفيذ') return `<span class="badge-status st-processing">⚙️ جاري التجهيز</span>`;
+  if(st === 'تم الشحن / جاري التوصيل') return `<span class="badge-status st-shipped">🚚 جاري التوصيل</span>`;
+  if(st === 'تم التسليم بنجاح') return `<span class="badge-status st-delivered">✅ تم التسليم</span>`;
+  if(st === 'ملغي') return `<span class="badge-status st-cancelled">❌ ملغي</span>`;
+  return st;
+}
+
+function sendChatMessage() {
+  const txt = document.getElementById('chatInput').value.trim();
+  if(!txt) return;
+  chatMessages.push({ senderPhone: currentUser.phone, senderName: currentUser.name, text: txt, isAdmin: false, time: new Date().toLocaleTimeString('ar-EG') });
+  adminNotis.unshift({ id: Date.now(), type: 'chat', title: "💬 رسالة دعم جديدة", body: `رسالة من ${currentUser.name}: ${txt}`, date: new Date().toLocaleTimeString('ar-EG'), read: false });
+  saveData();
+  document.getElementById('chatInput').value = "";
+  renderChat();
+}
+
+function renderChat() {
+  const box = document.getElementById('chatMessages');
+  const myMsgs = chatMessages.filter(m => m.senderPhone === currentUser.phone);
+  box.innerHTML = myMsgs.map(m => `
+    <div class="chat-msg ${m.isAdmin ? 'msg-admin' : 'msg-user'}">
+      <small><b>${m.isAdmin ? 'الإدارة' : m.senderName}:</b></small><br>${m.text}
+    </div>
+  `).join('');
+}
+
+function loadAdminChatUsers() {
+  const sel = document.getElementById('adminChatUserSelect');
+  const usersWithChat = [...new Set(chatMessages.map(m => m.senderPhone))];
+  sel.innerHTML = usersWithChat.map(p => `<option value="${p}">${p}</option>`).join('');
+  loadAdminChat();
+}
+
+function loadAdminChat() {
+  const p = document.getElementById('adminChatUserSelect').value;
+  const box = document.getElementById('adminChatMessages');
+  const msgs = chatMessages.filter(m => m.senderPhone === p);
+  box.innerHTML = msgs.map(m => `
+    <div class="chat-msg ${m.isAdmin ? 'msg-admin' : 'msg-user'}">
+      <small><b>${m.isAdmin ? 'الإدارة' : m.senderName}:</b></small><br>${m.text}
+    </div>
+  `).join('');
+}
+
+function sendAdminChatMessage() {
+  const p = document.getElementById('adminChatUserSelect').value;
+  const txt = document.getElementById('adminChatInput').value.trim();
+  if(!txt || !p) return;
+
+  chatMessages.push({ senderPhone: p, senderName: 'الإدارة', text: txt, isAdmin: true, time: new Date().toLocaleTimeString('ar-EG') });
+  userNotis.unshift({ id: Date.now(), userPhone: p, title: "💬 رد جديد من الدعم", body: txt, date: new Date().toLocaleTimeString('ar-EG'), read: false });
+
+  saveData();
+  document.getElementById('adminChatInput').value = "";
+  loadAdminChat();
+}
+
+function markUserNotiSingleRead(id) {
+  let n = userNotis.find(item => item.id === id);
+  if(n && !n.read) {
+    n.read = true;
+    saveData();
+    updateUI();
+    renderUserNotis();
+  }
+}
+
+function markAllUserNotisRead() {
+  if(!currentUser) return;
+  userNotis.forEach(n => {
+    if(n.userPhone === currentUser.phone) n.read = true;
+  });
+  saveData();
+  updateUI();
+  renderUserNotis();
+}
+
+function renderUserNotis() {
+  if(!currentUser) return;
+  const myNotis = userNotis.filter(n => n.userPhone === currentUser.phone);
+  document.getElementById('userNotiList').innerHTML = myNotis.map(n => `
+    <div class="noti-item ${n.read ? 'read' : 'unread'}" onclick="markUserNotiSingleRead(${n.id})">
+      <strong>${n.read ? '' : '🔵 '}${n.title}</strong>
+      <div>${n.body}</div>
+      <small>${n.date} - ${n.read ? 'تمت القراءة' : 'اضغط للتعليم كمقروء'}</small>
+    </div>
+  `).join('') || "<p style='text-align:center; color:var(--muted); padding:15px;'>لا توجد إشعارات حالياً.</p>";
+}
+
+/* --- تحديد الإشعارات المرئية للأدمن الحالي حسب صلاحياته --- */
+function getVisibleAdminNotis() {
+  if (!currentUser || !currentUser.isAdmin) return [];
+  if (currentUser.isSuperAdmin) return adminNotis;
+
+  const perms = currentUser.perms || {};
+  return adminNotis.filter(n => {
+    if (!n.type) return true;
+    if (n.type === 'user') return true;
+    if (n.type === 'order') return true;
+    if (n.type === 'chat') return !!perms.canChat;
+    if (n.type === 'subadmin') return false;
+    return true;
+  });
+}
+
+function markAdminNotiSingleRead(id) {
+  let n = adminNotis.find(item => item.id === id);
+  if(!n) return;
+
+  if(!n.read) {
+    n.read = true;
+    saveData();
+    updateUI();
+  }
+
+  goToNotiTarget(n);
+  renderAdminNotis();
+}
+
+/* --- الانتقال لتفاصيل المستخدم/الطلب عند الضغط على الإشعار --- */
+function goToNotiTarget(n) {
+  if (!n || !n.refId || (n.type !== 'user' && n.type !== 'order')) return;
+
+  closeModal('adminNotiModal');
+  openModal('adminDashboardModal');
+
+  if (n.type === 'user') {
+    switchAdminTab('admUsers');
+    const u = registeredUsers.find(x => x.id === n.refId);
+    const searchInput = document.getElementById('userSearchInput');
+    if (searchInput) {
+      searchInput.value = u ? u.phone : '';
+      renderAdminUsers();
+    }
+    setTimeout(() => {
+      const row = document.getElementById('userRow_' + n.refId);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.style.outline = '3px solid var(--orange)';
+        setTimeout(() => { row.style.outline = ''; }, 2500);
+      }
+    }, 60);
+  } else if (n.type === 'order') {
+    switchAdminTab('admOrders');
+    setTimeout(() => {
+      const row = document.getElementById('orderRow_' + n.refId);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.style.outline = '3px solid var(--orange)';
+        setTimeout(() => { row.style.outline = ''; }, 2500);
+      }
+    }, 60);
+  }
+}
+
+function markAllAdminNotisRead() {
+  const visibleIds = new Set(getVisibleAdminNotis().map(n => n.id));
+  adminNotis.forEach(n => { if(visibleIds.has(n.id)) n.read = true; });
+  saveData();
+  updateUI();
+  renderAdminNotis();
+}
+
+function renderAdminNotis() {
+  const visible = getVisibleAdminNotis();
+  document.getElementById('adminNotiList').innerHTML = visible.map(n => `
+    <div class="noti-item ${n.read ? 'read' : 'unread'}" onclick="markAdminNotiSingleRead(${n.id})">
+      <strong>${n.read ? '' : '🔴 '}${n.title}</strong>
+      <div>${n.body}</div>
+      <small>${n.date} - ${n.read ? 'تمت القراءة' : 'اضغط للتعليم كمقروء'}</small>
+    </div>
+  `).join('') || "<p style='text-align:center; color:var(--muted); padding:15px;'>لا توجد تنبيهات جديدة.</p>";
+}
+
+function uploadLogo(e) {
+  const file = e.target.files[0];
+  if(file) {
+    const reader = new FileReader();
+    reader.onload = function(ev) { storeSettings.logo = ev.target.result; saveData(); applySettings(); renderProducts(); };
+    reader.readAsDataURL(file);
+  }
+}
+
+function uploadBanner(e) {
+  const file = e.target.files[0];
+  if(file) {
+    const reader = new FileReader();
+    reader.onload = function(ev) { storeSettings.banner = ev.target.result; saveData(); applySettings(); };
+    reader.readAsDataURL(file);
+  }
+}
+
+function saveStoreSettings(e) {
+  e.preventDefault();
+  storeSettings.titleAr = document.getElementById('stTitleAr').value;
+  storeSettings.titleEn = document.getElementById('stTitleEn').value;
+  storeSettings.addressAr = document.getElementById('stAddressAr').value;
+  storeSettings.addressEn = document.getElementById('stAddressEn').value;
+  storeSettings.descAr = document.getElementById('stDescAr').value;
+  saveData();
+  applySettings();
+  alert("تم حفظ بيانات المتجر والعنوان بنجاح!");
+}
+
+function previewImage(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(event) { uploadedImgBase64 = event.target.result; };
+    reader.readAsDataURL(file);
+  }
+}
+
+function addProduct(e) {
+  e.preventDefault();
+  const qtyVal = document.getElementById('pQty').value.trim();
+
+  products.unshift({
+    id: Date.now(),
+    title: document.getElementById('pTitle').value,
+    cat: document.getElementById('pCatSelect').value,
+    price: document.getElementById('pPrice').value,
+    quantity: (qtyVal === '' || qtyVal === null) ? null : parseInt(qtyVal),
+    desc: document.getElementById('pDesc').value,
+    img: uploadedImgBase64 || ''
+  });
+  
+  uploadedImgBase64 = "";
+  saveData();
+  renderProducts();
+  alert("تم نشر المنتج في المتجر!");
+}
+
+function switchAdminTab(t) {
+  ['admOrders','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admAccount'].forEach(id => {
+    const el = document.getElementById(id+'Tab');
+    if(el) el.style.display = (id === t) ? 'block' : 'none';
+  });
+
+  if(t === 'admOrders') renderAdminOrders();
+  if(t === 'admPayments') renderAdminPayments();
+  if(t === 'admCategories') renderAdminCategories();
+  if(t === 'admSubAdmins') renderAdminSubAdmins();
+  if(t === 'admUsers') renderAdminUsers();
+  if(t === 'admChat') loadAdminChatUsers();
+  if(t === 'admAccount') loadSuperAdminAccountTab();
+}
+
+function openEditUserModal(id) {
+  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ هذا الخيار متاح فقط للأدمن الرئيسي!");
+  const u = registeredUsers.find(x => x.id === id);
+  if(!u) return;
+
+  document.getElementById('editUserId').value = u.id;
+  document.getElementById('editUserName').value = u.name;
+  document.getElementById('editUserPhone').value = u.phone;
+  document.getElementById('editUserNationalId').value = u.nationalId;
+  document.getElementById('editUserEmail').value = u.email;
+  document.getElementById('editUserAddress').value = u.address;
+  document.getElementById('editUserPass').value = u.pass;
+
+  openModal('editUserModal');
+}
+
+function handleSaveUserEdit(e) {
+  e.preventDefault();
+  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+
+  const id = parseInt(document.getElementById('editUserId').value);
+  let u = registeredUsers.find(x => x.id === id);
+
+  if (u) {
+    u.name = document.getElementById('editUserName').value.trim();
+    u.phone = document.getElementById('editUserPhone').value.trim();
+    u.nationalId = document.getElementById('editUserNationalId').value.trim();
+    u.email = document.getElementById('editUserEmail').value.trim();
+    u.address = document.getElementById('editUserAddress').value.trim();
+    u.pass = document.getElementById('editUserPass').value.trim();
+
+    saveData();
+    renderAdminUsers();
+    closeModal('editUserModal');
+    alert("✅ تم تعديل بيانات العميل بنجاح!");
+  }
+}
+
+function deleteUserAccount(id) {
+  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+  if (confirm("هل أنت تأكد من حذف حساب هذا المستخدم نهائياً؟")) {
+    registeredUsers = registeredUsers.filter(x => x.id !== id);
+    saveData();
+    renderAdminUsers();
+  }
+}
+
+function renderAdminUsers() {
+  const searchInput = document.getElementById('userSearchInput');
+  const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+  let list = registeredUsers;
+  if (term) {
+    list = list.filter(u =>
+      (u.name && u.name.toLowerCase().includes(term)) ||
+      (u.phone && u.phone.toLowerCase().includes(term)) ||
+      (u.nationalId && u.nationalId.toLowerCase().includes(term)) ||
+      (u.email && u.email.toLowerCase().includes(term))
+    );
+  }
+
+  if (list.length === 0) {
+    document.getElementById('adminUsersTable').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:15px;">${term ? '🔍 لا توجد نتائج مطابقة للبحث.' : 'لا يوجد عملاء مسجلين بعد.'}</td></tr>`;
+    return;
+  }
+
+  document.getElementById('adminUsersTable').innerHTML = list.map(u => `
+    <tr id="userRow_${u.id}">
+      <td><b>${u.name}</b></td>
+      <td>${u.phone}</td>
+      <td>${u.nationalId}</td>
+      <td>${u.email}</td>
+      <td>${u.address}</td>
+      <td>
+        ${currentUser && currentUser.isSuperAdmin ? `
+          <button class="btn-sm btn-blue" onclick="openEditUserModal(${u.id})">تعديل ✏️</button>
+          <button class="btn-sm btn-danger" onclick="deleteUserAccount(${u.id})">حذف 🗑️</button>
+        ` : 'غير متاح للفرعي'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function loadSuperAdminAccountTab() {
+  document.getElementById('superAdminNameInput').value = superAdminCreds.name;
+  document.getElementById('superAdminUserInput').value = superAdminCreds.user;
+  document.getElementById('superAdminPassInput').value = superAdminCreds.pass;
+}
+
+function handleSaveSuperAdminCreds(e) {
+  e.preventDefault();
+  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+
+  superAdminCreds.name = document.getElementById('superAdminNameInput').value.trim();
+  superAdminCreds.user = document.getElementById('superAdminUserInput').value.trim();
+  superAdminCreds.pass = document.getElementById('superAdminPassInput').value.trim();
+
+  currentUser.name = superAdminCreds.name;
+
+  saveData();
+  updateUI();
+  alert("✅ تم تعديل اسم ومعرف وكلمة مرور الأدمن الرئيسي بنجاح!");
+}
+
+function filterCat(c, ev) {
+  document.querySelectorAll('#categoriesTabsBar .tab-btn').forEach(b => b.classList.remove('active'));
+  if(ev) ev.target.classList.add('active');
+  renderProducts(c);
+}
+
+function openModal(id) {
+  if(id === 'cartModal') renderCart();
+  if(id === 'userOrdersModal') renderUserOrders();
+  if(id === 'userNotiModal') renderUserNotis();
+  if(id === 'adminNotiModal') renderAdminNotis();
+  if(id === 'chatModal') renderChat();
+  if(id === 'adminDashboardModal') switchAdminTab('admOrders');
+  document.getElementById(id).style.display = 'flex';
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+updateUI();
+</script>
+</body>
+</html>
 
 <!-- أكواد JavaScript الأساسية لتشغيل النوافذ والوظائف -->
 <script>
