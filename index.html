@@ -755,27 +755,17 @@
 /* ======================================================================
    إعداد Firebase - غيّر البيانات دي ببيانات مشروعك من Firebase Console
 ====================================================================== */
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyD9D3dS-2YcOPlK4kpPG4n7qwaZF_M0OLY",
-  authDomain: "maktabt-bressy-store-2642b.firebaseapp.com",
-  projectId: "maktabt-bressy-store-2642b",
-  storageBucket: "maktabt-bressy-store-2642b.firebasestorage.app",
-  messagingSenderId: "332258939840",
-  appId: "1:332258939840:web:3c83b6fabd1e422d46ae25",
-  measurementId: "G-LQ9Z7LX6QM"
+ apiKey: AIzaSyD9D3dS-2YcOPlK4kpPG4n7qwaZF_M0LY
+authDomain: maktabt-bressy-store-2642b.firebaseapp.com
+projectId: maktabt-bressy-store-2642b
+storageBucket: maktabt-bressy-store-2642b.firebasestorage.app
+messagingSenderId: 332258939840
+appId: 1:332258939840:web:3c83b6fabd1e422d46ae25
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 /* تطبيق فرعي منفصل (Secondary App) - بيُستخدم بس عشان الأدمن الرئيسي يقدر ينشئ
    حساب أدمن فرعي جديد من غير ما تتسجل خروج جلسته هو، لأن Firebase بيسجل دخول
