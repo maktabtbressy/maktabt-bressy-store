@@ -772,11 +772,13 @@
 
 
 
-/* تطبيق فرعي منفصل (Secondary App) - بيُستخدم بس عشان الأدمن الرئيسي يقدر ينشئ
-   حساب أدمن فرعي جديد من غير ما تتسجل خروج جلسته هو، لأن Firebase بيسجل دخول
-   تلقائيًا لأي حساب بيتعمله createUser على نفس الـ auth instance */
-const secondaryApp = firebase.apps.find(a => a.name === 'Secondary') || firebase.initializeApp(firebaseConfig, 'Secondary');
-const secondaryAuth = secondaryApp.auth();
+<script>
+  /* تطبيق فرعي منفصل (Secondary App) - بيُستخدم بس عشان الأدمن الرئيسي يقدر ينشئ
+     حساب أدمن فرعي جديد من غير ما تتسجل خروج جلسته هو، لأن Firebase بيسجل دخول
+     تلقائيًا لأي حساب بيتعمله createUser على نفس الـ auth instance */
+  const secondaryApp = firebase.apps.find(a => a.name === 'Secondary') || firebase.initializeApp(firebaseConfig, 'Secondary');
+  const secondaryAuth = secondaryApp.auth();
+</script>
 /* ====================================================================== */
 
 let allUsers = [];      // كل المستخدمين (عملاء + أدمن فرعي + أدمن رئيسي) - من مجموعة users
