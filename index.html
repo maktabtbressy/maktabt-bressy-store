@@ -754,8 +754,7 @@
 
 /* ======================================================================
    إعداد Firebase - غيّر البيانات دي ببيانات مشروعك من Firebase Console
-====================================================================== */
- const firebaseConfig = {
+====================================================================== */const firebaseConfig = {
     apiKey: "AIzaSyD9D3dS-2YcOPlK4kpPG4n7qwaZF_M0OLY",
     authDomain: "maktabt-bressy-store-2642b.firebaseapp.com",
     projectId: "maktabt-bressy-store-2642b",
@@ -765,17 +764,12 @@
     measurementId: "G-LQ9Z7LX6QM"
   };
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
+  // 1. تهيئة التطبيق الرئيسي
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
 
-
-
-<script>
-  /* تطبيق فرعي منفصل (Secondary App) - بيُستخدم بس عشان الأدمن الرئيسي يقدر ينشئ
-     حساب أدمن فرعي جديد من غير ما تتسجل خروج جلسته هو، لأن Firebase بيسجل دخول
-     تلقائيًا لأي حساب بيتعمله createUser على نفس الـ auth instance */
+  // 2. تطبيق فرعي منفصل (Secondary App) لإضافة أدمن فرعي بدون تسجيل خروج الرئيسي
   const secondaryApp = firebase.apps.find(a => a.name === 'Secondary') || firebase.initializeApp(firebaseConfig, 'Secondary');
   const secondaryAuth = secondaryApp.auth();
 </script>
