@@ -756,7 +756,7 @@
    إعداد Firebase - غيّر البيانات دي ببيانات مشروعك من Firebase Console
 ====================================================================== */
 const firebaseConfig = {
-  apiKey: "AIzaSyD9D3dS-2YcOPlK4kpPG4n7qwaZF_M0OLY",
+  apiKey: "AIzaSyD9D3dS-2YcOPlK4kpPG4n7qwaZF_M0LY",
   authDomain: "maktabt-bressy-store-2642b.firebaseapp.com",
   projectId: "maktabt-bressy-store-2642b",
   storageBucket: "maktabt-bressy-store-2642b.firebasestorage.app",
@@ -803,6 +803,37 @@ function loadCartLocal() {
 }
 function saveCartLocal() {
   localStorage.setItem('brs_v4_cart', JSON.stringify(cart));
+}
+
+/* --- ضغط وتصغير أي صورة قبل تحويلها لـ base64 وحفظها، عشان متتخطاش حد Firestore (1 ميجا للمستند) --- */
+function compressImage(file, maxDimension = 900, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDimension || height > maxDimension) {
+          if (width >= height) {
+            height = Math.round(height * (maxDimension / width));
+            width = maxDimension;
+          } else {
+            width = Math.round(width * (maxDimension / height));
+            height = maxDimension;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('تعذّرت قراءة الصورة'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('تعذّرت قراءة الملف'));
+    reader.readAsDataURL(file);
+  });
 }
 
 /* --- ترجمة أخطاء Firebase Auth لرسائل عربية مفهومة --- */
@@ -1109,14 +1140,13 @@ function addToCart(id) {
   alert("تمت الإضافة للسلة!");
 }
 
-function previewReceiptImage(e) {
+async function previewReceiptImage(e) {
   const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(event) {
-      receiptImgBase64 = event.target.result;
-    };
-    reader.readAsDataURL(file);
+  if (!file) return;
+  try {
+    receiptImgBase64 = await compressImage(file, 1100, 0.78);
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء معالجة صورة الإيصال، جرّب صورة تانية.");
   }
 }
 
@@ -1219,12 +1249,13 @@ function openQuickEditProduct(id) {
   openModal('editProductModal');
 }
 
-function previewEditProductImage(e) {
+async function previewEditProductImage(e) {
   const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(event) { editUploadedImgBase64 = event.target.result; };
-    reader.readAsDataURL(file);
+  if (!file) return;
+  try {
+    editUploadedImgBase64 = await compressImage(file, 800, 0.7);
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء معالجة الصورة، جرّب صورة تانية.");
   }
 }
 
@@ -1821,29 +1852,23 @@ function renderAdminNotis() {
 async function uploadLogo(e) {
   const file = e.target.files[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = async function(ev) {
-    try {
-      await db.collection('settings').doc('store').set({ logo: ev.target.result }, { merge: true });
-    } catch (err) {
-      alert("❌ حصل خطأ أثناء رفع اللوجو (الصورة كبيرة؟). " + err.message);
-    }
-  };
-  reader.readAsDataURL(file);
+  try {
+    const compressed = await compressImage(file, 500, 0.75);
+    await db.collection('settings').doc('store').set({ logo: compressed }, { merge: true });
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء رفع اللوجو. " + err.message);
+  }
 }
 
 async function uploadBanner(e) {
   const file = e.target.files[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = async function(ev) {
-    try {
-      await db.collection('settings').doc('store').set({ banner: ev.target.result }, { merge: true });
-    } catch (err) {
-      alert("❌ حصل خطأ أثناء رفع الغلاف (الصورة كبيرة؟). " + err.message);
-    }
-  };
-  reader.readAsDataURL(file);
+  try {
+    const compressed = await compressImage(file, 1400, 0.72);
+    await db.collection('settings').doc('store').set({ banner: compressed }, { merge: true });
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء رفع الغلاف. " + err.message);
+  }
 }
 
 async function saveStoreSettings(e) {
@@ -1863,12 +1888,13 @@ async function saveStoreSettings(e) {
   }
 }
 
-function previewImage(e) {
+async function previewImage(e) {
   const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(event) { uploadedImgBase64 = event.target.result; };
-    reader.readAsDataURL(file);
+  if (!file) return;
+  try {
+    uploadedImgBase64 = await compressImage(file, 800, 0.7);
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء معالجة الصورة، جرّب صورة تانية.");
   }
 }
 
