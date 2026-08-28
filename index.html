@@ -2178,15 +2178,28 @@ async function openAuthConsoleForDeletedAccount(email, name) {
       : `بريده هو: ${email}\nهنفتحلك صفحة Authentication دلوقتي - دوّر عنه واحذفه من هناك.`)
   );
 
-  window.open(findAdminLink('Authentication', 'https://console.firebase.google.com/project/maktabt-bressy-store-2642b/authentication/users'), '_blank');
+  window.open(getAuthConsoleLink(), '_blank');
 }
 
 /* ======================================================================
    الروابط الإدارية - قائمة روابط قابلة للإضافة والتعديل والحذف من الموقع نفسه
 ====================================================================== */
-function findAdminLink(nameKeyword, fallbackUrl) {
-  const found = adminLinks.find(l => l.name && l.name.toLowerCase().includes(nameKeyword.toLowerCase()));
-  return found ? found.url : fallbackUrl;
+function getAuthConsoleLink() {
+  const found = adminLinks.find(l => l.isAuthLink === true);
+  return found ? found.url : 'https://console.firebase.google.com/project/maktabt-bressy-store-2642b/authentication/users';
+}
+
+async function setAsAuthLink(id) {
+  try {
+    const batch = db.batch();
+    adminLinks.forEach(l => {
+      if (l.id === id) batch.update(db.collection('adminLinks').doc(String(l.id)), { isAuthLink: true });
+      else if (l.isAuthLink) batch.update(db.collection('adminLinks').doc(String(l.id)), { isAuthLink: false });
+    });
+    await batch.commit();
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
 }
 
 async function addAdminLink(e) {
@@ -2244,10 +2257,14 @@ function renderAdminLinks() {
   box.innerHTML = adminLinks.map(l => `
     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-bottom:8px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-        <b style="font-size:13px; color:var(--navy);">${l.name}</b>
-        <div style="display:flex; gap:5px;">
+        <b style="font-size:13px; color:var(--navy);">
+          ${l.name}
+          ${l.isAuthLink ? '<span style="font-size:10.5px; background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:10px; margin-right:5px;">⭐ رابط حذف الحسابات</span>' : ''}
+        </b>
+        <div style="display:flex; gap:5px; flex-wrap:wrap;">
           <button class="btn-sm btn-blue" onclick="window.open('${l.url}','_blank')">🔗 فتح</button>
           <button class="btn-sm" style="background:#eab308;" onclick="toggleEditAdminLink(${l.id})">✏️ تعديل</button>
+          ${!l.isAuthLink ? `<button class="btn-sm" style="background:#64748b;" onclick="setAsAuthLink(${l.id})">⭐ استخدمه لحذف الحسابات</button>` : ''}
           <button class="btn-sm btn-danger" onclick="deleteAdminLink(${l.id})">🗑️ حذف</button>
         </div>
       </div>
