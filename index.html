@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="siteTitle">متجر مكتبة بريسي  | MAKTABT BRESSY STORE</title>
+<title id="siteTitle">متجر مكتبة بريسي الاحترافي | MAKTABT BRESSY</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -45,6 +45,7 @@
   .modal-lg { max-width: 980px; }
   /* هذه النوافذ بتتفتح فوق لوحة التحكم، فلازم تبقى طبقتها أعلى من طبقة لوحة التحكم نفسها */
   #editProductModal, #editUserModal, #editSubAdminModal { z-index: 210; }
+  #imagePreviewModal { z-index: 220; }
   .close-btn { position: absolute; left: 15px; top: 15px; font-size: 20px; cursor: pointer; color: var(--muted); }
 
   /* Forms & Controls */
@@ -79,6 +80,15 @@
   .st-shipped { background: #f3e8ff; color: #6b21a8; }
   .st-delivered { background: #dcfce7; color: #15803d; }
   .st-cancelled { background: #fee2e2; color: #b91c1c; }
+
+  /* تلوين صف الطلب كله حسب حالته الحالية */
+  tr.order-row-received { background: #eff6ff; }
+  tr.order-row-processing { background: #fffbeb; }
+  tr.order-row-shipped { background: #faf5ff; }
+  tr.order-row-delivered { background: #f0fdf4; }
+  tr.order-row-cancelled { background: #fef2f2; }
+  tr.order-row-received td, tr.order-row-processing td, tr.order-row-shipped td,
+  tr.order-row-delivered td, tr.order-row-cancelled td { border-color: #e2e8f0; }
 
   /* Notifications UI Dynamic */
   .noti-header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
@@ -503,6 +513,7 @@
       <button class="tab-btn" onclick="switchAdminTab('admSubAdmins')" id="tabSubAdminsBtn">👥 الأدمن الفرعي</button>
       <button class="tab-btn" onclick="switchAdminTab('admUsers')">👥 العملاء</button>
       <button class="tab-btn" onclick="switchAdminTab('admChat')">💬 الدعم</button>
+      <button class="tab-btn" onclick="switchAdminTab('admLinks')" id="tabLinksBtn">🔗 روابط إدارية</button>
       <button class="tab-btn" onclick="switchAdminTab('admAccount')" id="tabAdminAccBtn" style="background:#0f172a; color:#fff;">🔐 حسابي الأدمن</button>
     </div>
 
@@ -638,13 +649,6 @@
           <input type="text" id="stDescAr" required>
         </div>
 
-        <h3 style="font-size: 14px; margin: 15px 0 10px;">🔗 روابط إدارية</h3>
-        <div class="form-group">
-          <label>رابط صفحة Authentication (بيتفتح تلقائيًا بعد حذف أي حساب):</label>
-          <input type="url" id="stAuthConsoleUrl" placeholder="https://console.firebase.google.com/project/xxxxx/authentication/users">
-          <small style="font-size:11px; color:var(--muted);">سيبها فاضية عشان يستخدم الرابط الافتراضي لمشروعك.</small>
-        </div>
-
         <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ التعديلات والتحديث</button>
       </form>
     </div>
@@ -756,6 +760,27 @@
       </div>
     </div>
 
+    <!-- روابط إدارية -->
+    <div id="admLinksTab" style="display:none;">
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">➕ إضافة رابط إداري جديد</h3>
+      <form onsubmit="addAdminLink(event)" style="margin-bottom: 20px; background:#f8fafc; padding:12px; border-radius:8px;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>اسم الرابط</label>
+            <input type="text" id="newLinkName" required placeholder="مثال: رابط GitHub">
+          </div>
+          <div class="form-group">
+            <label>الرابط (URL)</label>
+            <input type="url" id="newLinkUrl" required placeholder="https://...">
+          </div>
+        </div>
+        <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ الرابط</button>
+      </form>
+
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">🔗 الروابط الإدارية الحالية</h3>
+      <div id="adminLinksList"></div>
+    </div>
+
     <!-- تعديل حساب الأدمن الرئيسي -->
     <div id="admAccountTab" style="display:none;">
       <h3 style="font-size: 14px; margin-bottom: 12px; color: var(--navy);">🔐 حسابي (Super Admin)</h3>
@@ -815,6 +840,8 @@ let orders = [];
 let userNotis = [];
 let adminNotis = [];
 let chatMessages = [];
+let adminLinks = [];
+let openLinkEditId = null;
 
 let storeSettings = {
   titleAr: "مكتبة بريسي", titleEn: "MAKTABT BRESSY",
@@ -967,8 +994,8 @@ function initUserScopedListeners() {
 
   if (!currentUser) {
     // مفيش حد مسجل دخول - نفضّي البيانات الخاصة اللي مش مسموح نشوفها دلوقتي
-    allUsers = []; paymentMethods = []; orders = []; userNotis = []; adminNotis = []; chatMessages = [];
-    renderAdminUsers(); renderAdminSubAdmins(); renderAdminOrders(); renderUserNotis(); renderAdminNotis();
+    allUsers = []; paymentMethods = []; orders = []; userNotis = []; adminNotis = []; chatMessages = []; adminLinks = [];
+    renderAdminUsers(); renderAdminSubAdmins(); renderAdminOrders(); renderUserNotis(); renderAdminNotis(); renderAdminLinks();
     updateNotiBadges();
     return;
   }
@@ -1003,6 +1030,11 @@ function initUserScopedListeners() {
       chatMessages = snap.docs.map(d => d.data());
       loadAdminChatUsers();
     }, err => console.error('chatMessages listener error:', err)));
+
+    scopedUnsubscribers.push(db.collection('adminLinks').onSnapshot(snap => {
+      adminLinks = snap.docs.map(d => d.data());
+      renderAdminLinks();
+    }, err => console.error('adminLinks listener error:', err)));
   } else {
     // العميل يشوف طلباته هو، إشعاراته هو، ورسائله هو بس (زي قواعد الأمان بالظبط)
     scopedUnsubscribers.push(db.collection('orders').where('userPhone', '==', currentUser.phone).onSnapshot(snap => {
@@ -1040,7 +1072,6 @@ function applySettings() {
   document.getElementById('stAddressAr').value = storeSettings.addressAr || '';
   document.getElementById('stAddressEn').value = storeSettings.addressEn || '';
   document.getElementById('stDescAr').value = storeSettings.descAr;
-  document.getElementById('stAuthConsoleUrl').value = storeSettings.authConsoleUrl || '';
 }
 
 function renderCategoriesBar() {
@@ -1158,6 +1189,7 @@ function updateUI() {
   const cartNavBtn = document.getElementById('cartNavBtn');
   const tabSubAdminsBtn = document.getElementById('tabSubAdminsBtn');
   const tabAdminAccBtn = document.getElementById('tabAdminAccBtn');
+  const tabLinksBtn = document.getElementById('tabLinksBtn');
 
   if (currentUser) {
     greeting.innerText = currentUser.isAdmin ? `👑 ${currentUser.name}` : `👤 ${currentUser.name}`;
@@ -1174,6 +1206,7 @@ function updateUI() {
 
       if(tabSubAdminsBtn) tabSubAdminsBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
       if(tabAdminAccBtn) tabAdminAccBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
+      if(tabLinksBtn) tabLinksBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
     } else {
       ordersBtn.style.display = "inline-flex";
       chatBtn.style.display = "inline-flex";
@@ -1657,7 +1690,7 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
 function renderUserOrders() {
   const myOrders = orders.filter(o => o.userPhone === currentUser.phone);
   document.getElementById('userOrdersTable').innerHTML = myOrders.map(o => `
-    <tr>
+    <tr class="${getOrderRowClass(o.status)}">
       <td><b>${o.orderId}</b></td>
       <td>${o.productTitle}</td>
       <td>${o.price}</td>
@@ -1733,7 +1766,7 @@ function renderAdminOrders() {
       : '<br><small style="color:var(--muted)">بدون إيصال مرفق</small>';
 
     return `
-      <tr id="orderRow_${o.orderId}">
+      <tr id="orderRow_${o.orderId}" class="${getOrderRowClass(o.status)}">
         <td>${o.userName}<br><small>${o.userPhone}</small></td>
         <td>${o.productTitle} (${o.price})<br><small>${o.payMethod} | ${o.senderAcc}</small>${receiptHtml}</td>
         <td>${getStatusBadge(o.status)}<br><small>ملاحظة: ${o.note || 'لاشيء'}</small></td>
@@ -1761,6 +1794,15 @@ function getStatusBadge(st) {
   if(st === 'تم التسليم بنجاح') return `<span class="badge-status st-delivered">✅ تم التسليم</span>`;
   if(st === 'ملغي') return `<span class="badge-status st-cancelled">❌ ملغي</span>`;
   return st;
+}
+
+function getOrderRowClass(st) {
+  if(st === 'تم استلام الطلب') return 'order-row-received';
+  if(st === 'جاري التحضير والتنفيذ') return 'order-row-processing';
+  if(st === 'تم الشحن / جاري التوصيل') return 'order-row-shipped';
+  if(st === 'تم التسليم بنجاح') return 'order-row-delivered';
+  if(st === 'ملغي') return 'order-row-cancelled';
+  return '';
 }
 
 async function sendChatMessage() {
@@ -2010,8 +2052,7 @@ async function saveStoreSettings(e) {
     titleEn: document.getElementById('stTitleEn').value,
     addressAr: document.getElementById('stAddressAr').value,
     addressEn: document.getElementById('stAddressEn').value,
-    descAr: document.getElementById('stDescAr').value,
-    authConsoleUrl: document.getElementById('stAuthConsoleUrl').value.trim()
+    descAr: document.getElementById('stDescAr').value
   };
   try {
     await db.collection('settings').doc('store').set(updated, { merge: true });
@@ -2056,7 +2097,7 @@ async function addProduct(e) {
 }
 
 function switchAdminTab(t) {
-  ['admOrders','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admAccount'].forEach(id => {
+  ['admOrders','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admLinks','admAccount'].forEach(id => {
     const el = document.getElementById(id+'Tab');
     if(el) el.style.display = (id === t) ? 'block' : 'none';
   });
@@ -2067,6 +2108,7 @@ function switchAdminTab(t) {
   if(t === 'admSubAdmins') renderAdminSubAdmins();
   if(t === 'admUsers') renderAdminUsers();
   if(t === 'admChat') loadAdminChatUsers();
+  if(t === 'admLinks') renderAdminLinks();
   if(t === 'admAccount') loadSuperAdminAccountTab();
 }
 
@@ -2136,7 +2178,87 @@ async function openAuthConsoleForDeletedAccount(email, name) {
       : `بريده هو: ${email}\nهنفتحلك صفحة Authentication دلوقتي - دوّر عنه واحذفه من هناك.`)
   );
 
-  window.open(storeSettings.authConsoleUrl || 'https://console.firebase.google.com/project/maktabt-bressy-store-2642b/authentication/users', '_blank');
+  window.open(findAdminLink('Authentication', 'https://console.firebase.google.com/project/maktabt-bressy-store-2642b/authentication/users'), '_blank');
+}
+
+/* ======================================================================
+   الروابط الإدارية - قائمة روابط قابلة للإضافة والتعديل والحذف من الموقع نفسه
+====================================================================== */
+function findAdminLink(nameKeyword, fallbackUrl) {
+  const found = adminLinks.find(l => l.name && l.name.toLowerCase().includes(nameKeyword.toLowerCase()));
+  return found ? found.url : fallbackUrl;
+}
+
+async function addAdminLink(e) {
+  e.preventDefault();
+  const name = document.getElementById('newLinkName').value.trim();
+  const url = document.getElementById('newLinkUrl').value.trim();
+  const id = Date.now();
+
+  try {
+    await db.collection('adminLinks').doc(String(id)).set({ id, name, url });
+    document.getElementById('newLinkName').value = "";
+    document.getElementById('newLinkUrl').value = "";
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+function toggleEditAdminLink(id) {
+  openLinkEditId = (openLinkEditId === id) ? null : id;
+  renderAdminLinks();
+}
+
+async function saveAdminLinkEdit(id) {
+  const input = document.getElementById('editLinkUrl_' + id);
+  const newUrl = input ? input.value.trim() : '';
+  if (!newUrl) return alert("لازم تحط رابط!");
+
+  try {
+    await db.collection('adminLinks').doc(String(id)).update({ url: newUrl });
+    openLinkEditId = null;
+    alert("✅ تم تحديث الرابط!");
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+async function deleteAdminLink(id) {
+  if (!confirm("متأكد من حذف الرابط ده؟")) return;
+  try {
+    await db.collection('adminLinks').doc(String(id)).delete();
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+function renderAdminLinks() {
+  const box = document.getElementById('adminLinksList');
+  if (!box) return;
+
+  if (adminLinks.length === 0) {
+    box.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">مفيش روابط مضافة لسه.</p>`;
+    return;
+  }
+
+  box.innerHTML = adminLinks.map(l => `
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+        <b style="font-size:13px; color:var(--navy);">${l.name}</b>
+        <div style="display:flex; gap:5px;">
+          <button class="btn-sm btn-blue" onclick="window.open('${l.url}','_blank')">🔗 فتح</button>
+          <button class="btn-sm" style="background:#eab308;" onclick="toggleEditAdminLink(${l.id})">✏️ تعديل</button>
+          <button class="btn-sm btn-danger" onclick="deleteAdminLink(${l.id})">🗑️ حذف</button>
+        </div>
+      </div>
+      ${openLinkEditId === l.id ? `
+        <div style="display:flex; gap:5px; margin-top:8px;">
+          <input type="url" id="editLinkUrl_${l.id}" value="${l.url}" style="flex:1; padding:6px; font-size:12px; border:1px solid #cbd5e1; border-radius:6px;">
+          <button class="btn-sm btn-blue" onclick="saveAdminLinkEdit(${l.id})">💾 حفظ</button>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
 }
 
 function renderAdminUsers() {
