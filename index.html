@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="siteTitle">متجر مكتبة بريسي الاحترافي | MAKTABT BRESSY</title>
+<title id="siteTitle">متجر مكتبة بريسي  | MAKTABT BRESSY</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -479,6 +479,15 @@
   </div>
 </div>
 
+<!-- نافذة معاينة الصور (إيصالات الدفع) -->
+<div class="modal" id="imagePreviewModal">
+  <div class="modal-content" style="max-width:520px; text-align:center;">
+    <span class="close-btn" onclick="closeModal('imagePreviewModal')">&times;</span>
+    <h3 style="font-size:14px; margin-bottom:10px; color:var(--navy);">📄 صورة الإيصال</h3>
+    <img id="imagePreviewImg" src="" style="max-width:100%; border-radius:8px;" alt="إيصال الدفع">
+  </div>
+</div>
+
 <!-- 12. لوحة تحكم الأدمن الشاملة -->
 <div class="modal" id="adminDashboardModal">
   <div class="modal-content modal-lg">
@@ -499,6 +508,19 @@
 
     <!-- إدارة الطلبات -->
     <div id="admOrdersTab">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>من تاريخ:</label>
+          <input type="date" id="ordersFromDate">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>إلى تاريخ:</label>
+          <input type="date" id="ordersToDate">
+        </div>
+        <button class="btn-sm btn-blue" style="padding:8px 14px;" onclick="applyAdminOrdersDateFilter()">تصفية 🔍</button>
+        <button class="btn-sm" style="padding:8px 14px; background:#64748b;" onclick="clearAdminOrdersDateFilter()">عرض الكل</button>
+        <button class="btn-sm btn-danger" style="padding:8px 14px; margin-right:auto;" onclick="deleteOldOrders()">🗑️ حذف الطلبات الأقدم من شهر</button>
+      </div>
       <div style="overflow-x:auto;">
         <table>
           <thead>
@@ -614,6 +636,13 @@
         <div class="form-group">
           <label>وصف المتجر:</label>
           <input type="text" id="stDescAr" required>
+        </div>
+
+        <h3 style="font-size: 14px; margin: 15px 0 10px;">🔗 روابط إدارية</h3>
+        <div class="form-group">
+          <label>رابط صفحة Authentication (بيتفتح تلقائيًا بعد حذف أي حساب):</label>
+          <input type="url" id="stAuthConsoleUrl" placeholder="https://console.firebase.google.com/project/xxxxx/authentication/users">
+          <small style="font-size:11px; color:var(--muted);">سيبها فاضية عشان يستخدم الرابط الافتراضي لمشروعك.</small>
         </div>
 
         <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ التعديلات والتحديث</button>
@@ -869,6 +898,7 @@ async function handleForgotPassword(inputId) {
 auth.onAuthStateChanged(async (fbUser) => {
   if (!fbUser) {
     currentUser = null;
+    initUserScopedListeners();
     updateUI();
     return;
   }
@@ -876,6 +906,7 @@ auth.onAuthStateChanged(async (fbUser) => {
     const doc = await db.collection('users').doc(fbUser.uid).get();
     if (!doc.exists) {
       currentUser = null;
+      initUserScopedListeners();
       updateUI();
       return;
     }
@@ -894,19 +925,17 @@ auth.onAuthStateChanged(async (fbUser) => {
     console.error(err);
     currentUser = null;
   }
+  initUserScopedListeners();
   updateUI();
 });
 
 /* ======================================================================
-   الاستماع اللحظي (Realtime) لكل مجموعات البيانات في Firestore
+   المستمعون اللحظيون (Realtime) - مقسّمة لنوعين:
+   1) عامة: تشتغل لأي زائر بدون تسجيل دخول (منتجات، أقسام، إعدادات المتجر)
+   2) خاصة بالمستخدم: بتتغيّر حسب هو مين (عميل/أدمن فرعي/أدمن رئيسي)، وده
+      عشان تتوافق مع قواعد الأمان اللي بتمنع أي حد من قراءة بيانات مش بتاعته
 ====================================================================== */
-function initFirebaseListeners() {
-  db.collection('users').onSnapshot(snap => {
-    allUsers = snap.docs.map(d => d.data());
-    renderAdminUsers();
-    renderAdminSubAdmins();
-  }, err => console.error('users listener error:', err));
-
+function initPublicListeners() {
   db.collection('categories').onSnapshot(snap => {
     let list = snap.docs.map(d => d.data());
     if (!list.some(c => c.key === 'all')) list.unshift({ key: 'all', titleAr: 'الكل' });
@@ -915,44 +944,83 @@ function initFirebaseListeners() {
     renderAdminCategories();
   }, err => console.error('categories listener error:', err));
 
-  db.collection('paymentMethods').onSnapshot(snap => {
-    paymentMethods = snap.docs.map(d => d.data());
-    renderAdminPayments();
-  }, err => console.error('paymentMethods listener error:', err));
-
   db.collection('products').onSnapshot(snap => {
     products = snap.docs.map(d => d.data());
     renderProducts(currentCategoryFilter);
   }, err => console.error('products listener error:', err));
 
-  db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snap => {
-    orders = snap.docs.map(d => d.data());
-    renderAdminOrders();
-    if (currentUser && !currentUser.isAdmin) renderUserOrders();
-  }, err => console.error('orders listener error:', err));
-
-  db.collection('userNotis').onSnapshot(snap => {
-    userNotis = snap.docs.map(d => d.data());
-    renderUserNotis();
-    updateNotiBadges();
-  }, err => console.error('userNotis listener error:', err));
-
-  db.collection('adminNotis').onSnapshot(snap => {
-    adminNotis = snap.docs.map(d => d.data());
-    renderAdminNotis();
-    updateNotiBadges();
-  }, err => console.error('adminNotis listener error:', err));
-
-  db.collection('chatMessages').orderBy('id').onSnapshot(snap => {
-    chatMessages = snap.docs.map(d => d.data());
-    renderChat();
-    if (currentUser && currentUser.isAdmin) loadAdminChat();
-  }, err => console.error('chatMessages listener error:', err));
-
   db.collection('settings').doc('store').onSnapshot(doc => {
     if (doc.exists) storeSettings = doc.data();
     applySettings();
   }, err => console.error('settings/store listener error:', err));
+}
+
+let scopedUnsubscribers = [];
+
+function teardownUserScopedListeners() {
+  scopedUnsubscribers.forEach(unsub => { try { unsub(); } catch(e) {} });
+  scopedUnsubscribers = [];
+}
+
+function initUserScopedListeners() {
+  teardownUserScopedListeners();
+
+  if (!currentUser) {
+    // مفيش حد مسجل دخول - نفضّي البيانات الخاصة اللي مش مسموح نشوفها دلوقتي
+    allUsers = []; paymentMethods = []; orders = []; userNotis = []; adminNotis = []; chatMessages = [];
+    renderAdminUsers(); renderAdminSubAdmins(); renderAdminOrders(); renderUserNotis(); renderAdminNotis();
+    updateNotiBadges();
+    return;
+  }
+
+  // بيانات محتاجة تسجيل دخول بس (مش محتاجة فلترة حسب الشخص)
+  scopedUnsubscribers.push(db.collection('users').onSnapshot(snap => {
+    allUsers = snap.docs.map(d => d.data());
+    renderAdminUsers();
+    renderAdminSubAdmins();
+  }, err => console.error('users listener error:', err)));
+
+  scopedUnsubscribers.push(db.collection('paymentMethods').onSnapshot(snap => {
+    paymentMethods = snap.docs.map(d => d.data());
+    renderAdminPayments();
+    if (document.getElementById('cartModal').style.display === 'flex') renderCheckoutAccounts();
+  }, err => console.error('paymentMethods listener error:', err)));
+
+  if (currentUser.isAdmin) {
+    // الأدمن (رئيسي أو فرعي) يشوف كل الطلبات وكل تنبيهات الإدارة وكل رسائل الدعم
+    scopedUnsubscribers.push(db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snap => {
+      orders = snap.docs.map(d => d.data());
+      renderAdminOrders();
+    }, err => console.error('orders listener error:', err)));
+
+    scopedUnsubscribers.push(db.collection('adminNotis').onSnapshot(snap => {
+      adminNotis = snap.docs.map(d => d.data());
+      renderAdminNotis();
+      updateNotiBadges();
+    }, err => console.error('adminNotis listener error:', err)));
+
+    scopedUnsubscribers.push(db.collection('chatMessages').orderBy('id').onSnapshot(snap => {
+      chatMessages = snap.docs.map(d => d.data());
+      loadAdminChatUsers();
+    }, err => console.error('chatMessages listener error:', err)));
+  } else {
+    // العميل يشوف طلباته هو، إشعاراته هو، ورسائله هو بس (زي قواعد الأمان بالظبط)
+    scopedUnsubscribers.push(db.collection('orders').where('userPhone', '==', currentUser.phone).onSnapshot(snap => {
+      orders = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      renderUserOrders();
+    }, err => console.error('orders listener error:', err)));
+
+    scopedUnsubscribers.push(db.collection('userNotis').where('userPhone', '==', currentUser.phone).onSnapshot(snap => {
+      userNotis = snap.docs.map(d => d.data());
+      renderUserNotis();
+      updateNotiBadges();
+    }, err => console.error('userNotis listener error:', err)));
+
+    scopedUnsubscribers.push(db.collection('chatMessages').where('senderPhone', '==', currentUser.phone).onSnapshot(snap => {
+      chatMessages = snap.docs.map(d => d.data()).sort((a, b) => (a.id || 0) - (b.id || 0));
+      renderChat();
+    }, err => console.error('chatMessages listener error:', err)));
+  }
 }
 
 function applySettings() {
@@ -972,6 +1040,7 @@ function applySettings() {
   document.getElementById('stAddressAr').value = storeSettings.addressAr || '';
   document.getElementById('stAddressEn').value = storeSettings.addressEn || '';
   document.getElementById('stDescAr').value = storeSettings.descAr;
+  document.getElementById('stAuthConsoleUrl').value = storeSettings.authConsoleUrl || '';
 }
 
 function renderCategoriesBar() {
@@ -1433,12 +1502,17 @@ async function handleSaveSubAdminEdit(e) {
 
 async function deleteSubAdmin(uid) {
   if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ خيار الحذف متاح فقط للأدمن الرئيسي!");
-  if (!confirm("هل أنت تأكد من حذف حساب الأدمن الفرعي هذا؟\n(ملاحظة: هيتم حذف بياناته من النظام، لكن حساب الدخول بتاعه في Firebase لازم يتحذف يدويًا من Firebase Console لو عايز تمنعه من الدخول نهائيًا)")) return;
+  const s = allUsers.find(x => x.uid === uid);
+  const emailToDelete = s ? s.email : '';
+  if (!confirm("هل أنت تأكد من حذف حساب الأدمن الفرعي هذا؟")) return;
+
   try {
     await db.collection('users').doc(uid).delete();
   } catch (err) {
-    alert("❌ حصل خطأ أثناء الحذف. " + err.message);
+    return alert("❌ حصل خطأ أثناء الحذف. " + err.message);
   }
+
+  openAuthConsoleForDeletedAccount(emailToDelete, s ? s.name : '');
 }
 
 function renderAdminSubAdmins() {
@@ -1594,10 +1668,68 @@ function renderUserOrders() {
   `).join('');
 }
 
+let adminOrdersFromDate = null;
+let adminOrdersToDate = null;
+
+function applyAdminOrdersDateFilter() {
+  adminOrdersFromDate = document.getElementById('ordersFromDate').value || null;
+  adminOrdersToDate = document.getElementById('ordersToDate').value || null;
+  renderAdminOrders();
+}
+
+function clearAdminOrdersDateFilter() {
+  adminOrdersFromDate = null;
+  adminOrdersToDate = null;
+  document.getElementById('ordersFromDate').value = '';
+  document.getElementById('ordersToDate').value = '';
+  renderAdminOrders();
+}
+
+async function deleteOldOrders() {
+  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ حذف سجل الطلبات القديمة متاح فقط للأدمن الرئيسي!");
+
+  const cutoff = Date.now() - (30 * 24 * 60 * 60 * 1000);
+  const oldOrders = orders.filter(o => (o.createdAt || 0) < cutoff);
+  if (oldOrders.length === 0) return alert("مفيش طلبات أقدم من شهر حاليًا.");
+  if (!confirm(`هيتم حذف ${oldOrders.length} طلب أقدم من شهر بشكل نهائي. متأكد؟`)) return;
+
+  try {
+    for (let i = 0; i < oldOrders.length; i += 400) {
+      const chunk = oldOrders.slice(i, i + 400);
+      const batch = db.batch();
+      chunk.forEach(o => batch.delete(db.collection('orders').doc(o.orderId)));
+      await batch.commit();
+    }
+    alert("✅ تم حذف الطلبات القديمة بنجاح.");
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء الحذف. " + err.message);
+  }
+}
+
+function showImagePreview(src) {
+  document.getElementById('imagePreviewImg').src = src;
+  openModal('imagePreviewModal');
+}
+
 function renderAdminOrders() {
-  document.getElementById('adminOrdersTable').innerHTML = orders.map((o, idx) => {
+  let list = orders;
+  if (adminOrdersFromDate) {
+    const fromTs = new Date(adminOrdersFromDate + 'T00:00:00').getTime();
+    list = list.filter(o => (o.createdAt || 0) >= fromTs);
+  }
+  if (adminOrdersToDate) {
+    const toTs = new Date(adminOrdersToDate + 'T23:59:59.999').getTime();
+    list = list.filter(o => (o.createdAt || 0) <= toTs);
+  }
+
+  if (list.length === 0) {
+    document.getElementById('adminOrdersTable').innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:15px;">${(adminOrdersFromDate || adminOrdersToDate) ? 'لا توجد طلبات في الفترة المحددة.' : 'لا توجد طلبات مسجلة بعد.'}</td></tr>`;
+    return;
+  }
+
+  document.getElementById('adminOrdersTable').innerHTML = list.map((o, idx) => {
     let receiptHtml = o.receiptImg
-      ? `<br><a href="${o.receiptImg}" target="_blank"><img src="${o.receiptImg}" style="width:45px; height:45px; border-radius:4px; object-fit:cover; border:1px solid #ccc; margin-top:3px;" title="اضغط للتكبير"></a>`
+      ? `<br><img src="${o.receiptImg}" onclick="showImagePreview('${o.receiptImg}')" style="width:45px; height:45px; border-radius:4px; object-fit:cover; border:1px solid #ccc; margin-top:3px; cursor:pointer;" title="اضغط للتكبير">`
       : '<br><small style="color:var(--muted)">بدون إيصال مرفق</small>';
 
     return `
@@ -1878,7 +2010,8 @@ async function saveStoreSettings(e) {
     titleEn: document.getElementById('stTitleEn').value,
     addressAr: document.getElementById('stAddressAr').value,
     addressEn: document.getElementById('stAddressEn').value,
-    descAr: document.getElementById('stDescAr').value
+    descAr: document.getElementById('stDescAr').value,
+    authConsoleUrl: document.getElementById('stAuthConsoleUrl').value.trim()
   };
   try {
     await db.collection('settings').doc('store').set(updated, { merge: true });
@@ -1975,12 +2108,35 @@ async function handleSaveUserEdit(e) {
 
 async function deleteUserAccount(uid) {
   if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
-  if (!confirm("هل أنت تأكد من حذف حساب هذا المستخدم نهائياً؟\n(ملاحظة: هيتم حذف بياناته من النظام، لكن حساب الدخول بتاعه في Firebase لازم يتحذف يدويًا من Firebase Console لو عايز تمنعه من الدخول نهائيًا)")) return;
+  const u = allUsers.find(x => x.uid === uid);
+  const emailToDelete = u ? u.email : '';
+  if (!confirm("هل أنت تأكد من حذف حساب هذا المستخدم نهائياً؟")) return;
+
   try {
     await db.collection('users').doc(uid).delete();
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    return alert("❌ حصل خطأ. " + err.message);
   }
+
+  openAuthConsoleForDeletedAccount(emailToDelete, u ? u.name : '');
+}
+
+/* --- بعد حذف أي حساب من الموقع، ننسخ بريده ونفتح صفحة Authentication عشان يتحذف حساب الدخول بتاعه كمان --- */
+async function openAuthConsoleForDeletedAccount(email, name) {
+  let copied = false;
+  if (email && navigator.clipboard) {
+    try { await navigator.clipboard.writeText(email); copied = true; } catch (e) {}
+  }
+
+  alert(
+    `✅ تم حذف بيانات "${name || 'المستخدم'}" من الموقع.\n\n` +
+    `⚠️ خطوة أخيرة مهمة: لسه حساب دخوله شغال في Authentication، ولازم تحذفه يدويًا عشان يقدر يسجّل تاني بنفس البريد.\n\n` +
+    (copied
+      ? `نسخنا بريده لحافظتك: ${email}\nهنفتحلك صفحة Authentication دلوقتي - الصق البريد في خانة البحث واحذفه من هناك.`
+      : `بريده هو: ${email}\nهنفتحلك صفحة Authentication دلوقتي - دوّر عنه واحذفه من هناك.`)
+  );
+
+  window.open(storeSettings.authConsoleUrl || 'https://console.firebase.google.com/project/maktabt-bressy-store-2642b/authentication/users', '_blank');
 }
 
 function renderAdminUsers() {
@@ -2061,7 +2217,7 @@ function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
 /* --- بداية تشغيل التطبيق --- */
 loadCartLocal();
-initFirebaseListeners();
+initPublicListeners();
 updateUI();
 </script>
 </body>
