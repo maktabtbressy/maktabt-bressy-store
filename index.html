@@ -2350,4 +2350,231 @@ async function handleSaveUserEdit(e) {
 
   const uid = document.getElementById('editUserId').value;
   const updated = {
-    name: document.getElementById('editUserNa
+    name: document.getElementById('editUserName').value.trim(),
+    phone: document.getElementById('editUserPhone').value.trim(),
+    nationalId: document.getElementById('editUserNationalId').value.trim(),
+    address: document.getElementById('editUserAddress').value.trim()
+  };
+
+  try {
+    await db.collection('users').doc(uid).update(updated);
+    closeModal('editUserModal');
+    alert("✅ تم تعديل بيانات العميل بنجاح!");
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+async function deleteUserAccount(uid) {
+  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+  const u = allUsers.find(x => x.uid === uid);
+  const emailToDelete = u ? u.email : '';
+  if (!confirm("هل أنت تأكد من حذف حساب هذا المستخدم نهائياً؟")) return;
+
+  try {
+    await db.collection('users').doc(uid).delete();
+  } catch (err) {
+    return alert("❌ حصل خطأ. " + err.message);
+  }
+
+  openAuthConsoleForDeletedAccount(emailToDelete, u ? u.name : '');
+}
+
+/* --- بعد حذف أي حساب من الموقع، ننسخ بريده ونفتح صفحة Authentication عشان يتحذف حساب الدخول بتاعه كمان --- */
+async function openAuthConsoleForDeletedAccount(email, name) {
+  let copied = false;
+  if (email && navigator.clipboard) {
+    try { await navigator.clipboard.writeText(email); copied = true; } catch (e) {}
+  }
+
+  alert(
+    `✅ تم حذف بيانات "${name || 'المستخدم'}" من الموقع.\n\n` +
+    `⚠️ خطوة أخيرة مهمة: لسه حساب دخوله شغال في Authentication، ولازم تحذفه يدويًا عشان يقدر يسجّل تاني بنفس البريد.\n\n` +
+    (copied
+      ? `نسخنا بريده لحافظتك: ${email}\nهنفتحلك صفحة Authentication دلوقتي - الصق البريد في خانة البحث واحذفه من هناك.`
+      : `بريده هو: ${email}\nهنفتحلك صفحة Authentication دلوقتي - دوّر عنه واحذفه من هناك.`)
+  );
+
+  window.open(getAuthConsoleLink(), '_blank');
+}
+
+/* ======================================================================
+   الروابط الإدارية - قائمة روابط قابلة للإضافة والتعديل والحذف من الموقع نفسه
+====================================================================== */
+function getAuthConsoleLink() {
+  const found = adminLinks.find(l => l.isAuthLink === true);
+  return found ? found.url : 'https://console.firebase.google.com/project/maktabt-bressy-store-2642b/authentication/users';
+}
+
+async function setAsAuthLink(id) {
+  try {
+    const batch = db.batch();
+    adminLinks.forEach(l => {
+      if (l.id === id) batch.update(db.collection('adminLinks').doc(String(l.id)), { isAuthLink: true });
+      else if (l.isAuthLink) batch.update(db.collection('adminLinks').doc(String(l.id)), { isAuthLink: false });
+    });
+    await batch.commit();
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+async function addAdminLink(e) {
+  e.preventDefault();
+  const name = document.getElementById('newLinkName').value.trim();
+  const url = document.getElementById('newLinkUrl').value.trim();
+  const id = Date.now();
+
+  try {
+    await db.collection('adminLinks').doc(String(id)).set({ id, name, url });
+    document.getElementById('newLinkName').value = "";
+    document.getElementById('newLinkUrl').value = "";
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+function toggleEditAdminLink(id) {
+  openLinkEditId = (openLinkEditId === id) ? null : id;
+  renderAdminLinks();
+}
+
+async function saveAdminLinkEdit(id) {
+  const input = document.getElementById('editLinkUrl_' + id);
+  const newUrl = input ? input.value.trim() : '';
+  if (!newUrl) return alert("لازم تحط رابط!");
+
+  try {
+    await db.collection('adminLinks').doc(String(id)).update({ url: newUrl });
+    openLinkEditId = null;
+    alert("✅ تم تحديث الرابط!");
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+async function deleteAdminLink(id) {
+  if (!confirm("متأكد من حذف الرابط ده؟")) return;
+  try {
+    await db.collection('adminLinks').doc(String(id)).delete();
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+function renderAdminLinks() {
+  const box = document.getElementById('adminLinksList');
+  if (!box) return;
+
+  if (adminLinks.length === 0) {
+    box.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">مفيش روابط مضافة لسه.</p>`;
+    return;
+  }
+
+  box.innerHTML = adminLinks.map(l => `
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+        <b style="font-size:13px; color:var(--navy);">
+          ${l.name}
+          ${l.isAuthLink ? '<span style="font-size:10.5px; background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:10px; margin-right:5px;">⭐ رابط حذف الحسابات</span>' : ''}
+        </b>
+        <div style="display:flex; gap:5px; flex-wrap:wrap;">
+          <button class="btn-sm btn-blue" onclick="window.open('${l.url}','_blank')">🔗 فتح</button>
+          <button class="btn-sm" style="background:#eab308;" onclick="toggleEditAdminLink(${l.id})">✏️ تعديل</button>
+          ${!l.isAuthLink ? `<button class="btn-sm" style="background:#64748b;" onclick="setAsAuthLink(${l.id})">⭐ استخدمه لحذف الحسابات</button>` : ''}
+          <button class="btn-sm btn-danger" onclick="deleteAdminLink(${l.id})">🗑️ حذف</button>
+        </div>
+      </div>
+      ${openLinkEditId === l.id ? `
+        <div style="display:flex; gap:5px; margin-top:8px;">
+          <input type="url" id="editLinkUrl_${l.id}" value="${l.url}" style="flex:1; padding:6px; font-size:12px; border:1px solid #cbd5e1; border-radius:6px;">
+          <button class="btn-sm btn-blue" onclick="saveAdminLinkEdit(${l.id})">💾 حفظ</button>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+function renderAdminUsers() {
+  const searchInput = document.getElementById('userSearchInput');
+  const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+  let list = allUsers.filter(u => u.role === 'customer');
+  if (term) {
+    list = list.filter(u =>
+      (u.name && u.name.toLowerCase().includes(term)) ||
+      (u.phone && u.phone.toLowerCase().includes(term)) ||
+      (u.nationalId && u.nationalId.toLowerCase().includes(term)) ||
+      (u.email && u.email.toLowerCase().includes(term))
+    );
+  }
+
+  if (list.length === 0) {
+    document.getElementById('adminUsersTable').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:15px;">${term ? '🔍 لا توجد نتائج مطابقة للبحث.' : 'لا يوجد عملاء مسجلين بعد.'}</td></tr>`;
+    return;
+  }
+
+  document.getElementById('adminUsersTable').innerHTML = list.map(u => `
+    <tr id="userRow_${u.uid}">
+      <td><b>${u.name}</b></td>
+      <td>${u.phone}</td>
+      <td>${u.nationalId}</td>
+      <td>${u.email}</td>
+      <td>${u.address}</td>
+      <td>
+        ${currentUser && currentUser.isSuperAdmin ? `
+          <button class="btn-sm btn-blue" onclick="openEditUserModal('${u.uid}')">تعديل ✏️</button>
+          <button class="btn-sm btn-danger" onclick="deleteUserAccount('${u.uid}')">حذف 🗑️</button>
+        ` : 'غير متاح للفرعي'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function loadSuperAdminAccountTab() {
+  document.getElementById('superAdminNameInput').value = currentUser ? currentUser.name : '';
+  document.getElementById('superAdminUserInput').value = currentUser ? currentUser.email : '';
+  document.getElementById('superAdminPassInput').value = '';
+}
+
+/* --- تعديل اسم الأدمن الرئيسي (البريد وكلمة المرور بيتغيروا من إعدادات الحساب في Firebase نفسه) --- */
+async function handleSaveSuperAdminCreds(e) {
+  e.preventDefault();
+  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+
+  const newName = document.getElementById('superAdminNameInput').value.trim();
+
+  try {
+    await db.collection('users').doc(currentUser.uid).update({ name: newName });
+    alert("✅ تم تعديل اسم الأدمن الرئيسي بنجاح!\nملاحظة: تغيير البريد الإلكتروني أو كلمة المرور بيتم عن طريق رابط \"نسيت كلمة المرور؟\" أو من Firebase Console مباشرة.");
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+function filterCat(c, ev) {
+  currentCategoryFilter = c;
+  document.querySelectorAll('#categoriesTabsBar .tab-btn').forEach(b => b.classList.remove('active'));
+  if(ev) ev.target.classList.add('active');
+  renderProducts(c);
+}
+
+function openModal(id) {
+  if(id === 'cartModal') renderCart();
+  if(id === 'userOrdersModal') renderUserOrders();
+  if(id === 'userNotiModal') renderUserNotis();
+  if(id === 'adminNotiModal') renderAdminNotis();
+  if(id === 'chatModal') renderChat();
+  if(id === 'adminDashboardModal') switchAdminTab('admOrders');
+  document.getElementById(id).style.display = 'flex';
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+/* --- بداية تشغيل التطبيق --- */
+loadCartLocal();
+initPublicListeners();
+updateUI();
+</script>
+</body>
+</html>
