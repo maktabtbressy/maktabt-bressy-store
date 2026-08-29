@@ -440,17 +440,19 @@
       </div>
       
       <div class="form-group" style="background:#f1f5f9; padding:10px; border-radius:8px; margin: 5px 0;">
-        <label style="color:var(--navy);">🖼️ تغيير أو اختيار صورة جديدة للمنتج:</label>
-        <input type="file" accept="image/*" onchange="previewEditProductImage(event)">
-        <label style="margin-top:8px; font-size:12px; color:var(--red); cursor:pointer;">
-          <input type="checkbox" id="removeImgCheckbox"> 🗑️ حذف الصورة الحالية والاعتماد على لوجو الصفحة الافتراضي
-        </label>
+        <label style="color:var(--navy);">🖼️ صور المنتج (الصورة الأولى هي اللي بتظهر في واجهة المتجر):</label>
+        <div id="editProdImagesList" style="display:flex; flex-wrap:wrap; gap:8px; margin:8px 0;"></div>
+        <label style="font-size:12px; color:var(--navy); font-weight:700;">➕ إضافة صور جديدة (تقدر تختار أكتر من صورة مرة واحدة):</label>
+        <input type="file" accept="image/*" multiple onchange="previewEditProductImage(event)">
       </div>
 
       <div class="form-group">
         <label>الوصف</label>
         <textarea id="editProdDesc" rows="3" required></textarea>
       </div>
+      <label style="font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px; cursor:pointer; margin-bottom:10px;">
+        <input type="checkbox" id="editProdRequiresSerial"> 🔑 المنتج ده يتطلب سيريال/رقم تعريفي من العميل عند الطلب (تفعيل برنامج)
+      </label>
       <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ التحديثات</button>
     </form>
   </div>
@@ -539,12 +541,27 @@
   </div>
 </div>
 
-<!-- نافذة معاينة الصور (إيصالات الدفع) -->
+<!-- نافذة معاينة الصور (إيصالات الدفع وصور المنتجات) -->
 <div class="modal" id="imagePreviewModal">
   <div class="modal-content" style="max-width:520px; text-align:center;">
     <span class="close-btn" onclick="closeModal('imagePreviewModal')">&times;</span>
-    <h3 style="font-size:14px; margin-bottom:10px; color:var(--navy);">📄 صورة الإيصال</h3>
-    <img id="imagePreviewImg" src="" style="max-width:100%; border-radius:8px;" alt="إيصال الدفع">
+    <h3 style="font-size:14px; margin-bottom:10px; color:var(--navy);">📄 عرض الصورة</h3>
+    <img id="imagePreviewImg" src="" style="max-width:100%; border-radius:8px;" alt="صورة">
+  </div>
+</div>
+
+<!-- نافذة تفاصيل المنتج -->
+<div class="modal" id="productDetailsModal">
+  <div class="modal-content modal-lg">
+    <span class="close-btn" onclick="closeModal('productDetailsModal')">&times;</span>
+    <h2 id="prodDetailsTitle" style="font-size: 18px; margin-bottom: 10px; color: var(--navy);"></h2>
+    <div id="prodDetailsImages" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+      <span id="prodDetailsPrice" class="price" style="font-size:16px;"></span>
+      <span id="prodDetailsQty" class="card-qty"></span>
+    </div>
+    <p id="prodDetailsDesc" style="line-height:1.8; font-size:14px; color:var(--text); white-space:pre-wrap;"></p>
+    <button id="prodDetailsOrderBtn" class="btn-submit" style="margin-top:12px;">طلب الخدمة 🛒</button>
   </div>
 </div>
 
@@ -713,9 +730,12 @@
           </div>
           <div class="form-group"><label>السعر</label><input type="text" id="pPrice" required></div>
           <div class="form-group"><label>الكمية (اتركها فارغة لعدم العرض)</label><input type="number" id="pQty" placeholder="مثال: 15"></div>
-          <div class="form-group"><label>الصورة (اختياري)</label><input type="file" accept="image/*" onchange="previewImage(event)"></div>
+          <div class="form-group"><label>الصور (اختياري - تقدر تختار أكتر من صورة)</label><input type="file" accept="image/*" multiple onchange="previewImage(event)"><small id="pImagesCount" style="font-size:11px; color:var(--muted);"></small></div>
         </div>
         <div class="form-group"><label>الوصف</label><textarea id="pDesc" rows="2" required></textarea></div>
+        <label style="font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px; cursor:pointer; margin-bottom:10px;">
+          <input type="checkbox" id="pRequiresSerial"> 🔑 المنتج ده يتطلب سيريال/رقم تعريفي من العميل عند الطلب (تفعيل برنامج)
+        </label>
         <button type="submit" class="btn-submit">نشر في المتجر</button>
       </form>
     </div>
@@ -808,6 +828,7 @@
         <input type="text" id="adminChatInput" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px;" placeholder="اكتب رد الأدمن...">
         <button onclick="sendAdminChatMessage()" style="background:var(--green); color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:700;">إرسال الرد</button>
       </div>
+      <p style="font-size:10.5px; color:var(--muted); margin-top:6px; text-align:center;">⏳ الرسائل بتتحذف تلقائيًا بعد شهر من إرسالها.</p>
     </div>
 
     <!-- روابط إدارية -->
@@ -900,9 +921,17 @@ let storeSettings = {
   logo: "", banner: ""
 };
 
-let uploadedImgBase64 = "";
-let editUploadedImgBase64 = null;
+let uploadedImages = [];        // صور المنتج الجديد وقت الإضافة
+let editExistingImages = [];    // صور المنتج الحالية أثناء التعديل (بعد استبعاد المحذوف)
+let editNewImages = [];         // صور جديدة مضافة أثناء التعديل
 let receiptImgBase64 = "";
+
+/* --- توافق مع المنتجات القديمة اللي كانت مخزّنة بحقل img واحد بدل مصفوفة images --- */
+function getProductImages(p) {
+  if (p.images && p.images.length) return p.images;
+  if (p.img) return [p.img];
+  return [];
+}
 
 function loadCartLocal() {
   try { cart = JSON.parse(localStorage.getItem('brs_v4_cart')) || []; } catch(e) { cart = []; }
@@ -1307,7 +1336,9 @@ function updateUI() {
 
 function addToCart(id) {
   if (!currentUser) return openModal('loginModal');
-  cart.push(products.find(p => p.id === id));
+  const p = products.find(p => p.id === id);
+  if (!p) return;
+  cart.push({ ...p });
   saveCartLocal();
   updateUI();
   alert("تمت الإضافة للسلة!");
@@ -1341,9 +1372,20 @@ function renderCart() {
   }
 
   container.innerHTML = cart.map((item, i) => `
-    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #ddd;">
-      <div><strong>${item.title}</strong> - ${item.price}</div>
-      <button onclick="cart.splice(${i},1); saveCartLocal(); updateUI(); renderCart();" style="color:red; background:none; border:none; cursor:pointer;">حذف</button>
+    <div style="padding:8px 0; border-bottom:1px solid #ddd;">
+      <div style="display:flex; justify-content:space-between;">
+        <div><strong>${item.title}</strong> - ${item.price}</div>
+        <button onclick="cart.splice(${i},1); saveCartLocal(); updateUI(); renderCart();" style="color:red; background:none; border:none; cursor:pointer;">حذف</button>
+      </div>
+      ${item.requiresSerial ? `
+        <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:8px; margin-top:6px;">
+          <label style="font-size:11.5px; font-weight:700; color:#92400e; display:block; margin-bottom:4px;">🔑 اكتب السيريال / الرقم التعريفي بتاع البرنامج ده:</label>
+          <textarea rows="2" placeholder="ممكن تكتب أكتر من سطر..." style="width:100%; padding:6px; font-size:12.5px; border:1px solid #fcd34d; border-radius:6px;" oninput="updateCartSerialText(${i}, this.value)">${item.serialText || ''}</textarea>
+          <label style="font-size:11px; color:#92400e; display:block; margin-top:6px;">📷 أو ارفق صورة السيريال (اختياري):</label>
+          <input type="file" accept="image/*" onchange="previewCartSerialImage(event, ${i})">
+          ${item.serialImg ? `<img src="${item.serialImg}" style="width:50px; height:50px; object-fit:cover; border-radius:6px; margin-top:5px; cursor:pointer;" onclick="showImagePreview('${item.serialImg}')">` : ''}
+        </div>
+      ` : ''}
     </div>
   `).join('');
 
@@ -1354,8 +1396,32 @@ function renderCart() {
 }
 
 /* --- الانتقال لبيانات التوصيل: نعبّي الحقول تلقائيًا من بيانات الحساب لكن تفضل قابلة للتعديل --- */
+function updateCartSerialText(index, value) {
+  if (!cart[index]) return;
+  cart[index].serialText = value;
+  saveCartLocal();
+}
+
+async function previewCartSerialImage(e, index) {
+  const file = e.target.files[0];
+  if (!file || !cart[index]) return;
+  try {
+    cart[index].serialImg = await compressImage(file, 900, 0.75);
+    saveCartLocal();
+    renderCart();
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء معالجة الصورة، جرّب صورة تانية.");
+  }
+}
+
 function goToDeliveryInfo() {
   if (cart.length === 0) return;
+
+  const missingSerial = cart.find(item => item.requiresSerial && !(item.serialText && item.serialText.trim()) && !item.serialImg);
+  if (missingSerial) {
+    return alert(`المنتج "${missingSerial.title}" محتاج تكتب السيريال أو ترفق صورته الأول قبل ما تكمل.`);
+  }
+
   document.getElementById('deliveryName').value = currentUser.name || '';
   document.getElementById('deliveryPhone').value = currentUser.phone || '';
   document.getElementById('deliveryAddress').value = currentUser.address || '';
@@ -1434,7 +1500,10 @@ async function submitOrderProcess() {
         deliveryName: checkoutDeliveryInfo.name,
         deliveryPhone: checkoutDeliveryInfo.phone,
         deliveryAddress: checkoutDeliveryInfo.address,
-        deliveryDiffers: deliveryDiffers
+        deliveryDiffers: deliveryDiffers,
+        requiresSerial: !!item.requiresSerial,
+        serialText: item.serialText || '',
+        serialImg: item.serialImg || ''
       };
 
       await db.collection('orders').doc(orderId).set(ord);
@@ -1460,25 +1529,62 @@ function openQuickEditProduct(id) {
   const p = products.find(item => item.id === id);
   if(!p) return;
 
-  editUploadedImgBase64 = null;
+  editExistingImages = getProductImages(p).slice();
+  editNewImages = [];
+
   document.getElementById('editProdId').value = p.id;
   document.getElementById('editProdTitle').value = p.title;
   document.getElementById('editProdPrice').value = p.price;
   document.getElementById('editProdCatSelect').value = p.cat;
   document.getElementById('editProdQty').value = (p.quantity !== null && p.quantity !== undefined) ? p.quantity : '';
   document.getElementById('editProdDesc').value = p.desc;
-  document.getElementById('removeImgCheckbox').checked = false;
+  document.getElementById('editProdRequiresSerial').checked = !!p.requiresSerial;
 
+  renderEditProductImages();
   openModal('editProductModal');
 }
 
+function renderEditProductImages() {
+  const box = document.getElementById('editProdImagesList');
+  if (!box) return;
+
+  const existingHtml = editExistingImages.map((src, i) => `
+    <div style="position:relative;">
+      <img src="${src}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;">
+      <button type="button" onclick="removeExistingEditImage(${i})" style="position:absolute; top:-6px; right:-6px; background:var(--red); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; line-height:1;">✕</button>
+    </div>
+  `).join('');
+
+  const newHtml = editNewImages.map((src, i) => `
+    <div style="position:relative;">
+      <img src="${src}" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:2px solid var(--green);">
+      <button type="button" onclick="removeNewEditImage(${i})" style="position:absolute; top:-6px; right:-6px; background:var(--red); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer; line-height:1;">✕</button>
+    </div>
+  `).join('');
+
+  box.innerHTML = existingHtml + newHtml || `<p style="font-size:11px; color:var(--muted);">مفيش صور مضافة لسه.</p>`;
+}
+
+function removeExistingEditImage(index) {
+  editExistingImages.splice(index, 1);
+  renderEditProductImages();
+}
+
+function removeNewEditImage(index) {
+  editNewImages.splice(index, 1);
+  renderEditProductImages();
+}
+
 async function previewEditProductImage(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
   try {
-    editUploadedImgBase64 = await compressImage(file, 800, 0.7);
+    for (const file of files) {
+      editNewImages.push(await compressImage(file, 800, 0.7));
+    }
+    renderEditProductImages();
   } catch (err) {
-    alert("❌ حصل خطأ أثناء معالجة الصورة، جرّب صورة تانية.");
+    alert("❌ حصل خطأ أثناء معالجة الصور، جرّب صور تانية.");
   }
 }
 
@@ -1492,25 +1598,21 @@ async function handleSaveProductEdit(e) {
     title: document.getElementById('editProdTitle').value.trim(),
     price: document.getElementById('editProdPrice').value.trim(),
     cat: document.getElementById('editProdCatSelect').value,
-    desc: document.getElementById('editProdDesc').value.trim()
+    desc: document.getElementById('editProdDesc').value.trim(),
+    images: editExistingImages.concat(editNewImages),
+    requiresSerial: document.getElementById('editProdRequiresSerial').checked,
+    img: firebase.firestore.FieldValue.delete()
   };
 
   const qtyVal = document.getElementById('editProdQty').value.trim();
   updated.quantity = (qtyVal === '' || qtyVal === null) ? null : parseInt(qtyVal);
-
-  const isRemoveImage = document.getElementById('removeImgCheckbox').checked;
-  if (isRemoveImage) {
-    updated.img = '';
-  } else if (editUploadedImgBase64 !== null) {
-    updated.img = editUploadedImgBase64;
-  }
 
   try {
     await db.collection('products').doc(String(id)).update(updated);
     closeModal('editProductModal');
     alert("✅ تم تعديل بيانات المنتج بنجاح!");
   } catch (err) {
-    alert("❌ حصل خطأ أثناء الحفظ (الصورة ممكن تكون كبيرة جدًا، أو معندكش صلاحية). " + err.message);
+    alert("❌ حصل خطأ أثناء الحفظ (الصور ممكن تكون كبيرة جدًا، أو معندكش صلاحية). " + err.message);
   }
 }
 
@@ -1524,7 +1626,8 @@ function renderProducts(filter = 'all') {
       qtyHtml = `<div class="card-qty">المتاح: ${p.quantity}</div>`;
     }
 
-    const displayImgSrc = p.img ? p.img : defaultLogo;
+    const images = getProductImages(p);
+    const displayImgSrc = images.length ? images[0] : defaultLogo;
 
     let actionBtnHtml = '';
     if (currentUser && currentUser.isAdmin) {
@@ -1535,13 +1638,14 @@ function renderProducts(filter = 'all') {
 
     return `
       <div class="card">
-        <div class="card-img"><img src="${displayImgSrc}" alt="${p.title}"></div>
+        <div class="card-img" style="cursor:pointer;" onclick="openProductDetails(${p.id})"><img src="${displayImgSrc}" alt="${p.title}"></div>
         <div class="card-body">
           <h3>${p.title}</h3>
-          <p>${p.desc}</p>
           ${qtyHtml}
+          <div style="flex-grow:1;"></div>
           <div class="card-footer">
             <span class="price">${p.price}</span>
+            <button class="btn-quick-edit" style="background:#475569;" onclick="openProductDetails(${p.id})">📋 التفاصيل</button>
             ${actionBtnHtml}
           </div>
         </div>
@@ -1916,6 +2020,41 @@ function showImagePreview(src) {
   openModal('imagePreviewModal');
 }
 
+function openProductDetails(id) {
+  const p = products.find(item => item.id === id);
+  if (!p) return;
+
+  const images = getProductImages(p);
+  const defaultLogo = storeSettings.logo || 'https://via.placeholder.com/150?text=MAKTABT+BRESSY';
+  const galleryImages = images.length ? images : [defaultLogo];
+
+  document.getElementById('prodDetailsTitle').innerText = p.title;
+  document.getElementById('prodDetailsDesc').innerText = p.desc;
+  document.getElementById('prodDetailsPrice').innerText = p.price;
+
+  const qtyBox = document.getElementById('prodDetailsQty');
+  if (p.quantity !== null && p.quantity !== undefined && p.quantity !== '') {
+    qtyBox.innerText = `المتاح: ${p.quantity}`;
+    qtyBox.style.display = 'inline-block';
+  } else {
+    qtyBox.style.display = 'none';
+  }
+
+  document.getElementById('prodDetailsImages').innerHTML = galleryImages.map(src => `
+    <img src="${src}" onclick="showImagePreview('${src}')" style="width:140px; height:140px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0; cursor:pointer;" title="اضغط للتكبير">
+  `).join('');
+
+  const orderBtn = document.getElementById('prodDetailsOrderBtn');
+  if (currentUser && currentUser.isAdmin) {
+    orderBtn.style.display = 'none';
+  } else {
+    orderBtn.style.display = 'block';
+    orderBtn.onclick = () => { closeModal('productDetailsModal'); addToCart(p.id); };
+  }
+
+  openModal('productDetailsModal');
+}
+
 function renderAdminOrders() {
   let list = orders;
   if (adminOrdersFromDate) {
@@ -1946,10 +2085,20 @@ function renderAdminOrders() {
         </div>`;
     }
 
+    let serialHtml = '';
+    if (o.requiresSerial) {
+      serialHtml = `
+        <div style="margin-top:5px; padding:5px; background:#ecfeff; border:1px solid #a5f3fc; border-radius:6px; font-size:10.5px;">
+          <b style="color:#0e7490;">🔑 بيانات التفعيل المرسلة:</b><br>
+          ${o.serialText ? o.serialText.replace(/\n/g,'<br>') : '<span style="color:var(--muted);">مفيش سيريال مكتوب</span>'}
+          ${o.serialImg ? `<br><img src="${o.serialImg}" onclick="showImagePreview('${o.serialImg}')" style="width:40px; height:40px; object-fit:cover; border-radius:4px; margin-top:3px; cursor:pointer;" title="اضغط للتكبير">` : ''}
+        </div>`;
+    }
+
     return `
       <tr id="orderRow_${o.orderId}" class="${getOrderRowClass(o.status)}">
         <td>${o.userName}<br><small>${o.userPhone}</small>${deliveryHtml}</td>
-        <td>${o.productTitle} (${o.price})<br><small>${o.payMethod} | ${o.senderAcc}</small>${receiptHtml}</td>
+        <td>${o.productTitle} (${o.price})<br><small>${o.payMethod} | ${o.senderAcc}</small>${receiptHtml}${serialHtml}</td>
         <td>${getStatusBadge(o.status)}<br><small>ملاحظة: ${o.note || 'لاشيء'}</small></td>
         <td>
           <select id="stSel_${idx}" style="font-size:11px; padding:3px;">
@@ -2280,12 +2429,17 @@ async function saveStoreSettings(e) {
 }
 
 async function previewImage(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  uploadedImages = [];
   try {
-    uploadedImgBase64 = await compressImage(file, 800, 0.7);
+    for (const file of files) {
+      uploadedImages.push(await compressImage(file, 800, 0.7));
+    }
+    const counter = document.getElementById('pImagesCount');
+    if (counter) counter.innerText = `تم اختيار ${uploadedImages.length} صورة`;
   } catch (err) {
-    alert("❌ حصل خطأ أثناء معالجة الصورة، جرّب صورة تانية.");
+    alert("❌ حصل خطأ أثناء معالجة الصور، جرّب صور تانية.");
   }
 }
 
@@ -2301,15 +2455,19 @@ async function addProduct(e) {
     price: document.getElementById('pPrice').value,
     quantity: (qtyVal === '' || qtyVal === null) ? null : parseInt(qtyVal),
     desc: document.getElementById('pDesc').value,
-    img: uploadedImgBase64 || ''
+    images: uploadedImages.slice(),
+    requiresSerial: document.getElementById('pRequiresSerial').checked
   };
 
   try {
     await db.collection('products').doc(String(id)).set(newProd);
-    uploadedImgBase64 = "";
+    uploadedImages = [];
+    const counter = document.getElementById('pImagesCount');
+    if (counter) counter.innerText = '';
+    document.getElementById('pRequiresSerial').checked = false;
     alert("تم نشر المنتج في المتجر!");
   } catch (err) {
-    alert("❌ حصل خطأ أثناء النشر (الصورة ممكن تكون كبيرة جدًا، أو معندكش صلاحية). " + err.message);
+    alert("❌ حصل خطأ أثناء النشر (الصور ممكن تكون كبيرة جدًا، أو معندكش صلاحية). " + err.message);
   }
 }
 
