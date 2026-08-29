@@ -291,18 +291,19 @@
       <label>العنوان بالتفصيل</label>
       <textarea id="deliveryAddress" rows="2" required></textarea>
     </div>
+    <p style="font-size:11.5px; color:var(--muted); margin-bottom:8px;">📌 هيتم إرسال الطلب للإدارة أولاً للتأكد من التوفر، وبعد التأكيد هيظهرلك زرار الدفع في "طلباتي".</p>
     <div style="display:flex; gap:8px; margin-top:10px;">
       <button class="btn-nav" style="background:#64748b; flex:1;" onclick="closeModal('deliveryInfoModal'); openModal('cartModal');">◀ رجوع للسلة</button>
-      <button class="btn-submit" style="flex:2; margin-top:0;" onclick="goToPaymentStep()">الذهاب إلى الدفع 💳</button>
+      <button class="btn-submit" style="flex:2; margin-top:0;" onclick="submitOrderProcess()">تأكيد وإرسال الطلب 📦</button>
     </div>
   </div>
 </div>
 
-<!-- 4ج. الدفع -->
+<!-- 4ج. الدفع (خطوة منفصلة بعد تأكيد الأدمن لتوفر الطلب) -->
 <div class="modal" id="checkoutPaymentModal">
   <div class="modal-content">
     <span class="close-btn" onclick="closeModal('checkoutPaymentModal')">&times;</span>
-    <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">💳 اختر طريقة الدفع</h2>
+    <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">💳 تأكيد الطلب والدفع</h2>
 
     <div class="form-group">
       <label>طريقة الدفع:</label>
@@ -324,10 +325,7 @@
       <input type="file" accept="image/*" onchange="previewReceiptImage(event)">
     </div>
 
-    <div style="display:flex; gap:8px; margin-top:10px;">
-      <button class="btn-nav" style="background:#64748b; flex:1;" onclick="closeModal('checkoutPaymentModal'); openModal('deliveryInfoModal');">◀ رجوع لبيانات التوصيل</button>
-      <button class="btn-submit" style="flex:2; margin-top:0;" onclick="submitOrderProcess()">تأكيد وإرسال الطلب رسمياً 📦</button>
-    </div>
+    <button class="btn-submit" onclick="submitOrderPayment()">تأكيد الدفع ✅</button>
   </div>
 </div>
 
@@ -356,11 +354,12 @@
         <thead>
           <tr>
             <th>رقم الطلب</th>
-            <th>الخدمة</th>
-            <th>السعر</th>
+            <th>الأصناف</th>
+            <th>الإجمالي</th>
             <th>حالة الطلب</th>
             <th>ملاحظات الإدارة / سبب الإلغاء</th>
             <th>التاريخ</th>
+            <th>إجراءات</th>
           </tr>
         </thead>
         <tbody id="userOrdersTable"></tbody>
@@ -565,6 +564,42 @@
   </div>
 </div>
 
+<!-- نافذة عرض الطلب (فاتورة) -->
+<div class="modal" id="orderInvoiceModal">
+  <div class="modal-content modal-lg">
+    <span class="close-btn" onclick="closeModal('orderInvoiceModal')">&times;</span>
+    <div id="invoiceContent" style="background:#fff; padding:15px; border-radius:10px;">
+      <div style="text-align:center; margin-bottom:12px; border-bottom:2px solid var(--navy); padding-bottom:10px;">
+        <h2 id="invStoreTitle" style="color:var(--navy); font-size:18px;"></h2>
+        <p style="font-size:11px; color:var(--muted);" id="invStoreAddr"></p>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:10px; flex-wrap:wrap; gap:5px;">
+        <div><b>رقم الطلب:</b> <span id="invOrderId"></span></div>
+        <div><b>التاريخ:</b> <span id="invDate"></span></div>
+      </div>
+      <div style="font-size:12.5px; margin-bottom:10px;">
+        <div><b>العميل:</b> <span id="invCustomerName"></span> - <span id="invCustomerPhone"></span></div>
+        <div><b>عنوان التوصيل:</b> <span id="invDeliveryAddress"></span></div>
+      </div>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:10px;">
+        <thead>
+          <tr style="background:#f1f5f9;">
+            <th style="padding:6px; border:1px solid #e2e8f0;">الصنف</th>
+            <th style="padding:6px; border:1px solid #e2e8f0;">الكمية</th>
+            <th style="padding:6px; border:1px solid #e2e8f0;">السعر</th>
+          </tr>
+        </thead>
+        <tbody id="invItemsTable"></tbody>
+      </table>
+      <div style="text-align:left; font-weight:800; font-size:14px; color:var(--navy); margin-bottom:10px;" id="invTotal"></div>
+      <div style="font-size:12px;"><b>حالة الطلب:</b> <span id="invStatus"></span></div>
+    </div>
+    <div id="invoicePrintBtnWrap" style="margin-top:12px;">
+      <button class="btn-submit" style="background:var(--navy);" onclick="shareInvoiceImage()">🖨️ طباعة / مشاركة الفاتورة</button>
+    </div>
+  </div>
+</div>
+
 <!-- 12. لوحة تحكم الأدمن الشاملة -->
 <div class="modal" id="adminDashboardModal">
   <div class="modal-content modal-lg">
@@ -587,6 +622,10 @@
     <!-- إدارة الطلبات -->
     <div id="admOrdersTab">
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+        <div class="form-group" style="margin-bottom:0; flex:1; min-width:180px;">
+          <label>🔍 بحث (رقم طلب / اسم عميل / رقم موبايل):</label>
+          <input type="text" id="orderSearchInput" oninput="renderAdminOrders()" placeholder="اكتب للبحث...">
+        </div>
         <div class="form-group" style="margin-bottom:0;">
           <label>من تاريخ:</label>
           <input type="date" id="ordersFromDate">
@@ -603,8 +642,9 @@
         <table>
           <thead>
             <tr>
+              <th>رقم الطلب</th>
               <th>العميل</th>
-              <th>المنتج والدفع والإيصال</th>
+              <th>الأصناف والدفع والإيصال</th>
               <th>الحالة الحالية</th>
               <th>تحديث الحالة مع تعليق للعميل</th>
             </tr>
@@ -875,6 +915,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 
 /* ======================================================================
@@ -1429,10 +1470,51 @@ function goToDeliveryInfo() {
   openModal('deliveryInfoModal');
 }
 
-/* --- الانتقال لخطوة الدفع بعد التأكد من بيانات التوصيل --- */
+/* --- تجميع عناصر السلة في طلب واحد: نفس المنتج مرتين = صنف واحد بعدد 2 --- */
+function buildOrderItems(cartItems) {
+  const map = {};
+  cartItems.forEach(item => {
+    const key = item.id;
+    if (!map[key]) {
+      map[key] = {
+        title: item.title, price: item.price, quantity: 0,
+        requiresSerial: !!item.requiresSerial, serialText: item.serialText || '', serialImg: item.serialImg || ''
+      };
+    }
+    map[key].quantity += 1;
+    if (!map[key].serialText && item.serialText) map[key].serialText = item.serialText;
+    if (!map[key].serialImg && item.serialImg) map[key].serialImg = item.serialImg;
+  });
+  return Object.values(map);
+}
+
+/* --- توافق مع الطلبات القديمة اللي كانت مسجّلة بصنف واحد فقط بدل مصفوفة أصناف --- */
+function getOrderItems(o) {
+  if (o.items && o.items.length) return o.items;
+  if (o.productTitle) return [{ title: o.productTitle, price: o.price, quantity: 1, requiresSerial: !!o.requiresSerial, serialText: o.serialText || '', serialImg: o.serialImg || '' }];
+  return [];
+}
+
+function getOrderTotal(o) {
+  if (o.total !== undefined && o.total !== null) return o.total;
+  return getOrderItems(o).reduce((sum, it) => sum + parsePriceNumber(it.price) * (it.quantity || 1), 0);
+}
+
+/* --- الرسائل الافتراضية لكل حالة، تتعبّي تلقائيًا وتفضل قابلة للتعديل --- */
+function getDefaultStatusNote(status) {
+  const map = {
+    'تم استلام الطلب': 'تم استلام طلبك بنجاح وجاري مراجعته من فريقنا.',
+    'جاري التحضير والتنفيذ': 'طلبك متاح وجاري تجهيزه الآن. من فضلك أكّد الطلب وادفع لإتمام العملية.',
+    'تم الشحن / جاري التوصيل': 'طلبك في الطريق إليك الآن.',
+    'تم التسليم بنجاح': 'تم تسليم طلبك بنجاح، نتمنى لك تجربة سعيدة معنا!',
+    'ملغي': 'نأسف، تم إلغاء الطلب. يرجى التواصل مع الدعم لمزيد من التفاصيل.'
+  };
+  return map[status] || '';
+}
+
 let checkoutDeliveryInfo = { name: '', phone: '', address: '' };
 
-function goToPaymentStep() {
+async function submitOrderProcess() {
   const name = document.getElementById('deliveryName').value.trim();
   const phone = document.getElementById('deliveryPhone').value.trim();
   const address = document.getElementById('deliveryAddress').value.trim();
@@ -1442,15 +1524,49 @@ function goToPaymentStep() {
   }
 
   checkoutDeliveryInfo = { name, phone, address };
+  const deliveryDiffers = (
+    name !== (currentUser.name || '') ||
+    phone !== (currentUser.phone || '') ||
+    address !== (currentUser.address || '')
+  );
 
-  const paySelect = document.getElementById('payMethodSelect');
-  paySelect.innerHTML = paymentMethods.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-  renderCheckoutAccounts();
+  const items = buildOrderItems(cart);
+  const total = items.reduce((sum, it) => sum + parsePriceNumber(it.price) * it.quantity, 0);
+  const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+  const notiId = Date.now();
 
+  const ord = {
+    orderId,
+    userName: currentUser.name, userPhone: currentUser.phone,
+    items, total,
+    deliveryName: name, deliveryPhone: phone, deliveryAddress: address, deliveryDiffers,
+    status: 'تم استلام الطلب',
+    note: getDefaultStatusNote('تم استلام الطلب'),
+    date: new Date().toLocaleDateString('ar-EG'),
+    createdAt: Date.now(),
+    paymentSubmitted: false,
+    payMethod: '', senderAcc: '', refNo: '', receiptImg: ''
+  };
+
+  try {
+    await db.collection('orders').doc(orderId).set(ord);
+    await db.collection('adminNotis').doc(String(notiId)).set({
+      id: notiId, type: 'order', refId: orderId, title: "📦 طلب جديد وارد",
+      body: `طلب جديد من ${currentUser.name} - ${items.length} صنف بإجمالي ${total} ج.م`,
+      date: new Date().toLocaleTimeString('ar-EG'), read: false
+    });
+  } catch (err) {
+    return alert("❌ حصل خطأ أثناء إرسال الطلب.\n" + err.message);
+  }
+
+  cart = [];
+  saveCartLocal();
+  updateUI();
   closeModal('deliveryInfoModal');
-  openModal('checkoutPaymentModal');
+  alert("🎉 تم إرسال طلبك للإدارة! هيتم مراجعته وتحديثك بحالته، وهيظهرلك زرار الدفع أول ما يتأكد الطلب.");
 }
 
+/* --- خطوة الدفع بعد ما الأدمن يأكد توفر الطلب (منفصلة عن إرسال الطلب) --- */
 function renderCheckoutAccounts() {
   const selectedId = parseInt(document.getElementById('payMethodSelect').value);
   const method = paymentMethods.find(p => p.id === selectedId);
@@ -1468,7 +1584,22 @@ function renderCheckoutAccounts() {
   }
 }
 
-async function submitOrderProcess() {
+let payingForOrderId = null;
+
+function payForOrder(orderId) {
+  payingForOrderId = orderId;
+  const paySelect = document.getElementById('payMethodSelect');
+  paySelect.innerHTML = paymentMethods.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  renderCheckoutAccounts();
+  document.getElementById('paySenderAcc').value = '';
+  document.getElementById('payRefNo').value = '';
+  receiptImgBase64 = '';
+  openModal('checkoutPaymentModal');
+}
+
+async function submitOrderPayment() {
+  if (!payingForOrderId) return;
+
   const senderAcc = document.getElementById('paySenderAcc').value.trim();
   if(!senderAcc) return alert("يرجى إدخال رقمك أو اسم حسابك المحول منه!");
 
@@ -1476,58 +1607,34 @@ async function submitOrderProcess() {
   const method = paymentMethods.find(p => p.id === methodId);
   const refNo = document.getElementById('payRefNo').value || 'بدون مرجع';
 
-  const deliveryDiffers = (
-    checkoutDeliveryInfo.name !== (currentUser.name || '') ||
-    checkoutDeliveryInfo.phone !== (currentUser.phone || '') ||
-    checkoutDeliveryInfo.address !== (currentUser.address || '')
-  );
-
   try {
-    for (const item of cart) {
-      const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-      const notiId = Date.now() + Math.floor(Math.random() * 1000);
+    await db.collection('orders').doc(payingForOrderId).update({
+      payMethod: method ? method.name : 'غير محدد',
+      senderAcc, refNo,
+      receiptImg: receiptImgBase64 || '',
+      paymentSubmitted: true
+    });
 
-      const ord = {
-        orderId,
-        userName: currentUser.name, userPhone: currentUser.phone,
-        productTitle: item.title, price: item.price,
-        payMethod: method ? method.name : 'غير محدد',
-        senderAcc: senderAcc, refNo: refNo,
-        receiptImg: receiptImgBase64 || '',
-        status: 'تم استلام الطلب', note: 'جاري مراجعة الدفع والإيصال',
-        date: new Date().toLocaleDateString('ar-EG'),
-        createdAt: Date.now(),
-        deliveryName: checkoutDeliveryInfo.name,
-        deliveryPhone: checkoutDeliveryInfo.phone,
-        deliveryAddress: checkoutDeliveryInfo.address,
-        deliveryDiffers: deliveryDiffers,
-        requiresSerial: !!item.requiresSerial,
-        serialText: item.serialText || '',
-        serialImg: item.serialImg || ''
-      };
-
-      await db.collection('orders').doc(orderId).set(ord);
-      await db.collection('adminNotis').doc(String(notiId)).set({
-        id: notiId, type: 'order', refId: orderId, title: "📦 طلب جديد وارد",
-        body: `طلب جديد من ${currentUser.name} - ${item.title} (${item.price})`,
-        date: new Date().toLocaleTimeString('ar-EG'), read: false
-      });
-    }
+    const notiId = Date.now();
+    await db.collection('adminNotis').doc(String(notiId)).set({
+      id: notiId, type: 'order', refId: payingForOrderId, title: "💳 تأكيد دفع جديد",
+      body: `العميل أكّد الدفع للطلب ${payingForOrderId}`,
+      date: new Date().toLocaleTimeString('ar-EG'), read: false
+    });
   } catch (err) {
-    return alert("❌ حصل خطأ أثناء إرسال الطلب.\n" + err.message);
+    return alert("❌ حصل خطأ أثناء تأكيد الدفع.\n" + err.message);
   }
 
-  cart = [];
-  receiptImgBase64 = "";
-  saveCartLocal();
-  updateUI();
+  receiptImgBase64 = '';
+  payingForOrderId = null;
   closeModal('checkoutPaymentModal');
-  alert("🎉 تم إرسال الطلب بنجاح!");
+  alert("✅ تم إرسال تأكيد الدفع، هيتم مراجعته من الإدارة.");
 }
 
 function openQuickEditProduct(id) {
   const p = products.find(item => item.id === id);
   if(!p) return;
+
 
   editExistingImages = getProductImages(p).slice();
   editNewImages = [];
@@ -1890,10 +1997,12 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
   let ord = orders.find(o => o.orderId === orderId);
   if(!ord || !newStatus) return;
 
+  const finalNote = noteText || getDefaultStatusNote(newStatus) || ord.note;
+
   try {
     await db.collection('orders').doc(orderId).update({
       status: newStatus,
-      note: noteText || ord.note
+      note: finalNote
     });
 
     const notiId = Date.now();
@@ -1903,7 +2012,7 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
       refId: ord.orderId,
       userPhone: ord.userPhone,
       title: `تحديث طلب: ${ord.orderId}`,
-      body: `حالة طلبك الان: (${newStatus}). ${noteText ? 'ملاحظة: ' + noteText : ''}`,
+      body: `حالة طلبك الان: (${newStatus}). ملاحظة: ${finalNote}`,
       date: new Date().toLocaleTimeString('ar-EG'),
       read: false
     });
@@ -1912,6 +2021,13 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
   } catch (err) {
     alert("❌ حصل خطأ أثناء التحديث. " + err.message);
   }
+}
+
+/* --- تعبئة تلقائية للتعليق حسب الحالة المختارة، تفضل قابلة للتعديل --- */
+function autofillStatusNote(selectEl, noteInputId) {
+  const noteInput = document.getElementById(noteInputId);
+  if (!noteInput || noteInput.value.trim()) return; // ماتغيرش تعليق كتبه الأدمن بنفسه
+  noteInput.value = getDefaultStatusNote(selectEl.value);
 }
 
 let userOrdersFromDate = null;
@@ -1961,20 +2077,30 @@ function renderUserOrders() {
   }
 
   if (myOrders.length === 0) {
-    document.getElementById('userOrdersTable').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:15px;">${(userOrdersFromDate || userOrdersToDate) ? 'لا توجد طلبات في الفترة المحددة.' : 'لا توجد طلبات سابقة.'}</td></tr>`;
+    document.getElementById('userOrdersTable').innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:15px;">${(userOrdersFromDate || userOrdersToDate) ? 'لا توجد طلبات في الفترة المحددة.' : 'لا توجد طلبات سابقة.'}</td></tr>`;
     return;
   }
 
-  document.getElementById('userOrdersTable').innerHTML = myOrders.map(o => `
+  document.getElementById('userOrdersTable').innerHTML = myOrders.map(o => {
+    const items = getOrderItems(o);
+    const itemsSummary = items.map(it => `${it.title} × ${it.quantity}`).join('<br>');
+    const needsPayment = !o.paymentSubmitted && o.status !== 'تم استلام الطلب' && o.status !== 'ملغي';
+
+    return `
     <tr id="orderRow_${o.orderId}" class="${getOrderRowClass(o.status)}">
       <td><b>${o.orderId}</b></td>
-      <td>${o.productTitle}</td>
-      <td>${o.price}</td>
+      <td>${itemsSummary}</td>
+      <td>${getOrderTotal(o)} ج.م</td>
       <td>${getStatusBadge(o.status)}</td>
       <td style="color:var(--red); font-weight:700;">${o.note || 'لا يوجد'}</td>
       <td>${o.date}</td>
+      <td>
+        <button class="btn-sm btn-blue" style="margin-bottom:4px; width:100%;" onclick="openOrderInvoice('${o.orderId}')">📋 عرض الطلب</button>
+        ${needsPayment ? `<button class="btn-sm" style="background:var(--green); width:100%;" onclick="payForOrder('${o.orderId}')">✅ تأكيد الطلب والدفع الآن</button>` : ''}
+      </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 }
 
 let adminOrdersFromDate = null;
@@ -2020,6 +2146,66 @@ function showImagePreview(src) {
   openModal('imagePreviewModal');
 }
 
+let currentInvoiceOrder = null;
+
+function openOrderInvoice(orderId) {
+  const o = orders.find(x => x.orderId === orderId);
+  if (!o) return;
+  currentInvoiceOrder = o;
+
+  document.getElementById('invStoreTitle').innerText = storeSettings.titleAr;
+  document.getElementById('invStoreAddr').innerText = storeSettings.addressAr || '';
+  document.getElementById('invOrderId').innerText = o.orderId;
+  document.getElementById('invDate').innerText = o.date;
+  document.getElementById('invCustomerName').innerText = o.deliveryName || o.userName;
+  document.getElementById('invCustomerPhone').innerText = o.deliveryPhone || o.userPhone;
+  document.getElementById('invDeliveryAddress').innerText = o.deliveryAddress || '-';
+  document.getElementById('invStatus').innerText = o.status;
+
+  const items = getOrderItems(o);
+  document.getElementById('invItemsTable').innerHTML = items.map(it => `
+    <tr>
+      <td style="padding:6px; border:1px solid #e2e8f0;">${it.title}</td>
+      <td style="padding:6px; border:1px solid #e2e8f0; text-align:center;">${it.quantity}</td>
+      <td style="padding:6px; border:1px solid #e2e8f0;">${it.price}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('invTotal').innerText = `الإجمالي: ${getOrderTotal(o)} ج.م`;
+
+  document.getElementById('invoicePrintBtnWrap').style.display = (currentUser && currentUser.isAdmin) ? 'block' : 'none';
+
+  openModal('orderInvoiceModal');
+}
+
+/* --- تحويل الفاتورة لصورة، ومشاركتها مباشرة (واتساب، طابعة حرارية، بلوتوث...) أو تنزيلها --- */
+async function shareInvoiceImage() {
+  if (typeof html2canvas === 'undefined') return alert("عذرًا، مكتبة إنشاء الصور مش متاحة دلوقتي - تأكد من اتصال الإنترنت.");
+
+  const el = document.getElementById('invoiceContent');
+  try {
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' });
+    canvas.toBlob(async (blob) => {
+      const fileName = `فاتورة_${currentInvoiceOrder ? currentInvoiceOrder.orderId : 'طلب'}.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'فاتورة الطلب' });
+          return;
+        } catch (e) { /* المستخدم لغى المشاركة - نكمل على التنزيل العادي */ }
+      }
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
+    }, 'image/png');
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء إنشاء صورة الفاتورة. " + err.message);
+  }
+}
+
 function openProductDetails(id) {
   const p = products.find(item => item.id === id);
   if (!p) return;
@@ -2057,6 +2243,16 @@ function openProductDetails(id) {
 
 function renderAdminOrders() {
   let list = orders;
+
+  const term = document.getElementById('orderSearchInput') ? document.getElementById('orderSearchInput').value.trim().toLowerCase() : '';
+  if (term) {
+    list = list.filter(o =>
+      (o.orderId && o.orderId.toLowerCase().includes(term)) ||
+      (o.userName && o.userName.toLowerCase().includes(term)) ||
+      (o.userPhone && o.userPhone.toLowerCase().includes(term))
+    );
+  }
+
   if (adminOrdersFromDate) {
     const fromTs = new Date(adminOrdersFromDate + 'T00:00:00').getTime();
     list = list.filter(o => (o.createdAt || 0) >= fromTs);
@@ -2067,14 +2263,22 @@ function renderAdminOrders() {
   }
 
   if (list.length === 0) {
-    document.getElementById('adminOrdersTable').innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:15px;">${(adminOrdersFromDate || adminOrdersToDate) ? 'لا توجد طلبات في الفترة المحددة.' : 'لا توجد طلبات مسجلة بعد.'}</td></tr>`;
+    document.getElementById('adminOrdersTable').innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:15px;">${(term || adminOrdersFromDate || adminOrdersToDate) ? 'لا توجد طلبات مطابقة.' : 'لا توجد طلبات مسجلة بعد.'}</td></tr>`;
     return;
   }
 
   document.getElementById('adminOrdersTable').innerHTML = list.map((o, idx) => {
-    let receiptHtml = o.receiptImg
-      ? `<br><img src="${o.receiptImg}" onclick="showImagePreview('${o.receiptImg}')" style="width:45px; height:45px; border-radius:4px; object-fit:cover; border:1px solid #ccc; margin-top:3px; cursor:pointer;" title="اضغط للتكبير">`
-      : '<br><small style="color:var(--muted)">بدون إيصال مرفق</small>';
+    const items = getOrderItems(o);
+
+    let paymentHtml = '';
+    if (o.paymentSubmitted) {
+      let receiptHtml = o.receiptImg
+        ? `<br><img src="${o.receiptImg}" onclick="showImagePreview('${o.receiptImg}')" style="width:45px; height:45px; border-radius:4px; object-fit:cover; border:1px solid #ccc; margin-top:3px; cursor:pointer;" title="اضغط للتكبير">`
+        : '<br><small style="color:var(--muted)">بدون إيصال مرفق</small>';
+      paymentHtml = `<br><small>${o.payMethod} | ${o.senderAcc}</small>${receiptHtml}`;
+    } else {
+      paymentHtml = `<br><small style="color:#b45309; font-weight:700;">⏳ لسه العميل ما دفعش</small>`;
+    }
 
     let deliveryHtml = '';
     if (o.deliveryName || o.deliveryAddress) {
@@ -2085,23 +2289,28 @@ function renderAdminOrders() {
         </div>`;
     }
 
+    const itemsListHtml = items.map(it => `${it.title} × ${it.quantity} (${it.price})`).join('<br>');
+
+    const serialItems = items.filter(it => it.requiresSerial);
     let serialHtml = '';
-    if (o.requiresSerial) {
-      serialHtml = `
+    if (serialItems.length) {
+      serialHtml = serialItems.map(it => `
         <div style="margin-top:5px; padding:5px; background:#ecfeff; border:1px solid #a5f3fc; border-radius:6px; font-size:10.5px;">
-          <b style="color:#0e7490;">🔑 بيانات التفعيل المرسلة:</b><br>
-          ${o.serialText ? o.serialText.replace(/\n/g,'<br>') : '<span style="color:var(--muted);">مفيش سيريال مكتوب</span>'}
-          ${o.serialImg ? `<br><img src="${o.serialImg}" onclick="showImagePreview('${o.serialImg}')" style="width:40px; height:40px; object-fit:cover; border-radius:4px; margin-top:3px; cursor:pointer;" title="اضغط للتكبير">` : ''}
-        </div>`;
+          <b style="color:#0e7490;">🔑 سيريال "${it.title}":</b><br>
+          ${it.serialText ? it.serialText.replace(/\n/g,'<br>') : '<span style="color:var(--muted);">مفيش سيريال مكتوب</span>'}
+          ${it.serialImg ? `<br><img src="${it.serialImg}" onclick="showImagePreview('${it.serialImg}')" style="width:40px; height:40px; object-fit:cover; border-radius:4px; margin-top:3px; cursor:pointer;" title="اضغط للتكبير">` : ''}
+        </div>`).join('');
     }
 
     return `
       <tr id="orderRow_${o.orderId}" class="${getOrderRowClass(o.status)}">
+        <td><b>${o.orderId}</b></td>
         <td>${o.userName}<br><small>${o.userPhone}</small>${deliveryHtml}</td>
-        <td>${o.productTitle} (${o.price})<br><small>${o.payMethod} | ${o.senderAcc}</small>${receiptHtml}${serialHtml}</td>
+        <td>${itemsListHtml}<br><b>الإجمالي: ${getOrderTotal(o)} ج.م</b>${paymentHtml}${serialHtml}</td>
         <td>${getStatusBadge(o.status)}<br><small>ملاحظة: ${o.note || 'لاشيء'}</small></td>
         <td>
-          <select id="stSel_${idx}" style="font-size:11px; padding:3px;">
+          <button class="btn-sm btn-blue" style="width:100%; margin-bottom:4px;" onclick="openOrderInvoice('${o.orderId}')">📋 عرض طلب</button>
+          <select id="stSel_${idx}" onchange="autofillStatusNote(this, 'ntInp_${idx}')" style="font-size:11px; padding:3px; width:100%;">
             <option value="">تغيير الحالة...</option>
             <option value="تم استلام الطلب">📥 تم استلام الطلب</option>
             <option value="جاري التحضير والتنفيذ">⚙️ جاري التجهيز</option>
@@ -2109,7 +2318,7 @@ function renderAdminOrders() {
             <option value="تم التسليم بنجاح">✅ تم التسليم بنجاح</option>
             <option value="ملغي">❌ إلغاء الطلب</option>
           </select>
-          <input type="text" id="ntInp_${idx}" placeholder="سبب الإلغاء / ملاحظة للعميل" style="font-size:11px; padding:3px; margin-top:3px; width:100%;">
+          <input type="text" id="ntInp_${idx}" placeholder="التعليق هيتعبّى تلقائيًا - عدّله لو حبيت" style="font-size:11px; padding:3px; margin-top:3px; width:100%;">
           <button class="btn-sm btn-blue" onclick="updateOrderStatusWithNote('${o.orderId}', document.getElementById('stSel_${idx}').value, 'ntInp_${idx}')" style="margin-top:3px; width:100%;">تحديث</button>
         </td>
       </tr>
