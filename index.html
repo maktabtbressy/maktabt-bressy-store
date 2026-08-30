@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="siteTitle">متجر مكتبة بريسي الاحترافي | MAKTABT BRESSY</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Almarai:wght@400;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --navy: #0e2a47;
@@ -15,10 +16,11 @@
     --green: #16a34a;
     --red: #dc2626;
     --blue: #2563eb;
+    --font-family: 'Cairo';
   }
   
-  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Cairo', sans-serif; }
-  body { background: var(--bg); color: var(--text); padding-bottom: 60px; }
+  * { margin:0; padding:0; box-sizing:border-box; font-family: var(--font-family), 'Cairo', sans-serif; }
+  body { background: var(--bg); color: var(--text); padding-bottom: 60px; transition: background 0.2s, color 0.2s; }
 
   /* Banner & Header */
   .hero-banner { height: 200px; background: linear-gradient(135deg, #0e2a47, #1e3a5f); background-size: cover; background-position: center; position: relative; }
@@ -45,7 +47,9 @@
   .modal-lg { max-width: 980px; }
   /* هذه النوافذ بتتفتح فوق لوحة التحكم، فلازم تبقى طبقتها أعلى من طبقة لوحة التحكم نفسها */
   #editProductModal, #editUserModal, #editSubAdminModal { z-index: 210; }
+  #checkoutPaymentModal, #orderInvoiceModal { z-index: 212; }
   #imagePreviewModal { z-index: 220; }
+  #attachmentPreviewModal { z-index: 225; }
   .close-btn { position: absolute; left: 15px; top: 15px; font-size: 20px; cursor: pointer; color: var(--muted); }
 
   /* Forms & Controls */
@@ -119,9 +123,62 @@
   
   .perm-checkboxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
   .perm-checkboxes label { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  /* ============ الوضع الداكن ============ */
+  body.dark-mode { background: #0f172a; color: #e2e8f0; }
+  body.dark-mode .modal-content { background: #1e293b; color: #e2e8f0; }
+  body.dark-mode .close-btn { color: #94a3b8; }
+  body.dark-mode .card { background: #1e293b; border-color: #334155; }
+  body.dark-mode .card-img { background: #0f172a; }
+  body.dark-mode .card h3 { color: #f1f5f9; }
+  body.dark-mode .card p { color: #94a3b8; }
+  body.dark-mode .card-footer { border-top-color: #334155; }
+  body.dark-mode .price { color: #f1f5f9; }
+  body.dark-mode .form-group label { color: #cbd5e1; }
+  body.dark-mode .form-group input,
+  body.dark-mode .form-group select,
+  body.dark-mode .form-group textarea { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+  body.dark-mode table { color: #e2e8f0; }
+  body.dark-mode th { background: #334155; color: #f1f5f9; }
+  body.dark-mode td { border-color: #334155; }
+  body.dark-mode .tab-btn { background: #1e293b; border-color: #475569; color: #e2e8f0; }
+  body.dark-mode .tab-btn.active, body.dark-mode .tab-btn:hover { background: var(--navy); color: #fff; }
+  body.dark-mode .chat-box { background: #0f172a; border-color: #334155; }
+  body.dark-mode .msg-admin { background: #334155; color: #e2e8f0; }
+  body.dark-mode .noti-item.read { background: #1e293b; }
+  body.dark-mode .noti-item.unread { background: #1e3a5f; }
+  body.dark-mode .noti-item:hover { background: #334155; }
+  body.dark-mode .payment-info-box { background: #1e3a5f; border-color: #334155; }
+  body.dark-mode .perm-checkboxes { background: #1e293b; border-color: #334155; }
+  body.dark-mode .btn-mark-all { background: #334155; color: #e2e8f0; border-color: #475569; }
+  body.dark-mode .noti-header-bar { border-bottom-color: #334155; }
+  body.dark-mode tr.order-row-received,
+  body.dark-mode tr.order-row-processing,
+  body.dark-mode tr.order-row-shipped,
+  body.dark-mode tr.order-row-delivered,
+  body.dark-mode tr.order-row-cancelled { background: #1e293b; }
+  body.dark-mode small, body.dark-mode .card-qty { filter: brightness(1.3); }
 </style>
 </head>
 <body>
+
+<!-- شريط الإعلان -->
+<div id="announcementBar" style="display:none; background:var(--orange); color:#fff; text-align:center; padding:8px 30px 8px 10px; font-size:12.5px; font-weight:700; position:relative;">
+  <span id="announcementText"></span>
+  <span onclick="dismissAnnouncement()" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:16px; line-height:1;">&times;</span>
+</div>
+
+<!-- نافذة وضع الصيانة -->
+<div id="maintenanceOverlay" style="display:none; position:fixed; inset:0; background:var(--navy); z-index:9999; align-items:center; justify-content:center; text-align:center; padding:20px; color:#fff;">
+  <div>
+    <div style="font-size:50px; margin-bottom:15px;">🚧</div>
+    <h2 style="font-size:20px; margin-bottom:10px;">المتجر مغلق مؤقتًا</h2>
+    <p style="font-size:14px; opacity:0.85;">بنرجعلكم قريب، شكرًا لصبركم 🙏</p>
+    <div style="margin-top:20px;">
+      <button class="btn-nav" style="background:var(--orange);" onclick="openModal('adminLoginModal')">دخول الأدمن 🔐</button>
+    </div>
+  </div>
+</div>
 
 <!-- البانر العلوي -->
 <div class="hero-banner" id="heroBanner">
@@ -146,6 +203,11 @@
     </div>
     
     <div class="nav-actions">
+      <span id="socialLinksBox" style="display:flex; gap:6px;">
+        <a id="socialWhatsapp" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="واتساب">💬</a>
+        <a id="socialFacebook" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="فيسبوك">📘</a>
+        <a id="socialInstagram" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="إنستجرام">📷</a>
+      </span>
       <span id="userGreeting" style="font-size: 12px; font-weight: 700;"></span>
       
       <!-- إشعارات العميل -->
@@ -404,11 +466,25 @@
     <span class="close-btn" onclick="closeModal('chatModal')">&times;</span>
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">💬 الدعم المباشر مع إدارة المتجر</h2>
     <div class="chat-box" id="chatMessages"></div>
-    <div style="display:flex; gap:5px; margin-top:10px;">
+    <div style="display:flex; gap:5px; margin-top:10px; align-items:center;">
       <input type="text" id="chatInput" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px;" placeholder="اكتب رسالتك هنا...">
+      <label style="cursor:pointer; font-size:20px;" title="إرفاق ملف">
+        📎<input type="file" id="chatFileInput" onchange="handleChatFileSelect(event)" style="display:none;">
+      </label>
       <button onclick="sendChatMessage()" style="background:var(--navy); color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:700;">إرسال</button>
     </div>
+    <small id="chatFileLabel" style="font-size:11px; color:var(--navy); display:block; margin-top:4px;"></small>
     <p style="font-size:10.5px; color:var(--muted); margin-top:6px; text-align:center;">⏳ الرسائل بتتحذف تلقائيًا بعد شهر من إرسالها.</p>
+  </div>
+</div>
+
+<!-- نافذة معاينة مرفقات الشات -->
+<div class="modal" id="attachmentPreviewModal">
+  <div class="modal-content" style="max-width:480px; text-align:center;">
+    <span class="close-btn" onclick="closeModal('attachmentPreviewModal')">&times;</span>
+    <h3 style="font-size:14px; margin-bottom:10px; color:var(--navy);">📎 عرض المرفق</h3>
+    <div id="attachmentPreviewBody"></div>
+    <a id="attachmentDownloadLink" href="#" download style="display:block; margin-top:12px; background:var(--green); color:#fff; padding:10px; border-radius:8px; text-decoration:none; font-weight:800;">⬇️ تنزيل الملف</a>
   </div>
 </div>
 
@@ -607,16 +683,17 @@
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">👑 لوحة الإدارة الشاملة</h2>
     
     <div class="tabs" style="justify-content: flex-start; margin-bottom: 15px;">
-      <button class="tab-btn active" onclick="switchAdminTab('admOrders')">📦 الطلبات</button>
-      <button class="tab-btn" onclick="switchAdminTab('admPayments')">💳 طرق وأرقام الدفع</button>
-      <button class="tab-btn" onclick="switchAdminTab('admCategories')">🗂️ إدارة الأقسام</button>
-      <button class="tab-btn" onclick="switchAdminTab('admSettings')">⚙️ بيانات ومتجر بريسي</button>
-      <button class="tab-btn" onclick="switchAdminTab('admProducts')">➕ المنتجات</button>
-      <button class="tab-btn" onclick="switchAdminTab('admSubAdmins')" id="tabSubAdminsBtn">👥 الأدمن الفرعي</button>
-      <button class="tab-btn" onclick="switchAdminTab('admUsers')">👥 العملاء</button>
-      <button class="tab-btn" onclick="switchAdminTab('admChat')">💬 الدعم</button>
-      <button class="tab-btn" onclick="switchAdminTab('admLinks')" id="tabLinksBtn">🔗 روابط إدارية</button>
-      <button class="tab-btn" onclick="switchAdminTab('admAccount')" id="tabAdminAccBtn" style="background:#0f172a; color:#fff;">🔐 حسابي الأدمن</button>
+      <button class="tab-btn active" data-tab="admOrders" onclick="switchAdminTab('admOrders')">📦 الطلبات</button>
+      <button class="tab-btn" data-tab="admPayments" onclick="switchAdminTab('admPayments')">💳 طرق وأرقام الدفع</button>
+      <button class="tab-btn" data-tab="admCategories" onclick="switchAdminTab('admCategories')">🗂️ إدارة الأقسام</button>
+      <button class="tab-btn" data-tab="admSettings" onclick="switchAdminTab('admSettings')">⚙️ بيانات ومتجر بريسي</button>
+      <button class="tab-btn" data-tab="admProducts" onclick="switchAdminTab('admProducts')">➕ المنتجات</button>
+      <button class="tab-btn" data-tab="admSubAdmins" onclick="switchAdminTab('admSubAdmins')" id="tabSubAdminsBtn">👥 الأدمن الفرعي</button>
+      <button class="tab-btn" data-tab="admUsers" onclick="switchAdminTab('admUsers')">👥 العملاء</button>
+      <button class="tab-btn" data-tab="admChat" onclick="switchAdminTab('admChat')">💬 الدعم</button>
+      <button class="tab-btn" data-tab="admLinks" onclick="switchAdminTab('admLinks')" id="tabLinksBtn">🔗 روابط إدارية</button>
+      <button class="tab-btn" data-tab="admTheme" onclick="switchAdminTab('admTheme')" id="tabThemeBtn">🎨 الإعدادات</button>
+      <button class="tab-btn" data-tab="admAccount" onclick="switchAdminTab('admAccount')" id="tabAdminAccBtn" style="background:#0f172a; color:#fff;">🔐 حسابي الأدمن</button>
     </div>
 
     <!-- إدارة الطلبات -->
@@ -756,6 +833,52 @@
           <input type="text" id="stDescAr" required>
         </div>
 
+        <h3 style="font-size: 14px; margin: 15px 0 10px;">💰 الطلبات والعملة</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>رمز العملة:</label>
+            <input type="text" id="stCurrencySymbol" placeholder="ج.م">
+          </div>
+          <div class="form-group">
+            <label>الحد الأدنى لمبلغ الطلب (اختياري):</label>
+            <input type="number" id="stMinOrderAmount" placeholder="مثال: 50">
+          </div>
+          <div class="form-group">
+            <label>رسوم التوصيل (اختياري):</label>
+            <input type="number" id="stDeliveryFee" placeholder="مثال: 20">
+          </div>
+        </div>
+
+        <h3 style="font-size: 14px; margin: 15px 0 10px;">📱 روابط التواصل (تظهر كأيقونات في أعلى الموقع)</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>رابط واتساب:</label>
+            <input type="url" id="stWhatsappLink" placeholder="https://wa.me/201xxxxxxxxx">
+          </div>
+          <div class="form-group">
+            <label>رابط فيسبوك:</label>
+            <input type="url" id="stFacebookLink" placeholder="https://facebook.com/...">
+          </div>
+          <div class="form-group">
+            <label>رابط إنستجرام:</label>
+            <input type="url" id="stInstagramLink" placeholder="https://instagram.com/...">
+          </div>
+        </div>
+
+        <h3 style="font-size: 14px; margin: 15px 0 10px;">📢 شريط إعلان علوي</h3>
+        <label style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:10px;">
+          <input type="checkbox" id="stAnnouncementEnabled" style="width:18px; height:18px;"> تفعيل شريط الإعلان
+        </label>
+        <div class="form-group">
+          <label>نص الإعلان:</label>
+          <input type="text" id="stAnnouncementText" placeholder="مثال: عرض خاص لحد آخر الشهر 🎉">
+        </div>
+
+        <h3 style="font-size: 14px; margin: 15px 0 10px; color:var(--red);">🚧 وضع الصيانة</h3>
+        <label style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:10px; background:#fef2f2; padding:10px; border-radius:8px; border:1px solid #fecaca;">
+          <input type="checkbox" id="stMaintenanceMode" style="width:18px; height:18px;"> ⚠️ إغلاق المتجر مؤقتًا عن العملاء (لوحة التحكم تفضل شغالة للأدمن)
+        </label>
+
         <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ التعديلات والتحديث</button>
       </form>
     </div>
@@ -860,14 +983,22 @@
     <!-- الشات والدعم -->
     <div id="admChatTab" style="display:none;">
       <div class="form-group">
+        <label>🔍 دوّر عن عميل (اسم / هاتف / إيميل):</label>
+        <input type="text" id="chatUserSearchInput" oninput="loadAdminChatUsers()" placeholder="اكتب للبحث...">
+      </div>
+      <div class="form-group">
         <label>اختر عميل للرد عليه:</label>
         <select id="adminChatUserSelect" onchange="loadAdminChat()"></select>
       </div>
       <div class="chat-box" id="adminChatMessages"></div>
-      <div style="display:flex; gap:5px; margin-top:10px;">
+      <div style="display:flex; gap:5px; margin-top:10px; align-items:center;">
         <input type="text" id="adminChatInput" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px;" placeholder="اكتب رد الأدمن...">
+        <label style="cursor:pointer; font-size:20px;" title="إرفاق ملف">
+          📎<input type="file" id="adminChatFileInput" onchange="handleAdminChatFileSelect(event)" style="display:none;">
+        </label>
         <button onclick="sendAdminChatMessage()" style="background:var(--green); color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:700;">إرسال الرد</button>
       </div>
+      <small id="adminChatFileLabel" style="font-size:11px; color:var(--navy); display:block; margin-top:4px;"></small>
       <p style="font-size:10.5px; color:var(--muted); margin-top:6px; text-align:center;">⏳ الرسائل بتتحذف تلقائيًا بعد شهر من إرسالها.</p>
     </div>
 
@@ -890,6 +1021,44 @@
 
       <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">🔗 الروابط الإدارية الحالية</h3>
       <div id="adminLinksList"></div>
+    </div>
+
+    <!-- الإعدادات (المظهر) -->
+    <div id="admThemeTab" style="display:none;">
+      <h3 style="font-size: 14px; margin-bottom: 12px; color: var(--navy);">🎨 مظهر المتجر</h3>
+      <div style="background:#f8fafc; padding:15px; border-radius:10px; border:1px solid #e2e8f0;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>اللون الأساسي (الهيدر والعناوين):</label>
+            <input type="color" id="themePrimaryColor" oninput="previewThemeChange()" style="height:42px; padding:2px; cursor:pointer;">
+          </div>
+          <div class="form-group">
+            <label>اللون الثانوي (الأزرار والتمييز):</label>
+            <input type="color" id="themeAccentColor" oninput="previewThemeChange()" style="height:42px; padding:2px; cursor:pointer;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>خط المتجر:</label>
+          <select id="themeFontFamily" onchange="previewThemeChange()">
+            <option value="Cairo">Cairo (الافتراضي)</option>
+            <option value="Tajawal">Tajawal</option>
+            <option value="Almarai">Almarai</option>
+            <option value="IBM Plex Sans Arabic">IBM Plex Sans Arabic</option>
+          </select>
+        </div>
+
+        <label style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; cursor:pointer; margin:12px 0;">
+          <input type="checkbox" id="themeDarkMode" onchange="previewThemeChange()" style="width:18px; height:18px; cursor:pointer;">
+          🌙 الوضع الداكن (Dark Mode) - هيبان لكل زوار الموقع
+        </label>
+
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn-submit" style="background:var(--navy); flex:2; margin-top:0;" onclick="saveThemeSettings()">💾 حفظ المظهر لكل الزوار</button>
+          <button class="btn-nav" style="background:#64748b; flex:1;" onclick="resetThemeSettings()">↩️ الافتراضي</button>
+        </div>
+        <p style="font-size:11px; color:var(--muted); margin-top:8px;">📌 أي تغيير بيتطبق فورًا على شاشتك للمعاينة، ومش بيوصل لباقي الزوار غير بعد ما تدوس "حفظ المظهر".</p>
+      </div>
     </div>
 
     <!-- تعديل حساب الأدمن الرئيسي -->
@@ -1213,6 +1382,122 @@ function applySettings() {
   document.getElementById('stAddressAr').value = storeSettings.addressAr || '';
   document.getElementById('stAddressEn').value = storeSettings.addressEn || '';
   document.getElementById('stDescAr').value = storeSettings.descAr;
+  document.getElementById('stCurrencySymbol').value = storeSettings.currencySymbol || '';
+  document.getElementById('stMinOrderAmount').value = storeSettings.minOrderAmount || '';
+  document.getElementById('stDeliveryFee').value = storeSettings.deliveryFee || '';
+  document.getElementById('stWhatsappLink').value = storeSettings.whatsappLink || '';
+  document.getElementById('stFacebookLink').value = storeSettings.facebookLink || '';
+  document.getElementById('stInstagramLink').value = storeSettings.instagramLink || '';
+  document.getElementById('stAnnouncementEnabled').checked = !!storeSettings.announcementEnabled;
+  document.getElementById('stAnnouncementText').value = storeSettings.announcementText || '';
+  document.getElementById('stMaintenanceMode').checked = !!storeSettings.maintenanceMode;
+
+  applyTheme(storeSettings.theme);
+  applySocialLinks();
+  applyAnnouncementBar();
+  applyMaintenanceMode();
+}
+
+/* --- العملة، تستخدم في كل مكان بيحسب إجمالي --- */
+function getCurrencySymbol() {
+  return storeSettings.currencySymbol || 'ج.م';
+}
+
+/* --- أيقونات التواصل في الهيدر، بتظهر بس لو الرابط متسجّل --- */
+function applySocialLinks() {
+  const map = [
+    ['socialWhatsapp', storeSettings.whatsappLink],
+    ['socialFacebook', storeSettings.facebookLink],
+    ['socialInstagram', storeSettings.instagramLink]
+  ];
+  map.forEach(([elId, url]) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (url) { el.href = url; el.style.display = 'inline'; }
+    else { el.style.display = 'none'; }
+  });
+}
+
+/* --- شريط الإعلان، قابل للإغلاق لجلسة التصفح الحالية --- */
+let announcementDismissed = false;
+function applyAnnouncementBar() {
+  const bar = document.getElementById('announcementBar');
+  const show = storeSettings.announcementEnabled && storeSettings.announcementText && !announcementDismissed;
+  if (show) {
+    document.getElementById('announcementText').innerText = storeSettings.announcementText;
+    bar.style.display = 'block';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+function dismissAnnouncement() {
+  announcementDismissed = true;
+  applyAnnouncementBar();
+}
+
+/* --- وضع الصيانة: يقفل الموقع عن العملاء بس، الأدمن يفضل يقدر يدخل --- */
+function applyMaintenanceMode() {
+  const overlay = document.getElementById('maintenanceOverlay');
+  const isBlocked = storeSettings.maintenanceMode && !(currentUser && currentUser.isAdmin);
+  overlay.style.display = isBlocked ? 'flex' : 'none';
+}
+
+/* ======================================================================
+   مظهر المتجر (الثيم) - ألوان وخط ووضع داكن، يتطبق على كل الزوار
+====================================================================== */
+const DEFAULT_THEME = { primaryColor: '#0e2a47', accentColor: '#f26522', fontFamily: 'Cairo', darkMode: false };
+
+function applyTheme(theme) {
+  const t = theme || DEFAULT_THEME;
+  document.documentElement.style.setProperty('--navy', t.primaryColor || DEFAULT_THEME.primaryColor);
+  document.documentElement.style.setProperty('--orange', t.accentColor || DEFAULT_THEME.accentColor);
+  document.documentElement.style.setProperty('--font-family', `'${t.fontFamily || DEFAULT_THEME.fontFamily}'`);
+  document.body.classList.toggle('dark-mode', !!t.darkMode);
+}
+
+function loadThemeTab() {
+  const t = storeSettings.theme || DEFAULT_THEME;
+  document.getElementById('themePrimaryColor').value = t.primaryColor || DEFAULT_THEME.primaryColor;
+  document.getElementById('themeAccentColor').value = t.accentColor || DEFAULT_THEME.accentColor;
+  document.getElementById('themeFontFamily').value = t.fontFamily || DEFAULT_THEME.fontFamily;
+  document.getElementById('themeDarkMode').checked = !!t.darkMode;
+}
+
+/* معاينة فورية على شاشة الأدمن بس، قبل الحفظ */
+function previewThemeChange() {
+  applyTheme({
+    primaryColor: document.getElementById('themePrimaryColor').value,
+    accentColor: document.getElementById('themeAccentColor').value,
+    fontFamily: document.getElementById('themeFontFamily').value,
+    darkMode: document.getElementById('themeDarkMode').checked
+  });
+}
+
+async function saveThemeSettings() {
+  const theme = {
+    primaryColor: document.getElementById('themePrimaryColor').value,
+    accentColor: document.getElementById('themeAccentColor').value,
+    fontFamily: document.getElementById('themeFontFamily').value,
+    darkMode: document.getElementById('themeDarkMode').checked
+  };
+  try {
+    await db.collection('settings').doc('store').set({ theme }, { merge: true });
+    alert("✅ تم حفظ مظهر المتجر بنجاح! هيبان كده لكل الزوار من دلوقتي.");
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+async function resetThemeSettings() {
+  if (!confirm("هل تريد استرجاع مظهر المتجر الافتراضي؟")) return;
+  applyTheme(DEFAULT_THEME);
+  loadThemeTab();
+  try {
+    await db.collection('settings').doc('store').set({ theme: DEFAULT_THEME }, { merge: true });
+    alert("✅ تم استرجاع المظهر الافتراضي بنجاح.");
+  } catch (err) {
+    alert("❌ حصل خطأ. " + err.message);
+  }
 }
 
 function renderCategoriesBar() {
@@ -1331,6 +1616,7 @@ function updateUI() {
   const tabSubAdminsBtn = document.getElementById('tabSubAdminsBtn');
   const tabAdminAccBtn = document.getElementById('tabAdminAccBtn');
   const tabLinksBtn = document.getElementById('tabLinksBtn');
+  const tabThemeBtn = document.getElementById('tabThemeBtn');
 
   if (currentUser) {
     greeting.innerText = currentUser.isAdmin ? `👑 ${currentUser.name}` : `👤 ${currentUser.name}`;
@@ -1348,6 +1634,7 @@ function updateUI() {
       if(tabSubAdminsBtn) tabSubAdminsBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
       if(tabAdminAccBtn) tabAdminAccBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
       if(tabLinksBtn) tabLinksBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
+      if(tabThemeBtn) tabThemeBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
     } else {
       ordersBtn.style.display = "inline-flex";
       chatBtn.style.display = "inline-flex";
@@ -1431,7 +1718,12 @@ function renderCart() {
   `).join('');
 
   const total = cart.reduce((sum, item) => sum + parsePriceNumber(item.price), 0);
-  totalBox.innerText = `الإجمالي التقريبي: ${total} ج.م`;
+  const deliveryFee = storeSettings.deliveryFee || 0;
+  const grandTotal = total + deliveryFee;
+
+  totalBox.innerHTML = deliveryFee
+    ? `الإجمالي: ${total} ${getCurrencySymbol()} + رسوم توصيل ${deliveryFee} ${getCurrencySymbol()} = <b>${grandTotal} ${getCurrencySymbol()}</b>`
+    : `الإجمالي التقريبي: ${total} ${getCurrencySymbol()}`;
   totalBox.style.display = "block";
   nextBtn.style.display = "block";
 }
@@ -1457,6 +1749,11 @@ async function previewCartSerialImage(e, index) {
 
 function goToDeliveryInfo() {
   if (cart.length === 0) return;
+
+  const cartTotal = cart.reduce((sum, item) => sum + parsePriceNumber(item.price), 0);
+  if (storeSettings.minOrderAmount && cartTotal < storeSettings.minOrderAmount) {
+    return alert(`الحد الأدنى لقيمة الطلب هو ${storeSettings.minOrderAmount} ${getCurrencySymbol()}. أضف منتجات أكتر عشان تكمل.`);
+  }
 
   const missingSerial = cart.find(item => item.requiresSerial && !(item.serialText && item.serialText.trim()) && !item.serialImg);
   if (missingSerial) {
@@ -1531,14 +1828,16 @@ async function submitOrderProcess() {
   );
 
   const items = buildOrderItems(cart);
-  const total = items.reduce((sum, it) => sum + parsePriceNumber(it.price) * it.quantity, 0);
+  const itemsTotal = items.reduce((sum, it) => sum + parsePriceNumber(it.price) * it.quantity, 0);
+  const deliveryFee = storeSettings.deliveryFee || 0;
+  const total = itemsTotal + deliveryFee;
   const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
   const notiId = Date.now();
 
   const ord = {
     orderId,
     userName: currentUser.name, userPhone: currentUser.phone,
-    items, total,
+    items, total, deliveryFee,
     deliveryName: name, deliveryPhone: phone, deliveryAddress: address, deliveryDiffers,
     status: 'تم استلام الطلب',
     note: getDefaultStatusNote('تم استلام الطلب'),
@@ -1552,7 +1851,7 @@ async function submitOrderProcess() {
     await db.collection('orders').doc(orderId).set(ord);
     await db.collection('adminNotis').doc(String(notiId)).set({
       id: notiId, type: 'order', refId: orderId, title: "📦 طلب جديد وارد",
-      body: `طلب جديد من ${currentUser.name} - ${items.length} صنف بإجمالي ${total} ج.م`,
+      body: `طلب جديد من ${currentUser.name} - ${items.length} صنف بإجمالي ${total} ${getCurrencySymbol()}`,
       date: new Date().toLocaleTimeString('ar-EG'), read: false
     });
   } catch (err) {
@@ -1747,12 +2046,11 @@ function renderProducts(filter = 'all') {
       <div class="card">
         <div class="card-img" style="cursor:pointer;" onclick="openProductDetails(${p.id})"><img src="${displayImgSrc}" alt="${p.title}"></div>
         <div class="card-body">
-          <h3>${p.title}</h3>
+          <h3 style="cursor:pointer;" onclick="openProductDetails(${p.id})">${p.title}</h3>
           ${qtyHtml}
           <div style="flex-grow:1;"></div>
           <div class="card-footer">
             <span class="price">${p.price}</span>
-            <button class="btn-quick-edit" style="background:#475569;" onclick="openProductDetails(${p.id})">📋 التفاصيل</button>
             ${actionBtnHtml}
           </div>
         </div>
@@ -2026,8 +2324,11 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
 /* --- تعبئة تلقائية للتعليق حسب الحالة المختارة، تفضل قابلة للتعديل --- */
 function autofillStatusNote(selectEl, noteInputId) {
   const noteInput = document.getElementById(noteInputId);
-  if (!noteInput || noteInput.value.trim()) return; // ماتغيرش تعليق كتبه الأدمن بنفسه
+  if (!noteInput) return;
+  const wasAutofilled = noteInput.dataset.autofilled === 'true' || !noteInput.value.trim();
+  if (!wasAutofilled) return; // الأدمن كتب تعليق يدوي بنفسه، متلمسهوش
   noteInput.value = getDefaultStatusNote(selectEl.value);
+  noteInput.dataset.autofilled = 'true';
 }
 
 let userOrdersFromDate = null;
@@ -2090,7 +2391,7 @@ function renderUserOrders() {
     <tr id="orderRow_${o.orderId}" class="${getOrderRowClass(o.status)}">
       <td><b>${o.orderId}</b></td>
       <td>${itemsSummary}</td>
-      <td>${getOrderTotal(o)} ج.م</td>
+      <td>${getOrderTotal(o)} ${getCurrencySymbol()}</td>
       <td>${getStatusBadge(o.status)}</td>
       <td style="color:var(--red); font-weight:700;">${o.note || 'لا يوجد'}</td>
       <td>${o.date}</td>
@@ -2163,15 +2464,24 @@ function openOrderInvoice(orderId) {
   document.getElementById('invStatus').innerText = o.status;
 
   const items = getOrderItems(o);
-  document.getElementById('invItemsTable').innerHTML = items.map(it => `
+  let itemsRowsHtml = items.map(it => `
     <tr>
       <td style="padding:6px; border:1px solid #e2e8f0;">${it.title}</td>
       <td style="padding:6px; border:1px solid #e2e8f0; text-align:center;">${it.quantity}</td>
       <td style="padding:6px; border:1px solid #e2e8f0;">${it.price}</td>
     </tr>
   `).join('');
+  if (o.deliveryFee) {
+    itemsRowsHtml += `
+      <tr>
+        <td style="padding:6px; border:1px solid #e2e8f0;">🚚 رسوم التوصيل</td>
+        <td style="padding:6px; border:1px solid #e2e8f0; text-align:center;">1</td>
+        <td style="padding:6px; border:1px solid #e2e8f0;">${o.deliveryFee} ${getCurrencySymbol()}</td>
+      </tr>`;
+  }
+  document.getElementById('invItemsTable').innerHTML = itemsRowsHtml;
 
-  document.getElementById('invTotal').innerText = `الإجمالي: ${getOrderTotal(o)} ج.م`;
+  document.getElementById('invTotal').innerText = `الإجمالي: ${getOrderTotal(o)} ${getCurrencySymbol()}`;
 
   document.getElementById('invoicePrintBtnWrap').style.display = (currentUser && currentUser.isAdmin) ? 'block' : 'none';
 
@@ -2206,6 +2516,17 @@ async function shareInvoiceImage() {
   }
 }
 
+/* --- تحويل أي رابط مكتوب في نص عادي لرابط قابل للضغط، مع حماية من إدراج HTML --- */
+function linkifyText(text) {
+  const escaped = String(text)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const withLinks = escaped.replace(/((https?:\/\/|www\.)[^\s<]+)/gi, (match) => {
+    const href = match.toLowerCase().startsWith('http') ? match : 'https://' + match;
+    return `<a href="${href}" target="_blank" rel="noopener" style="color:var(--blue); text-decoration:underline; word-break:break-all;">${match}</a>`;
+  });
+  return withLinks.replace(/\n/g, '<br>');
+}
+
 function openProductDetails(id) {
   const p = products.find(item => item.id === id);
   if (!p) return;
@@ -2215,7 +2536,7 @@ function openProductDetails(id) {
   const galleryImages = images.length ? images : [defaultLogo];
 
   document.getElementById('prodDetailsTitle').innerText = p.title;
-  document.getElementById('prodDetailsDesc').innerText = p.desc;
+  document.getElementById('prodDetailsDesc').innerHTML = linkifyText(p.desc);
   document.getElementById('prodDetailsPrice').innerText = p.price;
 
   const qtyBox = document.getElementById('prodDetailsQty');
@@ -2306,7 +2627,7 @@ function renderAdminOrders() {
       <tr id="orderRow_${o.orderId}" class="${getOrderRowClass(o.status)}">
         <td><b>${o.orderId}</b></td>
         <td>${o.userName}<br><small>${o.userPhone}</small>${deliveryHtml}</td>
-        <td>${itemsListHtml}<br><b>الإجمالي: ${getOrderTotal(o)} ج.م</b>${paymentHtml}${serialHtml}</td>
+        <td>${itemsListHtml}<br><b>الإجمالي: ${getOrderTotal(o)} ${getCurrencySymbol()}</b>${paymentHtml}${serialHtml}</td>
         <td>${getStatusBadge(o.status)}<br><small>ملاحظة: ${o.note || 'لاشيء'}</small></td>
         <td>
           <button class="btn-sm btn-blue" style="width:100%; margin-bottom:4px;" onclick="openOrderInvoice('${o.orderId}')">📋 عرض طلب</button>
@@ -2318,7 +2639,7 @@ function renderAdminOrders() {
             <option value="تم التسليم بنجاح">✅ تم التسليم بنجاح</option>
             <option value="ملغي">❌ إلغاء الطلب</option>
           </select>
-          <input type="text" id="ntInp_${idx}" placeholder="التعليق هيتعبّى تلقائيًا - عدّله لو حبيت" style="font-size:11px; padding:3px; margin-top:3px; width:100%;">
+          <input type="text" id="ntInp_${idx}" oninput="this.dataset.autofilled='false';" placeholder="التعليق هيتعبّى تلقائيًا - عدّله لو حبيت" style="font-size:11px; padding:3px; margin-top:3px; width:100%;">
           <button class="btn-sm btn-blue" onclick="updateOrderStatusWithNote('${o.orderId}', document.getElementById('stSel_${idx}').value, 'ntInp_${idx}')" style="margin-top:3px; width:100%;">تحديث</button>
         </td>
       </tr>
@@ -2344,20 +2665,63 @@ function getOrderRowClass(st) {
   return '';
 }
 
+/* --- قراءة أي ملف كـ base64 (مش مقصورة على الصور بس) مع حد أقصى للحجم --- */
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('تعذّرت قراءة الملف'));
+    reader.readAsDataURL(file);
+  });
+}
+
+const CHAT_FILE_MAX_BYTES = 700 * 1024; // أقل من حد Firestore (1 ميجا) بهامش أمان
+
+let pendingChatFile = null;
+
+async function handleChatFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > CHAT_FILE_MAX_BYTES) {
+    alert("❌ الملف كبير أوي (الحد الأقصى تقريبًا 700 كيلوبايت). اختر ملف أصغر.");
+    e.target.value = '';
+    return;
+  }
+  try {
+    const data = await readFileAsBase64(file);
+    pendingChatFile = { name: file.name, type: file.type, data };
+    document.getElementById('chatFileLabel').innerText = `📎 ${file.name}`;
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء قراءة الملف.");
+  }
+}
+
 async function sendChatMessage() {
   const txt = document.getElementById('chatInput').value.trim();
-  if(!txt) return;
+  if(!txt && !pendingChatFile) return;
   const id = Date.now();
 
   try {
-    await db.collection('chatMessages').doc(String(id)).set({
+    const msgData = {
       id, senderPhone: currentUser.phone, senderName: currentUser.name, text: txt, isAdmin: false, time: new Date().toLocaleTimeString('ar-EG')
-    });
+    };
+    if (pendingChatFile) {
+      msgData.fileName = pendingChatFile.name;
+      msgData.fileType = pendingChatFile.type;
+      msgData.fileData = pendingChatFile.data;
+    }
+
+    await db.collection('chatMessages').doc(String(id)).set(msgData);
     await db.collection('adminNotis').doc(String(id + 1)).set({
       id: id + 1, type: 'chat', refId: currentUser.phone, title: "💬 رسالة دعم جديدة",
-      body: `رسالة من ${currentUser.name}: ${txt}`, date: new Date().toLocaleTimeString('ar-EG'), read: false
+      body: pendingChatFile ? `${currentUser.name} أرسل مرفق: ${pendingChatFile.name}` : `رسالة من ${currentUser.name}: ${txt}`,
+      date: new Date().toLocaleTimeString('ar-EG'), read: false
     });
+
     document.getElementById('chatInput').value = "";
+    document.getElementById('chatFileInput').value = "";
+    document.getElementById('chatFileLabel').innerText = "";
+    pendingChatFile = null;
   } catch (err) {
     alert("❌ حصل خطأ أثناء الإرسال. " + err.message);
   }
@@ -2367,45 +2731,130 @@ function renderChat() {
   const box = document.getElementById('chatMessages');
   if (!currentUser) return;
   const myMsgs = chatMessages.filter(m => m.senderPhone === currentUser.phone);
-  box.innerHTML = myMsgs.map(m => `
-    <div class="chat-msg ${m.isAdmin ? 'msg-admin' : 'msg-user'}">
-      <small><b>${m.isAdmin ? 'الإدارة' : m.senderName}:</b></small><br>${m.text}
-    </div>
-  `).join('');
+  box.innerHTML = myMsgs.map(renderChatBubble).join('');
 }
 
 function loadAdminChatUsers() {
   const sel = document.getElementById('adminChatUserSelect');
-  const usersWithChat = [...new Set(chatMessages.map(m => m.senderPhone))];
-  sel.innerHTML = usersWithChat.map(p => `<option value="${p}">${p}</option>`).join('');
+  const searchInput = document.getElementById('chatUserSearchInput');
+  const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+  let customers = allUsers.filter(u => u.role === 'customer');
+  if (term) {
+    customers = customers.filter(u =>
+      (u.name && u.name.toLowerCase().includes(term)) ||
+      (u.phone && u.phone.toLowerCase().includes(term)) ||
+      (u.email && u.email.toLowerCase().includes(term))
+    );
+  }
+
+  const prevValue = sel.value;
+  sel.innerHTML = customers.map(u => `<option value="${u.phone}">${u.name} - ${u.phone}</option>`).join('');
+
+  if (customers.some(u => u.phone === prevValue)) {
+    sel.value = prevValue;
+  }
   loadAdminChat();
+}
+
+function openSupportChatFor(phone) {
+  openModal('adminDashboardModal');
+  switchAdminTab('admChat');
+  setTimeout(() => {
+    const searchInput = document.getElementById('chatUserSearchInput');
+    if (searchInput) searchInput.value = '';
+    loadAdminChatUsers();
+    const sel = document.getElementById('adminChatUserSelect');
+    if (sel) { sel.value = phone; loadAdminChat(); }
+  }, 60);
+}
+
+function renderChatBubble(m) {
+  let attachHtml = '';
+  if (m.fileData) {
+    const isImg = m.fileType && m.fileType.startsWith('image/');
+    attachHtml = `
+      <div onclick="openChatAttachment(${m.id})" style="margin-top:5px; cursor:pointer; background:rgba(255,255,255,0.2); padding:6px; border-radius:6px; display:flex; align-items:center; gap:5px;">
+        ${isImg ? `<img src="${m.fileData}" style="width:36px; height:36px; object-fit:cover; border-radius:4px;">` : '<span style="font-size:18px;">📎</span>'}
+        <span style="font-size:11px; text-decoration:underline; word-break:break-all;">${m.fileName}</span>
+      </div>`;
+  }
+  return `
+    <div class="chat-msg ${m.isAdmin ? 'msg-admin' : 'msg-user'}">
+      <small><b>${m.isAdmin ? 'الإدارة' : m.senderName}:</b></small><br>${m.text || ''}${attachHtml}
+    </div>
+  `;
+}
+
+function openChatAttachment(msgId) {
+  const m = chatMessages.find(x => x.id === msgId);
+  if (!m || !m.fileData) return;
+
+  const isImg = m.fileType && m.fileType.startsWith('image/');
+  document.getElementById('attachmentPreviewBody').innerHTML = isImg
+    ? `<img src="${m.fileData}" style="max-width:100%; border-radius:8px;">`
+    : `<div style="padding:25px; text-align:center; font-size:44px;">📄</div><p style="text-align:center; font-size:13px; word-break:break-all;">${m.fileName}</p>`;
+
+  const link = document.getElementById('attachmentDownloadLink');
+  link.href = m.fileData;
+  link.download = m.fileName || 'مرفق';
+
+  openModal('attachmentPreviewModal');
 }
 
 function loadAdminChat() {
   const p = document.getElementById('adminChatUserSelect').value;
   const box = document.getElementById('adminChatMessages');
   const msgs = chatMessages.filter(m => m.senderPhone === p);
-  box.innerHTML = msgs.map(m => `
-    <div class="chat-msg ${m.isAdmin ? 'msg-admin' : 'msg-user'}">
-      <small><b>${m.isAdmin ? 'الإدارة' : m.senderName}:</b></small><br>${m.text}
-    </div>
-  `).join('');
+  box.innerHTML = msgs.map(renderChatBubble).join('');
+}
+
+let pendingAdminChatFile = null;
+
+async function handleAdminChatFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > CHAT_FILE_MAX_BYTES) {
+    alert("❌ الملف كبير أوي (الحد الأقصى تقريبًا 700 كيلوبايت). اختر ملف أصغر.");
+    e.target.value = '';
+    return;
+  }
+  try {
+    const data = await readFileAsBase64(file);
+    pendingAdminChatFile = { name: file.name, type: file.type, data };
+    document.getElementById('adminChatFileLabel').innerText = `📎 ${file.name}`;
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء قراءة الملف.");
+  }
 }
 
 async function sendAdminChatMessage() {
   const p = document.getElementById('adminChatUserSelect').value;
   const txt = document.getElementById('adminChatInput').value.trim();
-  if(!txt || !p) return;
+  if((!txt && !pendingAdminChatFile) || !p) return;
   const id = Date.now();
 
   try {
-    await db.collection('chatMessages').doc(String(id)).set({
+    const msgData = {
       id, senderPhone: p, senderName: 'الإدارة', text: txt, isAdmin: true, time: new Date().toLocaleTimeString('ar-EG')
-    });
+    };
+    if (pendingAdminChatFile) {
+      msgData.fileName = pendingAdminChatFile.name;
+      msgData.fileType = pendingAdminChatFile.type;
+      msgData.fileData = pendingAdminChatFile.data;
+    }
+
+    await db.collection('chatMessages').doc(String(id)).set(msgData);
     await db.collection('userNotis').doc(String(id + 1)).set({
-      id: id + 1, type: 'chat', userPhone: p, title: "💬 رد جديد من الدعم", body: txt, date: new Date().toLocaleTimeString('ar-EG'), read: false
+      id: id + 1, type: 'chat', userPhone: p, title: "💬 رد جديد من الدعم",
+      body: pendingAdminChatFile ? `الإدارة أرسلت مرفق: ${pendingAdminChatFile.name}` : txt,
+      date: new Date().toLocaleTimeString('ar-EG'), read: false
     });
+
     document.getElementById('adminChatInput').value = "";
+    document.getElementById('adminChatFileInput').value = "";
+    document.getElementById('adminChatFileLabel').innerText = "";
+    pendingAdminChatFile = null;
   } catch (err) {
     alert("❌ حصل خطأ. " + err.message);
   }
@@ -2622,12 +3071,24 @@ async function uploadBanner(e) {
 
 async function saveStoreSettings(e) {
   e.preventDefault();
+  const minOrderVal = document.getElementById('stMinOrderAmount').value.trim();
+  const deliveryFeeVal = document.getElementById('stDeliveryFee').value.trim();
+
   const updated = {
     titleAr: document.getElementById('stTitleAr').value,
     titleEn: document.getElementById('stTitleEn').value,
     addressAr: document.getElementById('stAddressAr').value,
     addressEn: document.getElementById('stAddressEn').value,
-    descAr: document.getElementById('stDescAr').value
+    descAr: document.getElementById('stDescAr').value,
+    currencySymbol: document.getElementById('stCurrencySymbol').value.trim(),
+    minOrderAmount: minOrderVal ? parseFloat(minOrderVal) : null,
+    deliveryFee: deliveryFeeVal ? parseFloat(deliveryFeeVal) : null,
+    whatsappLink: document.getElementById('stWhatsappLink').value.trim(),
+    facebookLink: document.getElementById('stFacebookLink').value.trim(),
+    instagramLink: document.getElementById('stInstagramLink').value.trim(),
+    announcementEnabled: document.getElementById('stAnnouncementEnabled').checked,
+    announcementText: document.getElementById('stAnnouncementText').value.trim(),
+    maintenanceMode: document.getElementById('stMaintenanceMode').checked
   };
   try {
     await db.collection('settings').doc('store').set(updated, { merge: true });
@@ -2681,9 +3142,13 @@ async function addProduct(e) {
 }
 
 function switchAdminTab(t) {
-  ['admOrders','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admLinks','admAccount'].forEach(id => {
+  ['admOrders','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admLinks','admTheme','admAccount'].forEach(id => {
     const el = document.getElementById(id+'Tab');
     if(el) el.style.display = (id === t) ? 'block' : 'none';
+  });
+
+  document.querySelectorAll('#adminDashboardModal .tabs .tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === t);
   });
 
   if(t === 'admOrders') renderAdminOrders();
@@ -2693,6 +3158,7 @@ function switchAdminTab(t) {
   if(t === 'admUsers') renderAdminUsers();
   if(t === 'admChat') loadAdminChatUsers();
   if(t === 'admLinks') renderAdminLinks();
+  if(t === 'admTheme') loadThemeTab();
   if(t === 'admAccount') loadSuperAdminAccountTab();
 }
 
@@ -2892,7 +3358,8 @@ function renderAdminUsers() {
         ${currentUser && currentUser.isSuperAdmin ? `
           <button class="btn-sm btn-blue" onclick="openEditUserModal('${u.uid}')">تعديل ✏️</button>
           <button class="btn-sm btn-danger" onclick="deleteUserAccount('${u.uid}')">حذف 🗑️</button>
-        ` : 'غير متاح للفرعي'}
+        ` : ''}
+        <button class="btn-sm" style="background:#0284c7;" onclick="openSupportChatFor('${u.phone}')">💬 الدعم</button>
       </td>
     </tr>
   `).join('');
@@ -2932,7 +3399,11 @@ function openModal(id) {
   if(id === 'userNotiModal') renderUserNotis();
   if(id === 'adminNotiModal') renderAdminNotis();
   if(id === 'chatModal') renderChat();
-  if(id === 'adminDashboardModal') switchAdminTab('admOrders');
+  if(id === 'adminDashboardModal') {
+    const orderSearch = document.getElementById('orderSearchInput');
+    if (orderSearch) orderSearch.value = '';
+    switchAdminTab('admOrders');
+  }
   document.getElementById(id).style.display = 'flex';
 }
 
