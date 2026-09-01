@@ -50,6 +50,7 @@
   #checkoutPaymentModal, #orderInvoiceModal { z-index: 212; }
   #imagePreviewModal { z-index: 220; }
   #attachmentPreviewModal { z-index: 225; }
+  #adminLoginModal { z-index: 10000; }
   .close-btn { position: absolute; left: 15px; top: 15px; font-size: 20px; cursor: pointer; color: var(--muted); }
 
   /* Forms & Controls */
@@ -93,6 +94,11 @@
   tr.order-row-cancelled { background: #fef2f2; }
   tr.order-row-received td, tr.order-row-processing td, tr.order-row-shipped td,
   tr.order-row-delivered td, tr.order-row-cancelled td { border-color: #e2e8f0; }
+
+  /* عند الأدمن: طلب لسه محدش اتعامل معاه - أحمر واضح لا يُخطأ */
+  tr.order-row-urgent { background: #fecaca; border-right: 5px solid var(--red); animation: urgentPulse 2s infinite; }
+  tr.order-row-urgent td { border-color: #fca5a5; font-weight: 700; }
+  @keyframes urgentPulse { 0%, 100% { background: #fecaca; } 50% { background: #fca5a5; } }
 
   /* Notifications UI Dynamic */
   .noti-header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
@@ -158,9 +164,27 @@
   body.dark-mode tr.order-row-delivered,
   body.dark-mode tr.order-row-cancelled { background: #1e293b; }
   body.dark-mode small, body.dark-mode .card-qty { filter: brightness(1.3); }
+  body.dark-mode .form-group input::placeholder,
+  body.dark-mode .form-group textarea::placeholder { color: #64748b; opacity: 1; }
+  body.dark-mode .form-group input:focus,
+  body.dark-mode .form-group select:focus,
+  body.dark-mode .form-group textarea:focus { border-color: var(--orange); outline: none; }
+  body.dark-mode h2, body.dark-mode h3, body.dark-mode h4 { color: #f1f5f9; }
+  body.dark-mode p, body.dark-mode span, body.dark-mode div, body.dark-mode label { color: inherit; }
+  body.dark-mode .brand-address { color: #cbd5e1; }
+  body.dark-mode a { color: #7dd3fc; }
+  body.dark-mode select option { background: #0f172a; color: #e2e8f0; }
+  body.dark-mode ::-webkit-scrollbar { background: #0f172a; }
+  body.dark-mode ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+  body.dark-mode #maintenanceOverlay p { color: #e2e8f0; }
 </style>
 </head>
 <body>
+
+<!-- شريط تنبيه انقطاع الاتصال -->
+<div id="offlineBanner" style="display:none; position:fixed; top:0; left:0; right:0; background:var(--red); color:#fff; text-align:center; padding:10px; font-size:13px; font-weight:800; z-index:10001;">
+  ⚠️ الاتصال بالإنترنت غير مستقر حاليًا، برجاء الانتظار حتى يعود الاتصال قبل إرسال أي طلب جديد...
+</div>
 
 <!-- شريط الإعلان -->
 <div id="announcementBar" style="display:none; background:var(--orange); color:#fff; text-align:center; padding:8px 30px 8px 10px; font-size:12.5px; font-weight:700; position:relative;">
@@ -205,7 +229,7 @@
     <div class="nav-actions">
       <span id="socialLinksBox" style="display:flex; gap:6px;">
         <a id="socialWhatsapp" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="واتساب">💬</a>
-        <a id="socialFacebook" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="فيسبوك">ⓕ</a>
+        <a id="socialFacebook" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="فيسبوك">📘</a>
         <a id="socialInstagram" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="إنستجرام">📷</a>
       </span>
       <span id="userGreeting" style="font-size: 12px; font-weight: 700;"></span>
@@ -356,7 +380,7 @@
     <p style="font-size:11.5px; color:var(--muted); margin-bottom:8px;">📌 هيتم إرسال الطلب للإدارة أولاً للتأكد من التوفر، وبعد التأكيد هيظهرلك زرار الدفع في "طلباتي".</p>
     <div style="display:flex; gap:8px; margin-top:10px;">
       <button class="btn-nav" style="background:#64748b; flex:1;" onclick="closeModal('deliveryInfoModal'); openModal('cartModal');">◀ رجوع للسلة</button>
-      <button class="btn-submit" style="flex:2; margin-top:0;" onclick="submitOrderProcess()">تأكيد وإرسال الطلب 📦</button>
+      <button class="btn-submit" id="submitOrderBtn" style="flex:2; margin-top:0;" onclick="submitOrderProcess()">تأكيد وإرسال الطلب 📦</button>
     </div>
   </div>
 </div>
@@ -420,7 +444,7 @@
             <th>الإجمالي</th>
             <th>حالة الطلب</th>
             <th>ملاحظات الإدارة / سبب الإلغاء</th>
-            <th>التاريخ</th>
+            <th>تاريخ ووقت الطلب</th>
             <th>إجراءات</th>
           </tr>
         </thead>
@@ -474,7 +498,7 @@
       <button onclick="sendChatMessage()" style="background:var(--navy); color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:700;">إرسال</button>
     </div>
     <small id="chatFileLabel" style="font-size:11px; color:var(--navy); display:block; margin-top:4px;"></small>
-    <p style="font-size:10.5px; color:var(--muted); margin-top:6px; text-align:center;">⏳ الرسائل بتتحذف تلقائيًا بعد شهر من إرسالها.</p>
+    <p style="font-size:10.5px; color:var(--muted); margin-top:6px; text-align:center;">📎 الحد الأقصى لأي مرفق 10 ميجا. ⏳ الرسائل والمرفقات بتتحذف تلقائيًا بعد شهر من إرسالها.</p>
   </div>
 </div>
 
@@ -484,7 +508,7 @@
     <span class="close-btn" onclick="closeModal('attachmentPreviewModal')">&times;</span>
     <h3 style="font-size:14px; margin-bottom:10px; color:var(--navy);">📎 عرض المرفق</h3>
     <div id="attachmentPreviewBody"></div>
-    <a id="attachmentDownloadLink" href="#" download style="display:block; margin-top:12px; background:var(--green); color:#fff; padding:10px; border-radius:8px; text-decoration:none; font-weight:800;">⬇️ تنزيل الملف</a>
+    <button id="attachmentDownloadBtn" style="display:block; width:100%; margin-top:12px; background:var(--green); color:#fff; padding:10px; border:none; border-radius:8px; font-weight:800; cursor:pointer;">⬇️ تنزيل الملف</button>
   </div>
 </div>
 
@@ -684,6 +708,7 @@
     
     <div class="tabs" style="justify-content: flex-start; margin-bottom: 15px;">
       <button class="tab-btn active" data-tab="admOrders" onclick="switchAdminTab('admOrders')">📦 الطلبات</button>
+      <button class="tab-btn" data-tab="admReports" onclick="switchAdminTab('admReports')">📊 تقرير شامل</button>
       <button class="tab-btn" data-tab="admPayments" onclick="switchAdminTab('admPayments')">💳 طرق وأرقام الدفع</button>
       <button class="tab-btn" data-tab="admCategories" onclick="switchAdminTab('admCategories')">🗂️ إدارة الأقسام</button>
       <button class="tab-btn" data-tab="admSettings" onclick="switchAdminTab('admSettings')">⚙️ بيانات ومتجر بريسي</button>
@@ -701,7 +726,7 @@
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
         <div class="form-group" style="margin-bottom:0; flex:1; min-width:180px;">
           <label>🔍 بحث (رقم طلب / اسم عميل / رقم موبايل):</label>
-          <input type="text" id="orderSearchInput" oninput="renderAdminOrders()" placeholder="اكتب للبحث...">
+          <input type="text" id="orderSearchInput" oninput="adminOrdersCurrentPage=1; renderAdminOrders();" placeholder="اكتب للبحث...">
         </div>
         <div class="form-group" style="margin-bottom:0;">
           <label>من تاريخ:</label>
@@ -722,11 +747,64 @@
               <th>رقم الطلب</th>
               <th>العميل</th>
               <th>الأصناف والدفع والإيصال</th>
+              <th>تاريخ ووقت الطلب</th>
               <th>الحالة الحالية</th>
               <th>تحديث الحالة مع تعليق للعميل</th>
             </tr>
           </thead>
           <tbody id="adminOrdersTable"></tbody>
+        </table>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; flex-wrap:wrap; gap:8px; background:#f8fafc; padding:8px 10px; border-radius:8px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label style="font-size:11px;">عدد الطلبات في الصفحة (افتراضي 10):</label>
+          <input type="number" id="ordersPageSizeInput" min="1" value="10" style="width:90px; padding:6px;" onchange="applyOrdersPageSize()">
+        </div>
+        <div id="adminOrdersPagination" style="display:flex; gap:8px; align-items:center; font-size:12px;"></div>
+      </div>
+    </div>
+
+    <!-- التقرير الشامل -->
+    <div id="admReportsTab" style="display:none;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>من تاريخ:</label>
+          <input type="date" id="reportFromDate">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>إلى تاريخ:</label>
+          <input type="date" id="reportToDate">
+        </div>
+        <div class="form-group" style="margin-bottom:0; min-width:180px;">
+          <label>فئة الطلبات (الحالة):</label>
+          <select id="reportStatusFilter">
+            <option value="">كل الفئات</option>
+            <option value="تم استلام الطلب">📥 تم استلام الطلب</option>
+            <option value="جاري التحضير والتنفيذ">⚙️ جاري التجهيز</option>
+            <option value="تم الشحن / جاري التوصيل">🚚 جاري التوصيل</option>
+            <option value="تم التسليم بنجاح">✅ تم التسليم بنجاح</option>
+            <option value="ملغي">❌ ملغي</option>
+          </select>
+        </div>
+        <button class="btn-sm btn-blue" style="padding:8px 14px;" onclick="renderAdminReports()">📊 توليد التقرير</button>
+        <button class="btn-sm" style="padding:8px 14px; background:#64748b;" onclick="clearAdminReportFilter()">إعادة تعيين</button>
+      </div>
+
+      <div id="reportSummaryCards" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:10px; margin-bottom:16px;"></div>
+
+      <h3 style="font-size:14px; margin-bottom:8px; color:var(--navy);">🗂️ توزيع الطلبات حسب الحالة</h3>
+      <div style="overflow-x:auto; margin-bottom:20px;">
+        <table>
+          <thead><tr><th>الحالة</th><th>عدد الطلبات</th><th>إجمالي القيمة</th></tr></thead>
+          <tbody id="reportStatusTable"></tbody>
+        </table>
+      </div>
+
+      <h3 style="font-size:14px; margin-bottom:8px; color:var(--navy);">💳 توزيع الطلبات حسب وسيلة الدفع</h3>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>وسيلة الدفع</th><th>عدد الطلبات المدفوعة بها</th><th>إجمالي القيمة</th></tr></thead>
+          <tbody id="reportPaymentTable"></tbody>
         </table>
       </div>
     </div>
@@ -999,7 +1077,7 @@
         <button onclick="sendAdminChatMessage()" style="background:var(--green); color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:700;">إرسال الرد</button>
       </div>
       <small id="adminChatFileLabel" style="font-size:11px; color:var(--navy); display:block; margin-top:4px;"></small>
-      <p style="font-size:10.5px; color:var(--muted); margin-top:6px; text-align:center;">⏳ الرسائل بتتحذف تلقائيًا بعد شهر من إرسالها.</p>
+      <p style="font-size:10.5px; color:var(--muted); margin-top:6px; text-align:center;">📎 الحد الأقصى لأي مرفق 10 ميجا. ⏳ الرسائل والمرفقات بتتحذف تلقائيًا بعد شهر من إرسالها. 🗑️ اضغط على الأيقونة جنب أي رسالة عشان تحذفها.</p>
     </div>
 
     <!-- روابط إدارية -->
@@ -1053,6 +1131,15 @@
           🌙 الوضع الداكن (Dark Mode) - هيبان لكل زوار الموقع
         </label>
 
+        <div id="themePreviewBox" style="margin:12px 0; padding:15px; border-radius:10px; border:2px dashed #cbd5e1;">
+          <p style="font-size:11px; color:var(--muted); margin-bottom:8px;">👁️ معاينة سريعة قبل الحفظ:</p>
+          <div id="themePreviewHeader" style="padding:10px; border-radius:8px; margin-bottom:8px;">
+            <span id="themePreviewHeaderText" style="font-weight:800; color:#fff;">اسم المتجر هنا</span>
+          </div>
+          <button id="themePreviewBtn" type="button" style="border:none; padding:8px 16px; border-radius:8px; font-weight:700; color:#fff; cursor:default;">زرار تجريبي</button>
+          <p id="themeContrastWarning" style="font-size:11px; color:var(--red); margin-top:8px; display:none; font-weight:700;"></p>
+        </div>
+
         <div style="display:flex; gap:8px; margin-top:10px;">
           <button class="btn-submit" style="background:var(--navy); flex:2; margin-top:0;" onclick="saveThemeSettings()">💾 حفظ المظهر لكل الزوار</button>
           <button class="btn-nav" style="background:#64748b; flex:1;" onclick="resetThemeSettings()">↩️ الافتراضي</button>
@@ -1084,6 +1171,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 
@@ -1101,6 +1189,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 
 /* تطبيق فرعي منفصل (Secondary App) - بيُستخدم بس عشان الأدمن الرئيسي يقدر ينشئ
    حساب أدمن فرعي جديد من غير ما تتسجل خروج جلسته هو، لأن Firebase بيسجل دخول
@@ -1161,6 +1250,11 @@ async function cleanupOldChatMessages(messagesList) {
   if (old.length === 0) return;
 
   try {
+    // نحذف مرفقات Storage الأول (لو موجودة) عشان نفضّي المساحة فعليًا
+    await Promise.all(old.filter(m => m.filePath).map(m =>
+      storage.ref(m.filePath).delete().catch(() => {}) // الملف ممكن يكون اتحذف قبل كده، نتجاهل الخطأ
+    ));
+
     const batch = db.batch();
     old.forEach(m => batch.delete(db.collection('chatMessages').doc(String(m.id))));
     await batch.commit();
@@ -1262,6 +1356,14 @@ auth.onAuthStateChanged(async (fbUser) => {
   }
   initUserScopedListeners();
   updateUI();
+
+  // فحص دوري كل 5 دقايق للطلبات المتأخرة/المنتهية مهلة الدفع، حتى لو الأدمن مش فاتح تبويب الطلبات دلوقتي
+  if (currentUser && currentUser.isAdmin && !window.__deadlineCheckInterval) {
+    window.__deadlineCheckInterval = setInterval(() => {
+      checkOverdueOrders();
+      checkPaymentDeadlines();
+    }, 5 * 60 * 1000);
+  }
 });
 
 /* ======================================================================
@@ -1284,10 +1386,17 @@ function initPublicListeners() {
     renderProducts(currentCategoryFilter);
   }, err => console.error('products listener error:', err));
 
-  db.collection('settings').doc('store').onSnapshot(doc => {
+  /* --- نستخدم هذا المستمع الخفيف (شغال دايمًا لأي زائر) كـ"نبضة" لمعرفة هل احنا فعلاً متصلين بسيرفر Firebase ولا البيانات بتيجي من الكاش المحلي بسبب ضعف/انقطاع النت --- */
+  db.collection('settings').doc('store').onSnapshot({ includeMetadataChanges: true }, doc => {
     if (doc.exists) storeSettings = doc.data();
     applySettings();
-  }, err => console.error('settings/store listener error:', err));
+    firestoreConnected = !doc.metadata.fromCache;
+    updateOnlineStatus();
+  }, err => {
+    console.error('settings/store listener error:', err);
+    firestoreConnected = false;
+    updateOnlineStatus();
+  });
 }
 
 let scopedUnsubscribers = [];
@@ -1329,7 +1438,7 @@ function initUserScopedListeners() {
     }, err => console.error('orders listener error:', err)));
 
     scopedUnsubscribers.push(db.collection('adminNotis').onSnapshot(snap => {
-      adminNotis = snap.docs.map(d => d.data());
+      adminNotis = snap.docs.map(d => d.data()).sort((a, b) => (b.id || 0) - (a.id || 0));
       renderAdminNotis();
       updateNotiBadges();
     }, err => console.error('adminNotis listener error:', err)));
@@ -1352,7 +1461,7 @@ function initUserScopedListeners() {
     }, err => console.error('orders listener error:', err)));
 
     scopedUnsubscribers.push(db.collection('userNotis').where('userPhone', '==', currentUser.phone).onSnapshot(snap => {
-      userNotis = snap.docs.map(d => d.data());
+      userNotis = snap.docs.map(d => d.data()).sort((a, b) => (b.id || 0) - (a.id || 0));
       renderUserNotis();
       updateNotiBadges();
     }, err => console.error('userNotis listener error:', err)));
@@ -1461,16 +1570,44 @@ function loadThemeTab() {
   document.getElementById('themeAccentColor').value = t.accentColor || DEFAULT_THEME.accentColor;
   document.getElementById('themeFontFamily').value = t.fontFamily || DEFAULT_THEME.fontFamily;
   document.getElementById('themeDarkMode').checked = !!t.darkMode;
+  previewThemeChange();
+}
+
+/* حساب درجة سطوع اللون، لتحذير الأدمن لو اختار لون فاتح أوي (بما إن نفس اللون بيُستخدم كنص في أماكن كتير بالموقع) */
+function getColorLuminance(hex) {
+  const c = (hex || '#000000').replace('#', '');
+  const r = parseInt(c.substr(0, 2), 16) / 255;
+  const g = parseInt(c.substr(2, 2), 16) / 255;
+  const b = parseInt(c.substr(4, 2), 16) / 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b;
 }
 
 /* معاينة فورية على شاشة الأدمن بس، قبل الحفظ */
 function previewThemeChange() {
-  applyTheme({
+  const theme = {
     primaryColor: document.getElementById('themePrimaryColor').value,
     accentColor: document.getElementById('themeAccentColor').value,
     fontFamily: document.getElementById('themeFontFamily').value,
     darkMode: document.getElementById('themeDarkMode').checked
-  });
+  };
+  applyTheme(theme);
+
+  const headerBox = document.getElementById('themePreviewHeader');
+  const btn = document.getElementById('themePreviewBtn');
+  if (headerBox && btn) {
+    headerBox.style.background = theme.primaryColor;
+    btn.style.background = theme.accentColor;
+  }
+
+  const warning = document.getElementById('themeContrastWarning');
+  if (warning) {
+    if (getColorLuminance(theme.primaryColor) > 0.6) {
+      warning.style.display = 'block';
+      warning.innerText = '⚠️ اللون الأساسي ده فاتح أوي - نفس اللون بيُستخدم كنص في أماكن كتير في الموقع (زي عناوين المنتجات)، فهيصعب قراءته. جرّب لون أغمق شوية.';
+    } else {
+      warning.style.display = 'none';
+    }
+  }
 }
 
 async function saveThemeSettings() {
@@ -1797,11 +1934,18 @@ function getOrderTotal(o) {
   return getOrderItems(o).reduce((sum, it) => sum + parsePriceNumber(it.price) * (it.quantity || 1), 0);
 }
 
+/* --- عرض تاريخ ووقت الطلب كامل (يوم + ساعة)، بيعتمد على createdAt لو موجودة وإلا بيرجع لتاريخ النص القديم --- */
+function getOrderDateTime(o) {
+  if (o.createdAt) return new Date(o.createdAt).toLocaleString('ar-EG');
+  return o.date || '-';
+}
+
 /* --- الرسائل الافتراضية لكل حالة، تتعبّي تلقائيًا وتفضل قابلة للتعديل --- */
-function getDefaultStatusNote(status) {
+function getDefaultStatusNote(status, deadlineTs) {
+  const deadlineText = deadlineTs ? ` من فضلك ادفع قبل ${new Date(deadlineTs).toLocaleString('ar-EG')}، وإلا سيتم إلغاء الطلب تلقائيًا.` : ' من فضلك أكّد الطلب وادفع لإتمام العملية.';
   const map = {
     'تم استلام الطلب': 'تم استلام طلبك بنجاح وجاري مراجعته من فريقنا.',
-    'جاري التحضير والتنفيذ': 'طلبك متاح وجاري تجهيزه الآن. من فضلك أكّد الطلب وادفع لإتمام العملية.',
+    'جاري التحضير والتنفيذ': 'طلبك متاح وجاري تجهيزه الآن.' + deadlineText,
     'تم الشحن / جاري التوصيل': 'طلبك في الطريق إليك الآن.',
     'تم التسليم بنجاح': 'تم تسليم طلبك بنجاح، نتمنى لك تجربة سعيدة معنا!',
     'ملغي': 'نأسف، تم إلغاء الطلب. يرجى التواصل مع الدعم لمزيد من التفاصيل.'
@@ -1811,7 +1955,39 @@ function getDefaultStatusNote(status) {
 
 let checkoutDeliveryInfo = { name: '', phone: '', address: '' };
 
+/* --- منع تكرار إرسال نفس الطلب بسبب نت ضعيف: قفل أثناء الإرسال + مهلة 5 دقايق بين الطلبات --- */
+let orderSubmitInProgress = false;
+const ORDER_COOLDOWN_MS = 5 * 60 * 1000;
+
+function getLastOrderTime() {
+  return parseInt(localStorage.getItem('brs_v4_last_order_time') || '0');
+}
+function setLastOrderTime() {
+  localStorage.setItem('brs_v4_last_order_time', String(Date.now()));
+}
+
 async function submitOrderProcess() {
+  if (orderSubmitInProgress) return;
+
+  if (!navigator.onLine || !firestoreConnected) {
+    return alert(
+      `⚠️ الاتصال بالإنترنت غير مستقر حاليًا.\n\n` +
+      `من فضلك تأكد إن الاتصال رجع (هتلاقي شريط تنبيه أحمر بيختفي فوق الصفحة أول ما يرجع)، ` +
+      `وبعدها اضغط "تأكيد وإرسال الطلب" تاني. ده بيمنع تكرار نفس الطلب أكتر من مرة بسبب مشكلة الشبكة.`
+    );
+  }
+
+  const remaining = ORDER_COOLDOWN_MS - (Date.now() - getLastOrderTime());
+  if (getLastOrderTime() && remaining > 0) {
+    const mins = Math.ceil(remaining / 60000);
+    return alert(
+      `⏳ تم استلام طلبك السابق بنجاح.\n\n` +
+      `لضمان عدم إرسال نفس الطلب أكتر من مرة عن طريق الخطأ (خصوصًا لو حصلت مشكلة في الاتصال بالإنترنت)، ` +
+      `لازم تستنى حوالي ${mins} دقيقة قبل إرسال طلب جديد.\n\n` +
+      `تقدر تتابع حالة طلبك من "طلباتي" في الأثناء.`
+    );
+  }
+
   const name = document.getElementById('deliveryName').value.trim();
   const phone = document.getElementById('deliveryPhone').value.trim();
   const address = document.getElementById('deliveryAddress').value.trim();
@@ -1847,6 +2023,10 @@ async function submitOrderProcess() {
     payMethod: '', senderAcc: '', refNo: '', receiptImg: ''
   };
 
+  orderSubmitInProgress = true;
+  const submitBtn = document.getElementById('submitOrderBtn');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "⏳ جاري الإرسال..."; }
+
   try {
     await db.collection('orders').doc(orderId).set(ord);
     await db.collection('adminNotis').doc(String(notiId)).set({
@@ -1854,8 +2034,17 @@ async function submitOrderProcess() {
       body: `طلب جديد من ${currentUser.name} - ${items.length} صنف بإجمالي ${total} ${getCurrencySymbol()}`,
       date: new Date().toLocaleTimeString('ar-EG'), read: false
     });
+    setLastOrderTime();
   } catch (err) {
-    return alert("❌ حصل خطأ أثناء إرسال الطلب.\n" + err.message);
+    const isNetworkErr = err.code === 'unavailable' || !navigator.onLine || !firestoreConnected;
+    return alert(
+      isNetworkErr
+        ? "⚠️ فشل إرسال الطلب بسبب ضعف/انقطاع الاتصال بالإنترنت.\nمن فضلك تأكد من استقرار الاتصال وحاول تاني بعد شوية."
+        : "❌ حصل خطأ أثناء إرسال الطلب.\n" + err.message
+    );
+  } finally {
+    orderSubmitInProgress = false;
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "تأكيد وإرسال الطلب 📦"; }
   }
 
   cart = [];
@@ -2295,13 +2484,20 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
   let ord = orders.find(o => o.orderId === orderId);
   if(!ord || !newStatus) return;
 
-  const finalNote = noteText || getDefaultStatusNote(newStatus) || ord.note;
+  const updateData = { status: newStatus };
+
+  // أول مرة الطلب يخرج من "تم استلام الطلب" وقبل الدفع، نحدد مهلة 24 ساعة للدفع
+  let deadlineTs = ord.paymentDeadline || null;
+  if (newStatus !== 'تم استلام الطلب' && newStatus !== 'ملغي' && !ord.paymentSubmitted && !deadlineTs) {
+    deadlineTs = Date.now() + (24 * 60 * 60 * 1000);
+    updateData.paymentDeadline = deadlineTs;
+  }
+
+  const finalNote = noteText || getDefaultStatusNote(newStatus, deadlineTs) || ord.note;
+  updateData.note = finalNote;
 
   try {
-    await db.collection('orders').doc(orderId).update({
-      status: newStatus,
-      note: finalNote
-    });
+    await db.collection('orders').doc(orderId).update(updateData);
 
     const notiId = Date.now();
     await db.collection('userNotis').doc(String(notiId)).set({
@@ -2322,12 +2518,19 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
 }
 
 /* --- تعبئة تلقائية للتعليق حسب الحالة المختارة، تفضل قابلة للتعديل --- */
-function autofillStatusNote(selectEl, noteInputId) {
+function autofillStatusNote(selectEl, noteInputId, orderId) {
   const noteInput = document.getElementById(noteInputId);
   if (!noteInput) return;
   const wasAutofilled = noteInput.dataset.autofilled === 'true' || !noteInput.value.trim();
   if (!wasAutofilled) return; // الأدمن كتب تعليق يدوي بنفسه، متلمسهوش
-  noteInput.value = getDefaultStatusNote(selectEl.value);
+
+  const ord = orders.find(o => o.orderId === orderId);
+  let deadlineTs = ord && ord.paymentDeadline ? ord.paymentDeadline : null;
+  if (!deadlineTs && selectEl.value !== 'تم استلام الطلب' && selectEl.value !== 'ملغي') {
+    deadlineTs = Date.now() + (24 * 60 * 60 * 1000); // معاينة تقريبية قبل الحفظ الفعلي
+  }
+
+  noteInput.value = getDefaultStatusNote(selectEl.value, deadlineTs);
   noteInput.dataset.autofilled = 'true';
 }
 
@@ -2394,7 +2597,7 @@ function renderUserOrders() {
       <td>${getOrderTotal(o)} ${getCurrencySymbol()}</td>
       <td>${getStatusBadge(o.status)}</td>
       <td style="color:var(--red); font-weight:700;">${o.note || 'لا يوجد'}</td>
-      <td>${o.date}</td>
+      <td style="white-space:nowrap;">${getOrderDateTime(o)}</td>
       <td>
         <button class="btn-sm btn-blue" style="margin-bottom:4px; width:100%;" onclick="openOrderInvoice('${o.orderId}')">📋 عرض الطلب</button>
         ${needsPayment ? `<button class="btn-sm" style="background:var(--green); width:100%;" onclick="payForOrder('${o.orderId}')">✅ تأكيد الطلب والدفع الآن</button>` : ''}
@@ -2410,6 +2613,7 @@ let adminOrdersToDate = null;
 function applyAdminOrdersDateFilter() {
   adminOrdersFromDate = document.getElementById('ordersFromDate').value || null;
   adminOrdersToDate = document.getElementById('ordersToDate').value || null;
+  adminOrdersCurrentPage = 1;
   renderAdminOrders();
 }
 
@@ -2418,6 +2622,7 @@ function clearAdminOrdersDateFilter() {
   adminOrdersToDate = null;
   document.getElementById('ordersFromDate').value = '';
   document.getElementById('ordersToDate').value = '';
+  adminOrdersCurrentPage = 1;
   renderAdminOrders();
 }
 
@@ -2584,11 +2789,19 @@ function renderAdminOrders() {
   }
 
   if (list.length === 0) {
-    document.getElementById('adminOrdersTable').innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:15px;">${(term || adminOrdersFromDate || adminOrdersToDate) ? 'لا توجد طلبات مطابقة.' : 'لا توجد طلبات مسجلة بعد.'}</td></tr>`;
+    document.getElementById('adminOrdersTable').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:15px;">${(term || adminOrdersFromDate || adminOrdersToDate) ? 'لا توجد طلبات مطابقة.' : 'لا توجد طلبات مسجلة بعد.'}</td></tr>`;
+    const paginationBoxEmpty = document.getElementById('adminOrdersPagination');
+    if (paginationBoxEmpty) paginationBoxEmpty.innerHTML = '';
     return;
   }
 
-  document.getElementById('adminOrdersTable').innerHTML = list.map((o, idx) => {
+  const totalPages = Math.max(1, Math.ceil(list.length / adminOrdersPageSize));
+  if (adminOrdersCurrentPage > totalPages) adminOrdersCurrentPage = totalPages;
+  if (adminOrdersCurrentPage < 1) adminOrdersCurrentPage = 1;
+  const startIdx = (adminOrdersCurrentPage - 1) * adminOrdersPageSize;
+  const pageList = list.slice(startIdx, startIdx + adminOrdersPageSize);
+
+  document.getElementById('adminOrdersTable').innerHTML = pageList.map((o, idx) => {
     const items = getOrderItems(o);
 
     let paymentHtml = '';
@@ -2624,14 +2837,15 @@ function renderAdminOrders() {
     }
 
     return `
-      <tr id="orderRow_${o.orderId}" class="${getOrderRowClass(o.status)}">
+      <tr id="orderRow_${o.orderId}" class="${getAdminOrderRowClass(o.status)}">
         <td><b>${o.orderId}</b></td>
         <td>${o.userName}<br><small>${o.userPhone}</small>${deliveryHtml}</td>
         <td>${itemsListHtml}<br><b>الإجمالي: ${getOrderTotal(o)} ${getCurrencySymbol()}</b>${paymentHtml}${serialHtml}</td>
+        <td style="white-space:nowrap;">${getOrderDateTime(o)}</td>
         <td>${getStatusBadge(o.status)}<br><small>ملاحظة: ${o.note || 'لاشيء'}</small></td>
         <td>
           <button class="btn-sm btn-blue" style="width:100%; margin-bottom:4px;" onclick="openOrderInvoice('${o.orderId}')">📋 عرض طلب</button>
-          <select id="stSel_${idx}" onchange="autofillStatusNote(this, 'ntInp_${idx}')" style="font-size:11px; padding:3px; width:100%;">
+          <select id="stSel_${idx}" onchange="autofillStatusNote(this, 'ntInp_${idx}', '${o.orderId}')" style="font-size:11px; padding:3px; width:100%;">
             <option value="">تغيير الحالة...</option>
             <option value="تم استلام الطلب">📥 تم استلام الطلب</option>
             <option value="جاري التحضير والتنفيذ">⚙️ جاري التجهيز</option>
@@ -2645,6 +2859,81 @@ function renderAdminOrders() {
       </tr>
     `;
   }).join('');
+
+  const paginationBox = document.getElementById('adminOrdersPagination');
+  if (paginationBox) {
+    paginationBox.innerHTML = `
+      <button class="btn-sm" style="background:#64748b;" ${adminOrdersCurrentPage <= 1 ? 'disabled' : ''} onclick="goToOrdersPage(${adminOrdersCurrentPage - 1})">◀ السابق</button>
+      <span>صفحة ${adminOrdersCurrentPage} من ${totalPages} (${list.length} طلب)</span>
+      <button class="btn-sm" style="background:#64748b;" ${adminOrdersCurrentPage >= totalPages ? 'disabled' : ''} onclick="goToOrdersPage(${adminOrdersCurrentPage + 1})">التالي ▶</button>
+    `;
+  }
+
+  checkOverdueOrders();
+  checkPaymentDeadlines();
+}
+
+let adminOrdersPageSize = 10;
+let adminOrdersCurrentPage = 1;
+
+function applyOrdersPageSize() {
+  const val = parseInt(document.getElementById('ordersPageSizeInput').value);
+  adminOrdersPageSize = (val && val > 0) ? val : 10;
+  adminOrdersCurrentPage = 1;
+  renderAdminOrders();
+}
+
+function goToOrdersPage(p) {
+  adminOrdersCurrentPage = p;
+  renderAdminOrders();
+}
+
+/* --- تنبيه للأدمن لو طلب فضل أكتر من 24 ساعة من غير أي تحديث حالة --- */
+async function checkOverdueOrders() {
+  if (!currentUser || !currentUser.isAdmin) return;
+  const cutoff = Date.now() - (24 * 60 * 60 * 1000);
+  const overdue = orders.filter(o => o.status === 'تم استلام الطلب' && (o.createdAt || 0) < cutoff && !o.reminderSent);
+
+  for (const o of overdue) {
+    try {
+      await db.collection('orders').doc(o.orderId).update({ reminderSent: true });
+      const notiId = Date.now() + Math.floor(Math.random() * 1000);
+      await db.collection('adminNotis').doc(String(notiId)).set({
+        id: notiId, type: 'order', refId: o.orderId, title: "⏰ طلب متأخر بدون رد",
+        body: `الطلب ${o.orderId} من ${o.userName} لسه من غير أي تحديث من أكتر من 24 ساعة!`,
+        date: new Date().toLocaleTimeString('ar-EG'), read: false
+      });
+    } catch (err) { console.error('checkOverdueOrders error:', err); }
+  }
+}
+
+/* --- إلغاء تلقائي لأي طلب انتهت مهلة دفعه (24 ساعة من تحديث حالته) ولسه العميل ما دفعش --- */
+async function checkPaymentDeadlines() {
+  if (!currentUser || !currentUser.isAdmin) return;
+  const now = Date.now();
+  const expired = orders.filter(o =>
+    o.paymentDeadline && o.paymentDeadline < now && !o.paymentSubmitted &&
+    o.status !== 'ملغي' && o.status !== 'تم التسليم بنجاح'
+  );
+
+  for (const o of expired) {
+    try {
+      const deadlineText = new Date(o.paymentDeadline).toLocaleString('ar-EG');
+      const cancelNote = `تم إلغاء الطلب تلقائيًا لعدم إتمام الدفع خلال المهلة المحددة (كان آخر موعد للدفع: ${deadlineText}).`;
+
+      // نبلّغ العميل الأول قبل الحذف، عشان يوصله سبب الإلغاء وتاريخ ووقت آخر موعد كان محدد للدفع
+      const notiId = Date.now() + Math.floor(Math.random() * 1000);
+      await db.collection('userNotis').doc(String(notiId)).set({
+        id: notiId, type: 'order', refId: o.orderId, userPhone: o.userPhone,
+        title: `إلغاء طلب: ${o.orderId}`,
+        body: `تم إلغاء طلبك تلقائيًا لعدم إتمام الدفع في الوقت المحدد. ${cancelNote}`,
+        date: new Date().toLocaleTimeString('ar-EG'), read: false
+      });
+
+      // بعد التبليغ، نحذف الطلب نهائيًا من عند العميل والأدمن مع بعض (نفس المجموعة، بيختفي من الاتنين تلقائيًا لحظيًا)
+      await db.collection('orders').doc(o.orderId).delete();
+    } catch (err) { console.error('checkPaymentDeadlines error:', err); }
+  }
 }
 
 function getStatusBadge(st) {
@@ -2665,35 +2954,178 @@ function getOrderRowClass(st) {
   return '';
 }
 
+/* عند الأدمن: أي طلب لسه "تم استلام الطلب" (يعني محدش اتعامل معاه) يتلوّن أحمر واضح */
+function getAdminOrderRowClass(st) {
+  if (st === 'تم استلام الطلب') return 'order-row-urgent';
+  return getOrderRowClass(st);
+}
+
+function clearAdminReportFilter() {
+  document.getElementById('reportFromDate').value = '';
+  document.getElementById('reportToDate').value = '';
+  document.getElementById('reportStatusFilter').value = '';
+  renderAdminReports();
+}
+
+/* --- التقرير الشامل: بيجمع كل الطلبات (أو المفلترة بتاريخ/حالة) ويوريها كملخص + توزيع بالحالة + توزيع بوسيلة الدفع --- */
+function renderAdminReports() {
+  const fromVal = document.getElementById('reportFromDate') ? document.getElementById('reportFromDate').value : '';
+  const toVal = document.getElementById('reportToDate') ? document.getElementById('reportToDate').value : '';
+  const statusVal = document.getElementById('reportStatusFilter') ? document.getElementById('reportStatusFilter').value : '';
+
+  let list = orders.slice();
+  if (fromVal) {
+    const fromTs = new Date(fromVal + 'T00:00:00').getTime();
+    list = list.filter(o => (o.createdAt || 0) >= fromTs);
+  }
+  if (toVal) {
+    const toTs = new Date(toVal + 'T23:59:59.999').getTime();
+    list = list.filter(o => (o.createdAt || 0) <= toTs);
+  }
+  if (statusVal) {
+    list = list.filter(o => o.status === statusVal);
+  }
+
+  // بطاقات الملخص العام
+  const totalOrders = list.length;
+  const totalValue = list.reduce((sum, o) => sum + getOrderTotal(o), 0);
+  const paidOrders = list.filter(o => o.paymentSubmitted).length;
+  const cancelledOrders = list.filter(o => o.status === 'ملغي').length;
+  const deliveredOrders = list.filter(o => o.status === 'تم التسليم بنجاح').length;
+
+  const cardsBox = document.getElementById('reportSummaryCards');
+  if (cardsBox) {
+    const cardStyle = "background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px; text-align:center;";
+    cardsBox.innerHTML = `
+      <div style="${cardStyle}"><div style="font-size:20px; font-weight:900; color:var(--navy);">${totalOrders}</div><div style="font-size:11.5px; color:var(--muted);">إجمالي عدد الطلبات</div></div>
+      <div style="${cardStyle}"><div style="font-size:20px; font-weight:900; color:var(--green);">${totalValue} ${getCurrencySymbol()}</div><div style="font-size:11.5px; color:var(--muted);">إجمالي القيمة</div></div>
+      <div style="${cardStyle}"><div style="font-size:20px; font-weight:900; color:var(--blue);">${paidOrders}</div><div style="font-size:11.5px; color:var(--muted);">طلبات تم دفعها</div></div>
+      <div style="${cardStyle}"><div style="font-size:20px; font-weight:900; color:#15803d;">${deliveredOrders}</div><div style="font-size:11.5px; color:var(--muted);">طلبات تم تسليمها</div></div>
+      <div style="${cardStyle}"><div style="font-size:20px; font-weight:900; color:var(--red);">${cancelledOrders}</div><div style="font-size:11.5px; color:var(--muted);">طلبات ملغاة</div></div>
+    `;
+  }
+
+  // توزيع حسب الحالة
+  const statusList = ['تم استلام الطلب', 'جاري التحضير والتنفيذ', 'تم الشحن / جاري التوصيل', 'تم التسليم بنجاح', 'ملغي'];
+  const statusTable = document.getElementById('reportStatusTable');
+  if (statusTable) {
+    if (totalOrders === 0) {
+      statusTable.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--muted); padding:12px;">لا توجد طلبات مطابقة لهذه الفلاتر.</td></tr>`;
+    } else {
+      statusTable.innerHTML = statusList.map(st => {
+        const stOrders = list.filter(o => o.status === st);
+        if (stOrders.length === 0) return '';
+        const stTotal = stOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
+        return `<tr><td>${getStatusBadge(st)}</td><td>${stOrders.length}</td><td>${stTotal} ${getCurrencySymbol()}</td></tr>`;
+      }).join('') || `<tr><td colspan="3" style="text-align:center; color:var(--muted); padding:12px;">لا توجد طلبات مطابقة لهذه الفلاتر.</td></tr>`;
+    }
+  }
+
+  // توزيع حسب وسيلة الدفع (فودافون كاش، انستاباي...إلخ - أي وسيلة مسجلة فعليًا في الطلبات المدفوعة)
+  const paymentTable = document.getElementById('reportPaymentTable');
+  if (paymentTable) {
+    const paidList = list.filter(o => o.paymentSubmitted && o.payMethod);
+    if (paidList.length === 0) {
+      paymentTable.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--muted); padding:12px;">لا توجد طلبات مدفوعة مطابقة لهذه الفلاتر.</td></tr>`;
+    } else {
+      const byMethod = {};
+      paidList.forEach(o => {
+        const key = o.payMethod || 'غير محدد';
+        if (!byMethod[key]) byMethod[key] = { count: 0, total: 0 };
+        byMethod[key].count += 1;
+        byMethod[key].total += getOrderTotal(o);
+      });
+      paymentTable.innerHTML = Object.keys(byMethod).map(name => `
+        <tr><td><b>${name}</b></td><td>${byMethod[name].count}</td><td>${byMethod[name].total} ${getCurrencySymbol()}</td></tr>
+      `).join('');
+    }
+  }
+}
+
 /* --- قراءة أي ملف كـ base64 (مش مقصورة على الصور بس) مع حد أقصى للحجم --- */
+const CHAT_FILE_MAX_BYTES = 10 * 1024 * 1024; // 10 ميجا - الحد الأقصى المسموح لأي مرفق شات
+const CHAT_SMALL_FILE_THRESHOLD = 600 * 1024;  // 600 كيلو بايت - تحت الحد ده: base64 جوه Firestore زي الأول
+
+/* --- بيانات Cloudinary (مجاني، من غير كارت بنكي) - مستخدمة بس للملفات الكبيرة (أكتر من الحد أعلاه) --- */
+const CLOUDINARY_CLOUD_NAME = 'upxjbdew';
+const CLOUDINARY_UPLOAD_PRESET = 'chat_uploads';
+
 function readFileAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+    reader.onload = e => resolve(e.target.result);
     reader.onerror = () => reject(new Error('تعذّرت قراءة الملف'));
     reader.readAsDataURL(file);
   });
 }
 
-const CHAT_FILE_MAX_BYTES = 700 * 1024; // أقل من حد Firestore (1 ميجا) بهامش أمان
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', 'chatAttachments');
+  const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: formData });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error?.message || 'فشل الرفع على Cloudinary');
+  return data.secure_url;
+}
+
+/* --- رفع ذكي لمرفقات الشات:
+   - ملف صغير (≤600 كيلو): بيتحول base64 ويتخزن مباشرة جوه مستند الرسالة في Firestore (زي الأسلوب الأساسي، من غير أي خدمة خارجية).
+   - ملف كبير (>600 كيلو وحتى 10 ميجا): بيترفع على Cloudinary، وبيتخزن جوه Firestore رابطه بس (نص قصير جدًا). --- */
+async function uploadChatFile(file, labelElId) {
+  const labelEl = document.getElementById(labelElId);
+  if (file.size > CHAT_FILE_MAX_BYTES) {
+    alert("❌ الملف كبير أوي (الحد الأقصى 10 ميجا). اختر ملف أصغر.");
+    return null;
+  }
+
+  if (labelEl) labelEl.innerText = `⏳ جاري رفع "${file.name}"...`;
+
+  try {
+    let url, storedInline;
+    if (file.size <= CHAT_SMALL_FILE_THRESHOLD) {
+      url = await readFileAsBase64(file);
+      storedInline = true;
+    } else {
+      url = await uploadToCloudinary(file);
+      storedInline = false;
+    }
+    if (labelEl) labelEl.innerText = `📎 ${file.name}`;
+    return { name: file.name, type: file.type, size: file.size, url, path: null, storedInline };
+  } catch (err) {
+    if (labelEl) labelEl.innerText = '';
+    alert("❌ حصل خطأ أثناء رفع الملف. " + err.message);
+    return null;
+  }
+}
+
+/* --- تنزيل موثوق لأي مرفق حتى لو رابطه من نطاق مختلف (Firebase Storage) --- */
+async function downloadAttachment(url, filename) {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename || 'مرفق';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    window.open(url, '_blank'); // خطة بديلة لو التنزيل المباشر فشل
+  }
+}
 
 let pendingChatFile = null;
 
 async function handleChatFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
-  if (file.size > CHAT_FILE_MAX_BYTES) {
-    alert("❌ الملف كبير أوي (الحد الأقصى تقريبًا 700 كيلوبايت). اختر ملف أصغر.");
-    e.target.value = '';
-    return;
-  }
-  try {
-    const data = await readFileAsBase64(file);
-    pendingChatFile = { name: file.name, type: file.type, data };
-    document.getElementById('chatFileLabel').innerText = `📎 ${file.name}`;
-  } catch (err) {
-    alert("❌ حصل خطأ أثناء قراءة الملف.");
-  }
+  const uploaded = await uploadChatFile(file, 'chatFileLabel');
+  if (uploaded) pendingChatFile = uploaded;
+  else e.target.value = '';
 }
 
 async function sendChatMessage() {
@@ -2708,7 +3140,9 @@ async function sendChatMessage() {
     if (pendingChatFile) {
       msgData.fileName = pendingChatFile.name;
       msgData.fileType = pendingChatFile.type;
-      msgData.fileData = pendingChatFile.data;
+      msgData.fileSize = pendingChatFile.size;
+      msgData.fileURL = pendingChatFile.url;
+      msgData.filePath = pendingChatFile.path;
     }
 
     await db.collection('chatMessages').doc(String(id)).set(msgData);
@@ -2731,7 +3165,7 @@ function renderChat() {
   const box = document.getElementById('chatMessages');
   if (!currentUser) return;
   const myMsgs = chatMessages.filter(m => m.senderPhone === currentUser.phone);
-  box.innerHTML = myMsgs.map(renderChatBubble).join('');
+  box.innerHTML = myMsgs.map(m => renderChatBubble(m, false)).join('');
 }
 
 function loadAdminChatUsers() {
@@ -2769,35 +3203,51 @@ function openSupportChatFor(phone) {
   }, 60);
 }
 
-function renderChatBubble(m) {
+/* --- حذف أي رسالة (نص/مستند/مرفق) نهائيًا، مع حذف الملف من Storage لو موجود --- */
+async function deleteChatMessage(msgId) {
+  if (!confirm("متأكد من حذف الرسالة دي نهائيًا؟ الحذف مش قابل للتراجع.")) return;
+  const m = chatMessages.find(x => String(x.id) === String(msgId));
+  try {
+    if (m && m.filePath) {
+      try { await storage.ref(m.filePath).delete(); } catch (e) { /* الملف ممكن يكون اتحذف قبل كده */ }
+    }
+    await db.collection('chatMessages').doc(String(msgId)).delete();
+  } catch (err) {
+    alert("❌ حصل خطأ أثناء حذف الرسالة. " + err.message);
+  }
+}
+
+function renderChatBubble(m, showDelete) {
   let attachHtml = '';
-  if (m.fileData) {
+  if (m.fileURL) {
     const isImg = m.fileType && m.fileType.startsWith('image/');
     attachHtml = `
       <div onclick="openChatAttachment(${m.id})" style="margin-top:5px; cursor:pointer; background:rgba(255,255,255,0.2); padding:6px; border-radius:6px; display:flex; align-items:center; gap:5px;">
-        ${isImg ? `<img src="${m.fileData}" style="width:36px; height:36px; object-fit:cover; border-radius:4px;">` : '<span style="font-size:18px;">📎</span>'}
+        ${isImg ? `<img src="${m.fileURL}" style="width:36px; height:36px; object-fit:cover; border-radius:4px;">` : '<span style="font-size:18px;">📎</span>'}
         <span style="font-size:11px; text-decoration:underline; word-break:break-all;">${m.fileName}</span>
       </div>`;
   }
+  const deleteHtml = showDelete ? `<span onclick="deleteChatMessage(${m.id})" style="cursor:pointer; float:left; opacity:0.8; font-size:12px;" title="حذف الرسالة">🗑️</span>` : '';
   return `
     <div class="chat-msg ${m.isAdmin ? 'msg-admin' : 'msg-user'}">
-      <small><b>${m.isAdmin ? 'الإدارة' : m.senderName}:</b></small><br>${m.text || ''}${attachHtml}
+      ${deleteHtml}<small><b>${m.isAdmin ? 'الإدارة' : m.senderName}:</b></small><br>${m.text || ''}${attachHtml}
     </div>
   `;
 }
 
 function openChatAttachment(msgId) {
   const m = chatMessages.find(x => x.id === msgId);
-  if (!m || !m.fileData) return;
+  if (!m || !m.fileURL) return;
 
   const isImg = m.fileType && m.fileType.startsWith('image/');
   document.getElementById('attachmentPreviewBody').innerHTML = isImg
-    ? `<img src="${m.fileData}" style="max-width:100%; border-radius:8px;">`
-    : `<div style="padding:25px; text-align:center; font-size:44px;">📄</div><p style="text-align:center; font-size:13px; word-break:break-all;">${m.fileName}</p>`;
+    ? `<img src="${m.fileURL}" style="max-width:100%; border-radius:8px;">`
+    : `<div style="padding:25px; text-align:center; font-size:44px;">📄</div>
+       <p style="text-align:center; font-size:13px; word-break:break-all;">${m.fileName}</p>
+       <button onclick="window.open('${m.fileURL}','_blank')" class="btn-nav" style="background:var(--blue); width:100%; margin-top:8px;">🔗 فتح الملف (ببرنامج جهازك المناسب)</button>`;
 
-  const link = document.getElementById('attachmentDownloadLink');
-  link.href = m.fileData;
-  link.download = m.fileName || 'مرفق';
+  const downloadBtn = document.getElementById('attachmentDownloadBtn');
+  downloadBtn.onclick = () => downloadAttachment(m.fileURL, m.fileName);
 
   openModal('attachmentPreviewModal');
 }
@@ -2806,7 +3256,7 @@ function loadAdminChat() {
   const p = document.getElementById('adminChatUserSelect').value;
   const box = document.getElementById('adminChatMessages');
   const msgs = chatMessages.filter(m => m.senderPhone === p);
-  box.innerHTML = msgs.map(renderChatBubble).join('');
+  box.innerHTML = msgs.map(m => renderChatBubble(m, true)).join('');
 }
 
 let pendingAdminChatFile = null;
@@ -2814,18 +3264,9 @@ let pendingAdminChatFile = null;
 async function handleAdminChatFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
-  if (file.size > CHAT_FILE_MAX_BYTES) {
-    alert("❌ الملف كبير أوي (الحد الأقصى تقريبًا 700 كيلوبايت). اختر ملف أصغر.");
-    e.target.value = '';
-    return;
-  }
-  try {
-    const data = await readFileAsBase64(file);
-    pendingAdminChatFile = { name: file.name, type: file.type, data };
-    document.getElementById('adminChatFileLabel').innerText = `📎 ${file.name}`;
-  } catch (err) {
-    alert("❌ حصل خطأ أثناء قراءة الملف.");
-  }
+  const uploaded = await uploadChatFile(file, 'adminChatFileLabel');
+  if (uploaded) pendingAdminChatFile = uploaded;
+  else e.target.value = '';
 }
 
 async function sendAdminChatMessage() {
@@ -2841,7 +3282,9 @@ async function sendAdminChatMessage() {
     if (pendingAdminChatFile) {
       msgData.fileName = pendingAdminChatFile.name;
       msgData.fileType = pendingAdminChatFile.type;
-      msgData.fileData = pendingAdminChatFile.data;
+      msgData.fileSize = pendingAdminChatFile.size;
+      msgData.fileURL = pendingAdminChatFile.url;
+      msgData.filePath = pendingAdminChatFile.path;
     }
 
     await db.collection('chatMessages').doc(String(id)).set(msgData);
@@ -3142,7 +3585,7 @@ async function addProduct(e) {
 }
 
 function switchAdminTab(t) {
-  ['admOrders','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admLinks','admTheme','admAccount'].forEach(id => {
+  ['admOrders','admReports','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admLinks','admTheme','admAccount'].forEach(id => {
     const el = document.getElementById(id+'Tab');
     if(el) el.style.display = (id === t) ? 'block' : 'none';
   });
@@ -3152,6 +3595,7 @@ function switchAdminTab(t) {
   });
 
   if(t === 'admOrders') renderAdminOrders();
+  if(t === 'admReports') renderAdminReports();
   if(t === 'admPayments') renderAdminPayments();
   if(t === 'admCategories') renderAdminCategories();
   if(t === 'admSubAdmins') renderAdminSubAdmins();
@@ -3410,9 +3854,24 @@ function openModal(id) {
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
 /* --- بداية تشغيل التطبيق --- */
+/* --- كشف انقطاع/عدم استقرار الاتصال، وإظهار تنبيه ثابت لحد ما يرجع فعليًا ---
+   بنعتمد على شرطين مع بعض:
+   1) navigator.onLine: هل الجهاز متصل بشبكة أصلاً
+   2) firestoreConnected: هل آخر تحديث من Firestore جه من السيرفر فعلاً ولا من كاش محلي (يعني في انقطاع حقيقي حتى لو الشبكة شكلها متصلة) */
+let firestoreConnected = true;
+function updateOnlineStatus() {
+  const banner = document.getElementById('offlineBanner');
+  if (!banner) return;
+  const isReallyConnected = navigator.onLine && firestoreConnected;
+  banner.style.display = isReallyConnected ? 'none' : 'block';
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
 loadCartLocal();
 initPublicListeners();
 updateUI();
+updateOnlineStatus();
 </script>
 </body>
 </html>
