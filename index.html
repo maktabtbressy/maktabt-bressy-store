@@ -186,6 +186,16 @@
   ⚠️ الاتصال بالإنترنت غير مستقر حاليًا، برجاء الانتظار حتى يعود الاتصال قبل إرسال أي طلب جديد...
 </div>
 
+<!-- نافذة تنبيه/تأكيد مخصصة بهوية المتجر، بديلة لرسائل alert/confirm الأصلية بتاعة المتصفح -->
+<div id="customAlertOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); z-index:20000; align-items:center; justify-content:center; padding:15px;">
+  <div style="background:#fff; border-radius:14px; max-width:380px; width:100%; padding:22px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+    <img id="customAlertLogo" src="" alt="" style="width:44px; height:44px; border-radius:10px; object-fit:cover; margin-bottom:8px; display:none;">
+    <div id="customAlertStoreName" style="font-weight:900; font-size:13px; color:var(--navy); margin-bottom:10px;"></div>
+    <div id="customAlertMessage" style="font-size:14px; color:#1e293b; line-height:1.6; white-space:pre-line; margin-bottom:18px;"></div>
+    <div id="customAlertButtons" style="display:flex; gap:8px; justify-content:center;"></div>
+  </div>
+</div>
+
 <!-- شريط الإعلان -->
 <div id="announcementBar" style="display:none; background:var(--orange); color:#fff; text-align:center; padding:8px 30px 8px 10px; font-size:12.5px; font-weight:700; position:relative;">
   <span id="announcementText"></span>
@@ -227,6 +237,10 @@
     </div>
     
     <div class="nav-actions">
+      <div style="position:relative;">
+        <input type="text" id="storeSearchInput" oninput="runStoreSearch()" placeholder="🔍 دور على منتج..." style="width:150px; padding:7px 10px; border-radius:20px; border:1px solid #cbd5e1; font-size:12px;">
+        <div id="storeSearchResults" style="display:none; position:absolute; top:110%; right:0; width:260px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.18); max-height:320px; overflow-y:auto; z-index:500;"></div>
+      </div>
       <span id="socialLinksBox" style="display:flex; gap:6px;">
         <a id="socialWhatsapp" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="واتساب">💬</a>
         <a id="socialFacebook" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="فيسبوك">📘</a>
@@ -705,7 +719,13 @@
   <div class="modal-content modal-lg">
     <span class="close-btn" onclick="closeModal('adminDashboardModal')">&times;</span>
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">👑 لوحة الإدارة الشاملة</h2>
-    
+
+    <!-- بحث شامل: بيدور في كل حاجة (منتجات بكل الأقسام، طلبات، أقسام، طرق دفع، أدمن فرعي، عملاء، روابط) مرة واحدة -->
+    <div style="position:relative; margin-bottom:14px;">
+      <input type="text" id="globalAdminSearchInput" oninput="runGlobalAdminSearch()" placeholder="🔍 بحث شامل في كل اللوحة... (اسم منتج، رقم طلب، عميل، قسم، رابط...)" style="width:100%; padding:11px 14px; border:2px solid var(--navy); border-radius:10px; font-size:13.5px; font-weight:700;">
+      <div id="globalAdminSearchResults" style="display:none; position:absolute; top:105%; right:0; left:0; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.18); max-height:340px; overflow-y:auto; z-index:500;"></div>
+    </div>
+
     <div class="tabs" style="justify-content: flex-start; margin-bottom: 15px;">
       <button class="tab-btn active" data-tab="admOrders" onclick="switchAdminTab('admOrders')">📦 الطلبات</button>
       <button class="tab-btn" data-tab="admReports" onclick="switchAdminTab('admReports')">📊 تقرير شامل</button>
@@ -1312,12 +1332,12 @@ function mapAuthError(err) {
 
 async function handleForgotPassword(inputId) {
   const email = document.getElementById(inputId).value.trim();
-  if (!email) return alert("اكتب بريدك الإلكتروني في الحقل الأول، وبعدين دوس على الرابط تاني.");
+  if (!email) return showAlert("اكتب بريدك الإلكتروني في الحقل الأول، وبعدين دوس على الرابط تاني.");
   try {
     await auth.sendPasswordResetEmail(email);
-    alert("✅ اتبعتلك رابط إعادة تعيين كلمة المرور على بريدك، افتحه من هاتفك أو جهازك.");
+    showAlert("✅ اتبعتلك رابط إعادة تعيين كلمة المرور على بريدك، افتحه من هاتفك أو جهازك.");
   } catch (err) {
-    alert(mapAuthError(err));
+    showAlert(mapAuthError(err));
   }
 }
 
@@ -1619,21 +1639,21 @@ async function saveThemeSettings() {
   };
   try {
     await db.collection('settings').doc('store').set({ theme }, { merge: true });
-    alert("✅ تم حفظ مظهر المتجر بنجاح! هيبان كده لكل الزوار من دلوقتي.");
+    showAlert("✅ تم حفظ مظهر المتجر بنجاح! هيبان كده لكل الزوار من دلوقتي.");
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
 async function resetThemeSettings() {
-  if (!confirm("هل تريد استرجاع مظهر المتجر الافتراضي؟")) return;
+  if (!await showConfirm("هل تريد استرجاع مظهر المتجر الافتراضي؟")) return;
   applyTheme(DEFAULT_THEME);
   loadThemeTab();
   try {
     await db.collection('settings').doc('store').set({ theme: DEFAULT_THEME }, { merge: true });
-    alert("✅ تم استرجاع المظهر الافتراضي بنجاح.");
+    showAlert("✅ تم استرجاع المظهر الافتراضي بنجاح.");
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -1661,7 +1681,7 @@ async function handleUserRegister(e) {
   const pass = document.getElementById('regPass').value.trim();
 
   if(allUsers.some(u => u.phone === phone || u.nationalId === nationalId)) {
-    return alert("❌ البيانات مكررة! يوجد مستخدم بنفس الهاتف أو الرقم القومي.");
+    return showAlert("❌ البيانات مكررة! يوجد مستخدم بنفس الهاتف أو الرقم القومي.");
   }
 
   try {
@@ -1675,11 +1695,11 @@ async function handleUserRegister(e) {
       body: `قام ${name} (${phone}) بإنشاء حساب جديد.`, date: new Date().toLocaleTimeString('ar-EG'), read: false
     });
   } catch (err) {
-    return alert(mapAuthError(err));
+    return showAlert(mapAuthError(err));
   }
 
   closeModal('registerModal');
-  alert(`✅ أهلاً بك يا ${name}`);
+  showAlert(`✅ أهلاً بك يا ${name}`);
 }
 
 async function handleUserLogin(e) {
@@ -1691,7 +1711,7 @@ async function handleUserLogin(e) {
     await auth.signInWithEmailAndPassword(email, pass);
     closeModal('loginModal');
   } catch (err) {
-    alert(mapAuthError(err));
+    showAlert(mapAuthError(err));
   }
 }
 
@@ -1708,13 +1728,13 @@ async function handleAdminLogin(e) {
 
     if (!data || (data.role !== 'superadmin' && data.role !== 'subadmin')) {
       await auth.signOut();
-      return alert("❌ هذا الحساب ليس حساب أدمن.");
+      return showAlert("❌ هذا الحساب ليس حساب أدمن.");
     }
 
     closeModal('adminLoginModal');
     openModal('adminDashboardModal');
   } catch (err) {
-    alert(mapAuthError(err));
+    showAlert(mapAuthError(err));
   }
 }
 
@@ -1806,7 +1826,7 @@ function addToCart(id) {
   cart.push({ ...p });
   saveCartLocal();
   updateUI();
-  alert("تمت الإضافة للسلة!");
+  showAlert("تمت الإضافة للسلة!");
 }
 
 async function previewReceiptImage(e) {
@@ -1815,7 +1835,7 @@ async function previewReceiptImage(e) {
   try {
     receiptImgBase64 = await compressImage(file, 1100, 0.78);
   } catch (err) {
-    alert("❌ حصل خطأ أثناء معالجة صورة الإيصال، جرّب صورة تانية.");
+    showAlert("❌ حصل خطأ أثناء معالجة صورة الإيصال، جرّب صورة تانية.");
   }
 }
 
@@ -1880,7 +1900,7 @@ async function previewCartSerialImage(e, index) {
     saveCartLocal();
     renderCart();
   } catch (err) {
-    alert("❌ حصل خطأ أثناء معالجة الصورة، جرّب صورة تانية.");
+    showAlert("❌ حصل خطأ أثناء معالجة الصورة، جرّب صورة تانية.");
   }
 }
 
@@ -1889,12 +1909,12 @@ function goToDeliveryInfo() {
 
   const cartTotal = cart.reduce((sum, item) => sum + parsePriceNumber(item.price), 0);
   if (storeSettings.minOrderAmount && cartTotal < storeSettings.minOrderAmount) {
-    return alert(`الحد الأدنى لقيمة الطلب هو ${storeSettings.minOrderAmount} ${getCurrencySymbol()}. أضف منتجات أكتر عشان تكمل.`);
+    return showAlert(`الحد الأدنى لقيمة الطلب هو ${storeSettings.minOrderAmount} ${getCurrencySymbol()}. أضف منتجات أكتر عشان تكمل.`);
   }
 
   const missingSerial = cart.find(item => item.requiresSerial && !(item.serialText && item.serialText.trim()) && !item.serialImg);
   if (missingSerial) {
-    return alert(`المنتج "${missingSerial.title}" محتاج تكتب السيريال أو ترفق صورته الأول قبل ما تكمل.`);
+    return showAlert(`المنتج "${missingSerial.title}" محتاج تكتب السيريال أو ترفق صورته الأول قبل ما تكمل.`);
   }
 
   document.getElementById('deliveryName').value = currentUser.name || '';
@@ -1970,7 +1990,7 @@ async function submitOrderProcess() {
   if (orderSubmitInProgress) return;
 
   if (!navigator.onLine || !firestoreConnected) {
-    return alert(
+    return showAlert(
       `⚠️ الاتصال بالإنترنت غير مستقر حاليًا.\n\n` +
       `من فضلك تأكد إن الاتصال رجع (هتلاقي شريط تنبيه أحمر بيختفي فوق الصفحة أول ما يرجع)، ` +
       `وبعدها اضغط "تأكيد وإرسال الطلب" تاني. ده بيمنع تكرار نفس الطلب أكتر من مرة بسبب مشكلة الشبكة.`
@@ -1980,7 +2000,7 @@ async function submitOrderProcess() {
   const remaining = ORDER_COOLDOWN_MS - (Date.now() - getLastOrderTime());
   if (getLastOrderTime() && remaining > 0) {
     const mins = Math.ceil(remaining / 60000);
-    return alert(
+    return showAlert(
       `⏳ تم استلام طلبك السابق بنجاح.\n\n` +
       `لضمان عدم إرسال نفس الطلب أكتر من مرة عن طريق الخطأ (خصوصًا لو حصلت مشكلة في الاتصال بالإنترنت)، ` +
       `لازم تستنى حوالي ${mins} دقيقة قبل إرسال طلب جديد.\n\n` +
@@ -1993,7 +2013,7 @@ async function submitOrderProcess() {
   const address = document.getElementById('deliveryAddress').value.trim();
 
   if (!name || !phone || !address) {
-    return alert("من فضلك املأ كل بيانات التوصيل (الاسم، الهاتف، العنوان).");
+    return showAlert("من فضلك املأ كل بيانات التوصيل (الاسم، الهاتف، العنوان).");
   }
 
   checkoutDeliveryInfo = { name, phone, address };
@@ -2037,7 +2057,7 @@ async function submitOrderProcess() {
     setLastOrderTime();
   } catch (err) {
     const isNetworkErr = err.code === 'unavailable' || !navigator.onLine || !firestoreConnected;
-    return alert(
+    return showAlert(
       isNetworkErr
         ? "⚠️ فشل إرسال الطلب بسبب ضعف/انقطاع الاتصال بالإنترنت.\nمن فضلك تأكد من استقرار الاتصال وحاول تاني بعد شوية."
         : "❌ حصل خطأ أثناء إرسال الطلب.\n" + err.message
@@ -2051,7 +2071,7 @@ async function submitOrderProcess() {
   saveCartLocal();
   updateUI();
   closeModal('deliveryInfoModal');
-  alert("🎉 تم إرسال طلبك للإدارة! هيتم مراجعته وتحديثك بحالته، وهيظهرلك زرار الدفع أول ما يتأكد الطلب.");
+  showAlert("🎉 تم إرسال طلبك للإدارة! هيتم مراجعته وتحديثك بحالته، وهيظهرلك زرار الدفع أول ما يتأكد الطلب.");
 }
 
 /* --- خطوة الدفع بعد ما الأدمن يأكد توفر الطلب (منفصلة عن إرسال الطلب) --- */
@@ -2089,7 +2109,7 @@ async function submitOrderPayment() {
   if (!payingForOrderId) return;
 
   const senderAcc = document.getElementById('paySenderAcc').value.trim();
-  if(!senderAcc) return alert("يرجى إدخال رقمك أو اسم حسابك المحول منه!");
+  if(!senderAcc) return showAlert("يرجى إدخال رقمك أو اسم حسابك المحول منه!");
 
   const methodId = parseInt(document.getElementById('payMethodSelect').value);
   const method = paymentMethods.find(p => p.id === methodId);
@@ -2110,13 +2130,13 @@ async function submitOrderPayment() {
       date: new Date().toLocaleTimeString('ar-EG'), read: false
     });
   } catch (err) {
-    return alert("❌ حصل خطأ أثناء تأكيد الدفع.\n" + err.message);
+    return showAlert("❌ حصل خطأ أثناء تأكيد الدفع.\n" + err.message);
   }
 
   receiptImgBase64 = '';
   payingForOrderId = null;
   closeModal('checkoutPaymentModal');
-  alert("✅ تم إرسال تأكيد الدفع، هيتم مراجعته من الإدارة.");
+  showAlert("✅ تم إرسال تأكيد الدفع، هيتم مراجعته من الإدارة.");
 }
 
 function openQuickEditProduct(id) {
@@ -2179,7 +2199,7 @@ async function previewEditProductImage(e) {
     }
     renderEditProductImages();
   } catch (err) {
-    alert("❌ حصل خطأ أثناء معالجة الصور، جرّب صور تانية.");
+    showAlert("❌ حصل خطأ أثناء معالجة الصور، جرّب صور تانية.");
   }
 }
 
@@ -2205,9 +2225,9 @@ async function handleSaveProductEdit(e) {
   try {
     await db.collection('products').doc(String(id)).update(updated);
     closeModal('editProductModal');
-    alert("✅ تم تعديل بيانات المنتج بنجاح!");
+    showAlert("✅ تم تعديل بيانات المنتج بنجاح!");
   } catch (err) {
-    alert("❌ حصل خطأ أثناء الحفظ (الصور ممكن تكون كبيرة جدًا، أو معندكش صلاحية). " + err.message);
+    showAlert("❌ حصل خطأ أثناء الحفظ (الصور ممكن تكون كبيرة جدًا، أو معندكش صلاحية). " + err.message);
   }
 }
 
@@ -2253,7 +2273,7 @@ function renderProducts(filter = 'all') {
 ====================================================================== */
 async function handleAddSubAdmin(e) {
   e.preventDefault();
-  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+  if (!currentUser || !currentUser.isSuperAdmin) return showAlert("❌ غير مسموح إلا للأدمن الرئيسي!");
 
   const name = document.getElementById('subName').value.trim();
   const phone = document.getElementById('subPhone').value.trim();
@@ -2264,7 +2284,7 @@ async function handleAddSubAdmin(e) {
   const pass = document.getElementById('subPass').value.trim();
 
   if (allUsers.some(u => u.phone === phone)) {
-    return alert("❌ يوجد مستخدم مسجل بهذا الهاتف بالفعل!");
+    return showAlert("❌ يوجد مستخدم مسجل بهذا الهاتف بالفعل!");
   }
 
   const perms = {
@@ -2290,7 +2310,7 @@ async function handleAddSubAdmin(e) {
       date: new Date().toLocaleTimeString('ar-EG'), read: false
     });
   } catch (err) {
-    return alert(mapAuthError(err));
+    return showAlert(mapAuthError(err));
   }
 
   document.getElementById('subName').value = "";
@@ -2300,11 +2320,11 @@ async function handleAddSubAdmin(e) {
   document.getElementById('subAddress').value = "";
   document.getElementById('subJob').value = "";
   document.getElementById('subPass').value = "";
-  alert("✅ تم إضافة الأدمن الفرعي وتخصيص صلاحياته بنجاح!");
+  showAlert("✅ تم إضافة الأدمن الفرعي وتخصيص صلاحياته بنجاح!");
 }
 
 function openEditSubAdminModal(uid) {
-  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+  if (!currentUser || !currentUser.isSuperAdmin) return showAlert("❌ غير مسموح إلا للأدمن الرئيسي!");
   const s = allUsers.find(x => x.uid === uid);
   if (!s) return;
 
@@ -2326,7 +2346,7 @@ function openEditSubAdminModal(uid) {
 
 async function handleSaveSubAdminEdit(e) {
   e.preventDefault();
-  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+  if (!currentUser || !currentUser.isSuperAdmin) return showAlert("❌ غير مسموح إلا للأدمن الرئيسي!");
 
   const uid = document.getElementById('editSubId').value;
   const updated = {
@@ -2346,22 +2366,22 @@ async function handleSaveSubAdminEdit(e) {
   try {
     await db.collection('users').doc(uid).update(updated);
     closeModal('editSubAdminModal');
-    alert("✅ تم تحديث بيانات الأدمن الفرعي بنجاح!");
+    showAlert("✅ تم تحديث بيانات الأدمن الفرعي بنجاح!");
   } catch (err) {
-    alert("❌ حصل خطأ أثناء التحديث. " + err.message);
+    showAlert("❌ حصل خطأ أثناء التحديث. " + err.message);
   }
 }
 
 async function deleteSubAdmin(uid) {
-  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ خيار الحذف متاح فقط للأدمن الرئيسي!");
+  if (!currentUser || !currentUser.isSuperAdmin) return showAlert("❌ خيار الحذف متاح فقط للأدمن الرئيسي!");
   const s = allUsers.find(x => x.uid === uid);
   const emailToDelete = s ? s.email : '';
-  if (!confirm("هل أنت تأكد من حذف حساب الأدمن الفرعي هذا؟")) return;
+  if (!await showConfirm("هل أنت تأكد من حذف حساب الأدمن الفرعي هذا؟")) return;
 
   try {
     await db.collection('users').doc(uid).delete();
   } catch (err) {
-    return alert("❌ حصل خطأ أثناء الحذف. " + err.message);
+    return showAlert("❌ حصل خطأ أثناء الحذف. " + err.message);
   }
 
   openAuthConsoleForDeletedAccount(emailToDelete, s ? s.name : '');
@@ -2401,9 +2421,9 @@ async function addNewPaymentMethod(e) {
     await db.collection('paymentMethods').doc(String(id)).set({ id, name, accounts: accs });
     document.getElementById('newPayName').value = "";
     document.getElementById('newPayAccounts').value = "";
-    alert("تمت إضافة طريقة الدفع بنجاح!");
+    showAlert("تمت إضافة طريقة الدفع بنجاح!");
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -2412,18 +2432,18 @@ async function updatePaymentAccounts(id, inputId) {
   const accs = accsText.split(',').map(a => a.trim()).filter(a => a);
   try {
     await db.collection('paymentMethods').doc(String(id)).update({ accounts: accs });
-    alert("تم تحديث أرقام/حسابات الدفع!");
+    showAlert("تم تحديث أرقام/حسابات الدفع!");
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
 async function deletePaymentMethod(id) {
-  if(!confirm("هل أنت تأكد من حذف طريقة الدفع هذه؟")) return;
+  if(!await showConfirm("هل أنت تأكد من حذف طريقة الدفع هذه؟")) return;
   try {
     await db.collection('paymentMethods').doc(String(id)).delete();
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -2447,25 +2467,25 @@ async function addNewCategory(e) {
   const key = document.getElementById('catKeyInp').value.trim();
   const titleAr = document.getElementById('catTitleArInp').value.trim();
 
-  if(categories.some(c => c.key === key)) return alert("معرف القسم موجود بالفعل!");
+  if(categories.some(c => c.key === key)) return showAlert("معرف القسم موجود بالفعل!");
 
   try {
     await db.collection('categories').doc(key).set({ key, titleAr });
     document.getElementById('catKeyInp').value = "";
     document.getElementById('catTitleArInp').value = "";
-    alert("تم إدراج القسم الجديد بنجاح!");
+    showAlert("تم إدراج القسم الجديد بنجاح!");
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
 async function deleteCategory(key) {
-  if(key === 'all') return alert("لا يمكن حذف قسم الكل!");
-  if(!confirm("هل تريد حذف هذا القسم؟")) return;
+  if(key === 'all') return showAlert("لا يمكن حذف قسم الكل!");
+  if(!await showConfirm("هل تريد حذف هذا القسم؟")) return;
   try {
     await db.collection('categories').doc(key).delete();
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -2511,9 +2531,9 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
       read: false
     });
 
-    alert("تم التحديث وإبلاغ العميل!");
+    showAlert("تم التحديث وإبلاغ العميل!");
   } catch (err) {
-    alert("❌ حصل خطأ أثناء التحديث. " + err.message);
+    showAlert("❌ حصل خطأ أثناء التحديث. " + err.message);
   }
 }
 
@@ -2555,16 +2575,16 @@ async function deleteMyOldOrders() {
   if (!currentUser) return;
   const cutoff = Date.now() - (30 * 24 * 60 * 60 * 1000);
   const myOldOrders = orders.filter(o => o.userPhone === currentUser.phone && (o.createdAt || 0) < cutoff);
-  if (myOldOrders.length === 0) return alert("مفيش طلبات أقدم من شهر في سجلك حاليًا.");
-  if (!confirm(`هيتم حذف ${myOldOrders.length} طلب أقدم من شهر من سجلك نهائيًا. متأكد؟`)) return;
+  if (myOldOrders.length === 0) return showAlert("مفيش طلبات أقدم من شهر في سجلك حاليًا.");
+  if (!await showConfirm(`هيتم حذف ${myOldOrders.length} طلب أقدم من شهر من سجلك نهائيًا. متأكد؟`)) return;
 
   try {
     const batch = db.batch();
     myOldOrders.forEach(o => batch.delete(db.collection('orders').doc(o.orderId)));
     await batch.commit();
-    alert("✅ تم حذف طلباتك القديمة بنجاح.");
+    showAlert("✅ تم حذف طلباتك القديمة بنجاح.");
   } catch (err) {
-    alert("❌ حصل خطأ أثناء الحذف. " + err.message);
+    showAlert("❌ حصل خطأ أثناء الحذف. " + err.message);
   }
 }
 
@@ -2627,12 +2647,12 @@ function clearAdminOrdersDateFilter() {
 }
 
 async function deleteOldOrders() {
-  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ حذف سجل الطلبات القديمة متاح فقط للأدمن الرئيسي!");
+  if (!currentUser || !currentUser.isSuperAdmin) return showAlert("❌ حذف سجل الطلبات القديمة متاح فقط للأدمن الرئيسي!");
 
   const cutoff = Date.now() - (30 * 24 * 60 * 60 * 1000);
   const oldOrders = orders.filter(o => (o.createdAt || 0) < cutoff);
-  if (oldOrders.length === 0) return alert("مفيش طلبات أقدم من شهر حاليًا.");
-  if (!confirm(`هيتم حذف ${oldOrders.length} طلب أقدم من شهر بشكل نهائي. متأكد؟`)) return;
+  if (oldOrders.length === 0) return showAlert("مفيش طلبات أقدم من شهر حاليًا.");
+  if (!await showConfirm(`هيتم حذف ${oldOrders.length} طلب أقدم من شهر بشكل نهائي. متأكد؟`)) return;
 
   try {
     for (let i = 0; i < oldOrders.length; i += 400) {
@@ -2641,9 +2661,9 @@ async function deleteOldOrders() {
       chunk.forEach(o => batch.delete(db.collection('orders').doc(o.orderId)));
       await batch.commit();
     }
-    alert("✅ تم حذف الطلبات القديمة بنجاح.");
+    showAlert("✅ تم حذف الطلبات القديمة بنجاح.");
   } catch (err) {
-    alert("❌ حصل خطأ أثناء الحذف. " + err.message);
+    showAlert("❌ حصل خطأ أثناء الحذف. " + err.message);
   }
 }
 
@@ -2695,7 +2715,7 @@ function openOrderInvoice(orderId) {
 
 /* --- تحويل الفاتورة لصورة، ومشاركتها مباشرة (واتساب، طابعة حرارية، بلوتوث...) أو تنزيلها --- */
 async function shareInvoiceImage() {
-  if (typeof html2canvas === 'undefined') return alert("عذرًا، مكتبة إنشاء الصور مش متاحة دلوقتي - تأكد من اتصال الإنترنت.");
+  if (typeof html2canvas === 'undefined') return showAlert("عذرًا، مكتبة إنشاء الصور مش متاحة دلوقتي - تأكد من اتصال الإنترنت.");
 
   const el = document.getElementById('invoiceContent');
   try {
@@ -2717,7 +2737,7 @@ async function shareInvoiceImage() {
       link.click();
     }, 'image/png');
   } catch (err) {
-    alert("❌ حصل خطأ أثناء إنشاء صورة الفاتورة. " + err.message);
+    showAlert("❌ حصل خطأ أثناء إنشاء صورة الفاتورة. " + err.message);
   }
 }
 
@@ -3076,7 +3096,7 @@ async function uploadToCloudinary(file) {
 async function uploadChatFile(file, labelElId) {
   const labelEl = document.getElementById(labelElId);
   if (file.size > CHAT_FILE_MAX_BYTES) {
-    alert("❌ الملف كبير أوي (الحد الأقصى 10 ميجا). اختر ملف أصغر.");
+    showAlert("❌ الملف كبير أوي (الحد الأقصى 10 ميجا). اختر ملف أصغر.");
     return null;
   }
 
@@ -3095,7 +3115,7 @@ async function uploadChatFile(file, labelElId) {
     return { name: file.name, type: file.type, size: file.size, url, path: null, storedInline };
   } catch (err) {
     if (labelEl) labelEl.innerText = '';
-    alert("❌ حصل خطأ أثناء رفع الملف. " + err.message);
+    showAlert("❌ حصل خطأ أثناء رفع الملف. " + err.message);
     return null;
   }
 }
@@ -3157,7 +3177,7 @@ async function sendChatMessage() {
     document.getElementById('chatFileLabel').innerText = "";
     pendingChatFile = null;
   } catch (err) {
-    alert("❌ حصل خطأ أثناء الإرسال. " + err.message);
+    showAlert("❌ حصل خطأ أثناء الإرسال. " + err.message);
   }
 }
 
@@ -3205,7 +3225,7 @@ function openSupportChatFor(phone) {
 
 /* --- حذف أي رسالة (نص/مستند/مرفق) نهائيًا، مع حذف الملف من Storage لو موجود --- */
 async function deleteChatMessage(msgId) {
-  if (!confirm("متأكد من حذف الرسالة دي نهائيًا؟ الحذف مش قابل للتراجع.")) return;
+  if (!await showConfirm("متأكد من حذف الرسالة دي نهائيًا؟ الحذف مش قابل للتراجع.")) return;
   const m = chatMessages.find(x => String(x.id) === String(msgId));
   try {
     if (m && m.filePath) {
@@ -3213,7 +3233,7 @@ async function deleteChatMessage(msgId) {
     }
     await db.collection('chatMessages').doc(String(msgId)).delete();
   } catch (err) {
-    alert("❌ حصل خطأ أثناء حذف الرسالة. " + err.message);
+    showAlert("❌ حصل خطأ أثناء حذف الرسالة. " + err.message);
   }
 }
 
@@ -3299,7 +3319,7 @@ async function sendAdminChatMessage() {
     document.getElementById('adminChatFileLabel').innerText = "";
     pendingAdminChatFile = null;
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -3347,7 +3367,7 @@ async function markAllUserNotisRead() {
     mine.forEach(n => batch.update(db.collection('userNotis').doc(String(n.id)), { read: true }));
     await batch.commit();
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -3360,7 +3380,7 @@ async function deleteReadUserNotis() {
     mine.forEach(n => batch.delete(db.collection('userNotis').doc(String(n.id))));
     await batch.commit();
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -3457,7 +3477,7 @@ async function markAllAdminNotisRead() {
     visible.forEach(n => batch.update(db.collection('adminNotis').doc(String(n.id)), { read: true }));
     await batch.commit();
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -3470,7 +3490,7 @@ async function deleteReadAdminNotis() {
     deletable.forEach(n => batch.delete(db.collection('adminNotis').doc(String(n.id))));
     await batch.commit();
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -3497,7 +3517,7 @@ async function uploadLogo(e) {
     const compressed = await compressImage(file, 500, 0.75);
     await db.collection('settings').doc('store').set({ logo: compressed }, { merge: true });
   } catch (err) {
-    alert("❌ حصل خطأ أثناء رفع اللوجو. " + err.message);
+    showAlert("❌ حصل خطأ أثناء رفع اللوجو. " + err.message);
   }
 }
 
@@ -3508,7 +3528,7 @@ async function uploadBanner(e) {
     const compressed = await compressImage(file, 1400, 0.72);
     await db.collection('settings').doc('store').set({ banner: compressed }, { merge: true });
   } catch (err) {
-    alert("❌ حصل خطأ أثناء رفع الغلاف. " + err.message);
+    showAlert("❌ حصل خطأ أثناء رفع الغلاف. " + err.message);
   }
 }
 
@@ -3535,9 +3555,9 @@ async function saveStoreSettings(e) {
   };
   try {
     await db.collection('settings').doc('store').set(updated, { merge: true });
-    alert("تم حفظ بيانات المتجر والعنوان بنجاح!");
+    showAlert("تم حفظ بيانات المتجر والعنوان بنجاح!");
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -3552,7 +3572,7 @@ async function previewImage(e) {
     const counter = document.getElementById('pImagesCount');
     if (counter) counter.innerText = `تم اختيار ${uploadedImages.length} صورة`;
   } catch (err) {
-    alert("❌ حصل خطأ أثناء معالجة الصور، جرّب صور تانية.");
+    showAlert("❌ حصل خطأ أثناء معالجة الصور، جرّب صور تانية.");
   }
 }
 
@@ -3578,9 +3598,9 @@ async function addProduct(e) {
     const counter = document.getElementById('pImagesCount');
     if (counter) counter.innerText = '';
     document.getElementById('pRequiresSerial').checked = false;
-    alert("تم نشر المنتج في المتجر!");
+    showAlert("تم نشر المنتج في المتجر!");
   } catch (err) {
-    alert("❌ حصل خطأ أثناء النشر (الصور ممكن تكون كبيرة جدًا، أو معندكش صلاحية). " + err.message);
+    showAlert("❌ حصل خطأ أثناء النشر (الصور ممكن تكون كبيرة جدًا، أو معندكش صلاحية). " + err.message);
   }
 }
 
@@ -3607,7 +3627,7 @@ function switchAdminTab(t) {
 }
 
 function openEditUserModal(uid) {
-  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ هذا الخيار متاح فقط للأدمن الرئيسي!");
+  if (!currentUser || !currentUser.isSuperAdmin) return showAlert("❌ هذا الخيار متاح فقط للأدمن الرئيسي!");
   const u = allUsers.find(x => x.uid === uid);
   if(!u) return;
 
@@ -3623,7 +3643,7 @@ function openEditUserModal(uid) {
 
 async function handleSaveUserEdit(e) {
   e.preventDefault();
-  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+  if (!currentUser || !currentUser.isSuperAdmin) return showAlert("❌ غير مسموح إلا للأدمن الرئيسي!");
 
   const uid = document.getElementById('editUserId').value;
   const updated = {
@@ -3636,22 +3656,22 @@ async function handleSaveUserEdit(e) {
   try {
     await db.collection('users').doc(uid).update(updated);
     closeModal('editUserModal');
-    alert("✅ تم تعديل بيانات العميل بنجاح!");
+    showAlert("✅ تم تعديل بيانات العميل بنجاح!");
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
 async function deleteUserAccount(uid) {
-  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+  if (!currentUser || !currentUser.isSuperAdmin) return showAlert("❌ غير مسموح إلا للأدمن الرئيسي!");
   const u = allUsers.find(x => x.uid === uid);
   const emailToDelete = u ? u.email : '';
-  if (!confirm("هل أنت تأكد من حذف حساب هذا المستخدم نهائياً؟")) return;
+  if (!await showConfirm("هل أنت تأكد من حذف حساب هذا المستخدم نهائياً؟")) return;
 
   try {
     await db.collection('users').doc(uid).delete();
   } catch (err) {
-    return alert("❌ حصل خطأ. " + err.message);
+    return showAlert("❌ حصل خطأ. " + err.message);
   }
 
   openAuthConsoleForDeletedAccount(emailToDelete, u ? u.name : '');
@@ -3664,7 +3684,7 @@ async function openAuthConsoleForDeletedAccount(email, name) {
     try { await navigator.clipboard.writeText(email); copied = true; } catch (e) {}
   }
 
-  alert(
+  showAlert(
     `✅ تم حذف بيانات "${name || 'المستخدم'}" من الموقع.\n\n` +
     `⚠️ خطوة أخيرة مهمة: لسه حساب دخوله شغال في Authentication، ولازم تحذفه يدويًا عشان يقدر يسجّل تاني بنفس البريد.\n\n` +
     (copied
@@ -3692,7 +3712,7 @@ async function setAsAuthLink(id) {
     });
     await batch.commit();
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -3707,7 +3727,7 @@ async function addAdminLink(e) {
     document.getElementById('newLinkName').value = "";
     document.getElementById('newLinkUrl').value = "";
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -3719,23 +3739,23 @@ function toggleEditAdminLink(id) {
 async function saveAdminLinkEdit(id) {
   const input = document.getElementById('editLinkUrl_' + id);
   const newUrl = input ? input.value.trim() : '';
-  if (!newUrl) return alert("لازم تحط رابط!");
+  if (!newUrl) return showAlert("لازم تحط رابط!");
 
   try {
     await db.collection('adminLinks').doc(String(id)).update({ url: newUrl });
     openLinkEditId = null;
-    alert("✅ تم تحديث الرابط!");
+    showAlert("✅ تم تحديث الرابط!");
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
 async function deleteAdminLink(id) {
-  if (!confirm("متأكد من حذف الرابط ده؟")) return;
+  if (!await showConfirm("متأكد من حذف الرابط ده؟")) return;
   try {
     await db.collection('adminLinks').doc(String(id)).delete();
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -3818,15 +3838,15 @@ function loadSuperAdminAccountTab() {
 /* --- تعديل اسم الأدمن الرئيسي (البريد وكلمة المرور بيتغيروا من إعدادات الحساب في Firebase نفسه) --- */
 async function handleSaveSuperAdminCreds(e) {
   e.preventDefault();
-  if (!currentUser || !currentUser.isSuperAdmin) return alert("❌ غير مسموح إلا للأدمن الرئيسي!");
+  if (!currentUser || !currentUser.isSuperAdmin) return showAlert("❌ غير مسموح إلا للأدمن الرئيسي!");
 
   const newName = document.getElementById('superAdminNameInput').value.trim();
 
   try {
     await db.collection('users').doc(currentUser.uid).update({ name: newName });
-    alert("✅ تم تعديل اسم الأدمن الرئيسي بنجاح!\nملاحظة: تغيير البريد الإلكتروني أو كلمة المرور بيتم عن طريق رابط \"نسيت كلمة المرور؟\" أو من Firebase Console مباشرة.");
+    showAlert("✅ تم تعديل اسم الأدمن الرئيسي بنجاح!\nملاحظة: تغيير البريد الإلكتروني أو كلمة المرور بيتم عن طريق رابط \"نسيت كلمة المرور؟\" أو من Firebase Console مباشرة.");
   } catch (err) {
-    alert("❌ حصل خطأ. " + err.message);
+    showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
@@ -3852,6 +3872,207 @@ function openModal(id) {
 }
 
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+/* --- بحث المنتجات في الواجهة الأمامية: متاح لأي زائر (حتى لو مش مسجل دخول)، بيدور في كل الأقسام
+   مرة واحدة، عشان العميل يلاقي منتج شافه قبل كده حتى لو مش فاكر في أي قسم أو اتنقل لقسم تاني --- */
+function runStoreSearch() {
+  const box = document.getElementById('storeSearchResults');
+  const term = document.getElementById('storeSearchInput').value.trim().toLowerCase();
+
+  if (!term) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+  const matches = products.filter(p =>
+    (p.title && p.title.toLowerCase().includes(term)) ||
+    (p.desc && p.desc.toLowerCase().includes(term))
+  ).slice(0, 10);
+
+  if (matches.length === 0) {
+    box.innerHTML = `<div style="padding:14px; text-align:center; color:var(--muted); font-size:12.5px;">🔍 مفيش منتجات مطابقة.</div>`;
+    box.style.display = 'block';
+    return;
+  }
+
+  const defaultLogo = storeSettings.logo || 'https://via.placeholder.com/60';
+  box.innerHTML = matches.map(p => {
+    const catName = (categories.find(c => c.key === p.cat) || {}).titleAr || p.cat;
+    const images = getProductImages(p);
+    const imgSrc = images.length ? images[0] : defaultLogo;
+    return `
+      <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; cursor:pointer; border-bottom:1px solid #f1f5f9;" onclick="jumpToStoreSearchResult(${p.id})">
+        <img src="${imgSrc}" style="width:38px; height:38px; object-fit:cover; border-radius:6px; flex-shrink:0;">
+        <div style="min-width:0;">
+          <b style="font-size:12.5px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.title}</b>
+          <small style="color:var(--muted);">في قسم: ${catName} - ${p.price}</small>
+        </div>
+      </div>
+    `;
+  }).join('');
+  box.style.display = 'block';
+}
+
+function jumpToStoreSearchResult(id) {
+  document.getElementById('storeSearchResults').style.display = 'none';
+  document.getElementById('storeSearchInput').value = '';
+  openProductDetails(id);
+}
+
+document.addEventListener('click', e => {
+  const box = document.getElementById('storeSearchResults');
+  const input = document.getElementById('storeSearchInput');
+  if (box && input && !box.contains(e.target) && e.target !== input) box.style.display = 'none';
+});
+
+/* --- بحث شامل داخل لوحة الإدارة كلها: بيدور في المنتجات (بكل الأقسام)، الطلبات، الأقسام،
+   طرق الدفع، الأدمن الفرعي، العملاء، والروابط الإدارية - مرة واحدة، ويودّي للنتيجة مباشرة --- */
+function runGlobalAdminSearch() {
+  const box = document.getElementById('globalAdminSearchResults');
+  const term = document.getElementById('globalAdminSearchInput').value.trim().toLowerCase();
+
+  if (!term) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+  const rowStyle = "display:flex; align-items:center; gap:8px; padding:9px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9; font-size:12.5px;";
+  let html = '';
+  let count = 0;
+  const MAX_PER_TYPE = 6;
+
+  /* الأدمن الفرعي بيشوف بس نتايج الأقسام اللي أصلاً معاه صلاحية عليها (بنفس صلاحياته الحالية في اللوحة) */
+  const isSuper = currentUser && currentUser.isSuperAdmin;
+  const perms = (currentUser && currentUser.perms) || {};
+
+  // منتجات (بكل الأقسام) - يظهر بس لو معاه صلاحية تعديل المنتجات
+  if (isSuper || perms.canEditProd) {
+    const matchedProducts = products.filter(p =>
+      (p.title && p.title.toLowerCase().includes(term)) ||
+      (p.desc && p.desc.toLowerCase().includes(term))
+    ).slice(0, MAX_PER_TYPE);
+    matchedProducts.forEach(p => {
+      const catName = (categories.find(c => c.key === p.cat) || {}).titleAr || p.cat;
+      html += `<div style="${rowStyle}" onclick="jumpToGlobalSearchResult('product', ${p.id})">📦 <div><b>${p.title}</b><br><small style="color:var(--muted);">منتج - في قسم: ${catName}</small></div></div>`;
+      count++;
+    });
+  }
+
+  // طلبات - يظهر بس لو معاه صلاحية الطلبات
+  if (isSuper || perms.canOrders) {
+    const matchedOrders = orders.filter(o =>
+      (o.orderId && o.orderId.toLowerCase().includes(term)) ||
+      (o.userName && o.userName.toLowerCase().includes(term)) ||
+      (o.userPhone && o.userPhone.toLowerCase().includes(term))
+    ).slice(0, MAX_PER_TYPE);
+    matchedOrders.forEach(o => {
+      html += `<div style="${rowStyle}" onclick="jumpToGlobalSearchResult('order', '${o.orderId}')">🧾 <div><b>${o.orderId}</b><br><small style="color:var(--muted);">طلب - ${o.userName || o.userPhone || ''} - ${o.status}</small></div></div>`;
+      count++;
+    });
+  }
+
+  // الأقسام وطرق الدفع والعملاء: متاحين لأي أدمن (رئيسي أو فرعي) - نفس وضعهم الحالي في اللوحة، مفيش صلاحية خاصة بيهم
+  const matchedCats = categories.filter(c => c.key !== 'all' && c.titleAr && c.titleAr.toLowerCase().includes(term)).slice(0, MAX_PER_TYPE);
+  matchedCats.forEach(c => {
+    html += `<div style="${rowStyle}" onclick="jumpToGlobalSearchResult('category')">🗂️ <div><b>${c.titleAr}</b><br><small style="color:var(--muted);">قسم</small></div></div>`;
+    count++;
+  });
+
+  const matchedPayments = paymentMethods.filter(p =>
+    (p.name && p.name.toLowerCase().includes(term)) ||
+    (p.accounts && p.accounts.join(' ').toLowerCase().includes(term))
+  ).slice(0, MAX_PER_TYPE);
+  matchedPayments.forEach(p => {
+    html += `<div style="${rowStyle}" onclick="jumpToGlobalSearchResult('payment')">💳 <div><b>${p.name}</b><br><small style="color:var(--muted);">طريقة دفع</small></div></div>`;
+    count++;
+  });
+
+  const matchedCustomers = allUsers.filter(u => u.role === 'customer' && (
+    (u.name && u.name.toLowerCase().includes(term)) ||
+    (u.phone && u.phone.toLowerCase().includes(term)) ||
+    (u.email && u.email.toLowerCase().includes(term))
+  )).slice(0, MAX_PER_TYPE);
+  matchedCustomers.forEach(u => {
+    html += `<div style="${rowStyle}" onclick="jumpToGlobalSearchResult('user', '${u.phone}')">👤 <div><b>${u.name || u.phone}</b><br><small style="color:var(--muted);">عميل - ${u.phone || ''}</small></div></div>`;
+    count++;
+  });
+
+  // الأدمن الفرعي والروابط الإدارية: للأدمن الرئيسي بس (زي ما التبويبات بتاعتهم أصلاً مخفية عن الفرعي)
+  if (isSuper) {
+    const matchedSubAdmins = allUsers.filter(u => u.role === 'subadmin' && (
+      (u.name && u.name.toLowerCase().includes(term)) ||
+      (u.phone && u.phone.toLowerCase().includes(term)) ||
+      (u.email && u.email.toLowerCase().includes(term))
+    )).slice(0, MAX_PER_TYPE);
+    matchedSubAdmins.forEach(u => {
+      html += `<div style="${rowStyle}" onclick="jumpToGlobalSearchResult('subadmin')">🛡️ <div><b>${u.name || u.phone}</b><br><small style="color:var(--muted);">أدمن فرعي - ${u.phone || ''}</small></div></div>`;
+      count++;
+    });
+
+    const matchedLinks = adminLinks.filter(l => l.name && l.name.toLowerCase().includes(term)).slice(0, MAX_PER_TYPE);
+    matchedLinks.forEach(l => {
+      html += `<div style="${rowStyle}" onclick="jumpToGlobalSearchResult('link')">🔗 <div><b>${l.name}</b><br><small style="color:var(--muted);">رابط إداري</small></div></div>`;
+      count++;
+    });
+  }
+
+  box.innerHTML = count > 0 ? html : `<div style="padding:14px; text-align:center; color:var(--muted); font-size:12.5px;">🔍 مفيش نتائج مطابقة.</div>`;
+  box.style.display = 'block';
+}
+
+function jumpToGlobalSearchResult(type, refId) {
+  document.getElementById('globalAdminSearchResults').style.display = 'none';
+  document.getElementById('globalAdminSearchInput').value = '';
+
+  if (type === 'product') { openQuickEditProduct(refId); return; }
+
+  if (type === 'order') { switchAdminTab('admOrders'); const inp = document.getElementById('orderSearchInput'); if (inp) { inp.value = refId; renderAdminOrders(); } return; }
+
+  if (type === 'user') { switchAdminTab('admUsers'); const inp = document.getElementById('userSearchInput'); if (inp) { inp.value = refId; renderAdminUsers(); } return; }
+
+  if (type === 'category') { switchAdminTab('admCategories'); return; }
+  if (type === 'payment') { switchAdminTab('admPayments'); return; }
+  if (type === 'subadmin') { switchAdminTab('admSubAdmins'); return; }
+  if (type === 'link') { switchAdminTab('admLinks'); return; }
+}
+
+document.addEventListener('click', e => {
+  const box = document.getElementById('globalAdminSearchResults');
+  const input = document.getElementById('globalAdminSearchInput');
+  if (box && input && !box.contains(e.target) && e.target !== input) box.style.display = 'none';
+});
+
+/* --- بديل مخصص بهوية المتجر لرسائل alert() و confirm() الأصلية بتاعة المتصفح
+   (اللي كانت بتظهر ومكتوب فيها اسم الدومين). بترجع Promise عشان تتصرف بنفس منطق التوقف
+   لحد ما المستخدم يرد، بس بشكل غير حابس فعليًا (async) - مناسب للاستخدام مع await. --- */
+let __customAlertResolve = null;
+
+function __openCustomAlertBox(message, buttonsHtml) {
+  const logo = document.getElementById('customAlertLogo');
+  const nameEl = document.getElementById('customAlertStoreName');
+  if (storeSettings && storeSettings.logo) { logo.src = storeSettings.logo; logo.style.display = 'inline-block'; }
+  else { logo.style.display = 'none'; }
+  nameEl.innerText = (storeSettings && storeSettings.titleAr) ? storeSettings.titleAr : 'مكتبة بريسي';
+  document.getElementById('customAlertMessage').innerText = message;
+  document.getElementById('customAlertButtons').innerHTML = buttonsHtml;
+  document.getElementById('customAlertOverlay').style.display = 'flex';
+}
+
+function showAlert(message) {
+  return new Promise(resolve => {
+    __customAlertResolve = resolve;
+    __openCustomAlertBox(message, `<button class="btn-nav" style="background:var(--navy); width:100%;" onclick="closeCustomAlert(true)">حسنًا</button>`);
+  });
+}
+
+function showConfirm(message) {
+  return new Promise(resolve => {
+    __customAlertResolve = resolve;
+    __openCustomAlertBox(message, `
+      <button class="btn-nav" style="background:#64748b; flex:1;" onclick="closeCustomAlert(false)">إلغاء</button>
+      <button class="btn-nav" style="background:var(--red); flex:1;" onclick="closeCustomAlert(true)">تأكيد</button>
+    `);
+  });
+}
+
+function closeCustomAlert(result) {
+  document.getElementById('customAlertOverlay').style.display = 'none';
+  if (__customAlertResolve) { __customAlertResolve(result); __customAlertResolve = null; }
+}
 
 /* --- بداية تشغيل التطبيق --- */
 /* --- كشف انقطاع/عدم استقرار الاتصال، وإظهار تنبيه ثابت لحد ما يرجع فعليًا ---
