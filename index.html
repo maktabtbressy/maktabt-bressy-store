@@ -242,11 +242,7 @@
         <input type="text" id="storeSearchInput" oninput="runStoreSearch()" placeholder="🔍 دور على منتج..." style="width:150px; padding:7px 10px; border-radius:20px; border:1px solid #cbd5e1; font-size:12px;">
         <div id="storeSearchResults" style="display:none; position:absolute; top:110%; right:0; width:260px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.18); max-height:320px; overflow-y:auto; z-index:500;"></div>
       </div>
-      <span id="socialLinksBox" style="display:flex; gap:6px;">
-        <a id="socialWhatsapp" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="واتساب">💬</a>
-        <a id="socialFacebook" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="فيسبوك">📘</a>
-        <a id="socialInstagram" href="#" target="_blank" rel="noopener" style="display:none; font-size:18px; text-decoration:none;" title="إنستجرام">📷</a>
-      </span>
+      <button class="btn-nav" id="contactUsBtn" onclick="openModal('contactUsModal')" style="background:#0f766e; padding:7px 12px; font-size:12px;">📞 تواصل معنا</button>
       <span id="userGreeting" style="font-size: 12px; font-weight: 700;"></span>
       
       <!-- إشعارات العميل -->
@@ -528,6 +524,85 @@
   </div>
 </div>
 
+<!-- نافذة تواصل معنا -->
+<div class="modal" id="contactUsModal">
+  <div class="modal-content" style="max-width:480px;">
+    <span class="close-btn" onclick="closeModal('contactUsModal')">&times;</span>
+    <h2 style="font-size: 17px; margin-bottom: 14px; color: var(--navy);">📞 تواصل معنا</h2>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+      <div onclick="openModal('myTicketsModal')" style="cursor:pointer; background:#fff7ed; border:1px solid #fed7aa; border-radius:12px; padding:16px 8px; text-align:center;">
+        <div style="font-size:30px; margin-bottom:6px;">🎫</div>
+        <div style="font-size:12.5px; font-weight:800; color:#9a3412;">عرض التذاكر</div>
+      </div>
+      <div onclick="openModal('addTicketModal')" style="cursor:pointer; background:#ecfdf5; border:1px solid #6ee7b7; border-radius:12px; padding:16px 8px; text-align:center;">
+        <div style="font-size:30px; margin-bottom:6px;">➕</div>
+        <div style="font-size:12.5px; font-weight:800; color:#065f46;">إضافة تذكرة</div>
+      </div>
+    </div>
+
+    <p style="font-size:11.5px; color:var(--muted); margin-bottom:8px;">أو تواصل معنا مباشرة من خلال:</p>
+    <div id="contactChannelsBox" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;"></div>
+  </div>
+</div>
+
+<!-- نافذة إضافة تذكرة دعم جديدة -->
+<div class="modal" id="addTicketModal">
+  <div class="modal-content" style="max-width:480px;">
+    <span class="close-btn" onclick="closeModal('addTicketModal')">&times;</span>
+    <h2 style="font-size: 17px; margin-bottom: 14px; color: var(--navy);">➕ إضافة تذكرة دعم</h2>
+    <form onsubmit="submitTicket(event)">
+      <div class="form-group">
+        <label>نوع الشكوى:</label>
+        <select id="ticketTypeSelect" required></select>
+      </div>
+      <div class="form-group">
+        <label>العنوان:</label>
+        <input type="text" id="ticketTitleInput" placeholder="اكتب عنوان مختصر للتذكرة" required>
+      </div>
+      <div class="form-group">
+        <label>الوصف:</label>
+        <textarea id="ticketDescInput" rows="4" placeholder="اشرح المشكلة أو الطلب بالتفصيل..." required></textarea>
+      </div>
+      <button type="submit" class="btn-submit" style="background:var(--navy);">➕ إضافة</button>
+    </form>
+  </div>
+</div>
+
+<!-- نافذة عرض ومتابعة تذاكري -->
+<div class="modal" id="myTicketsModal">
+  <div class="modal-content" style="max-width:560px;">
+    <span class="close-btn" onclick="closeModal('myTicketsModal')">&times;</span>
+    <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">🎫 تذاكري</h2>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+      <div class="form-group" style="margin-bottom:0;">
+        <label>من الفترة:</label>
+        <input type="date" id="myTicketsFromDate">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>الي الفترة:</label>
+        <input type="date" id="myTicketsToDate">
+      </div>
+      <div class="form-group" style="margin-bottom:0; min-width:140px;">
+        <label>نوع الشكوي:</label>
+        <select id="myTicketsTypeFilter"><option value="">الكل</option></select>
+      </div>
+      <button class="btn-sm btn-blue" style="padding:8px 14px;" onclick="renderMyTickets()">عرض التذاكر</button>
+    </div>
+
+    <div id="myTicketsList"></div>
+  </div>
+</div>
+
+<!-- نافذة تفاصيل تذكرة (عرض تفاصيلها ورد الإدارة) -->
+<div class="modal" id="ticketDetailModal">
+  <div class="modal-content" style="max-width:480px;">
+    <span class="close-btn" onclick="closeModal('ticketDetailModal')">&times;</span>
+    <div id="ticketDetailBody"></div>
+  </div>
+</div>
+
 <!-- 9. نافذة تعديل المنتج للأدمن مع إدارة الصور -->
 <div class="modal" id="editProductModal">
   <div class="modal-content">
@@ -738,6 +813,7 @@
       <button class="tab-btn" data-tab="admSubAdmins" onclick="switchAdminTab('admSubAdmins')" id="tabSubAdminsBtn">👥 الأدمن الفرعي</button>
       <button class="tab-btn" data-tab="admUsers" onclick="switchAdminTab('admUsers')">👥 العملاء</button>
       <button class="tab-btn" data-tab="admChat" onclick="switchAdminTab('admChat')">💬 الدعم</button>
+      <button class="tab-btn" data-tab="admTickets" onclick="switchAdminTab('admTickets')" id="tabTicketsBtn">🎫 التذاكر</button>
       <button class="tab-btn" data-tab="admLinks" onclick="switchAdminTab('admLinks')" id="tabLinksBtn">🔗 روابط إدارية</button>
       <button class="tab-btn" data-tab="admTheme" onclick="switchAdminTab('admTheme')" id="tabThemeBtn">🎨 الإعدادات</button>
       <button class="tab-btn" data-tab="admAccount" onclick="switchAdminTab('admAccount')" id="tabAdminAccBtn" style="background:#0f172a; color:#fff;">🔐 حسابي الأدمن</button>
@@ -963,6 +1039,18 @@
             <label>رابط إنستجرام:</label>
             <input type="url" id="stInstagramLink" placeholder="https://instagram.com/...">
           </div>
+          <div class="form-group">
+            <label>رابط تليجرام:</label>
+            <input type="url" id="stTelegramLink" placeholder="https://t.me/...">
+          </div>
+          <div class="form-group">
+            <label>البريد الإلكتروني للتواصل:</label>
+            <input type="email" id="stContactEmail" placeholder="support@example.com">
+          </div>
+          <div class="form-group">
+            <label>رقم الموبايل للتواصل:</label>
+            <input type="tel" id="stContactPhone" placeholder="01xxxxxxxxx">
+          </div>
         </div>
 
         <h3 style="font-size: 14px; margin: 15px 0 10px;">📢 شريط إعلان علوي</h3>
@@ -1120,6 +1208,48 @@
       <p style="font-size:10.5px; color:var(--muted); margin-top:6px; text-align:center;">📎 الحد الأقصى لأي مرفق 10 ميجا. ⏳ الرسائل والمرفقات بتتحذف تلقائيًا بعد شهر من إرسالها. 🗑️ اضغط على الأيقونة جنب أي رسالة عشان تحذفها.</p>
     </div>
 
+    <!-- التذاكر -->
+    <div id="admTicketsTab" style="display:none;">
+      <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:14px;">
+        <h3 style="font-size: 13px; margin-bottom: 8px; color: var(--navy);">🗂️ أنواع الشكاوى (تظهر للعميل عند فتح تذكرة)</h3>
+        <div style="display:flex; gap:6px; margin-bottom:8px;">
+          <input type="text" id="newTicketTypeInput" placeholder="اكتب نوع شكوى جديد..." style="flex:1;">
+          <button class="btn-sm btn-blue" style="padding:8px 14px;" onclick="addTicketType()">➕ إضافة</button>
+        </div>
+        <div id="ticketTypesList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+      </div>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>من الفترة:</label>
+          <input type="date" id="admTicketsFromDate">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>الي الفترة:</label>
+          <input type="date" id="admTicketsToDate">
+        </div>
+        <div class="form-group" style="margin-bottom:0; min-width:140px;">
+          <label>نوع الشكوي:</label>
+          <select id="admTicketsTypeFilter"><option value="">الكل</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom:0; min-width:140px;">
+          <label>الحالة:</label>
+          <select id="admTicketsStatusFilter">
+            <option value="">الكل</option>
+            <option value="🆕 جديدة">🆕 جديدة</option>
+            <option value="🔄 جاري المتابعة">🔄 جاري المتابعة</option>
+            <option value="⚙️ قيد التنفيذ">⚙️ قيد التنفيذ</option>
+            <option value="✅ تم التنفيذ">✅ تم التنفيذ</option>
+            <option value="❌ مرفوضة">❌ مرفوضة</option>
+            <option value="🚫 ملغاة">🚫 ملغاة</option>
+          </select>
+        </div>
+        <button class="btn-sm btn-blue" style="padding:8px 14px;" onclick="renderAdminTickets()">عرض التذاكر</button>
+      </div>
+
+      <div id="adminTicketsList"></div>
+    </div>
+
     <!-- روابط إدارية -->
     <div id="admLinksTab" style="display:none;">
       <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">➕ إضافة رابط إداري جديد</h3>
@@ -1239,6 +1369,7 @@ let chatSession = { activePhone: null, activeSince: null };
 let chatQueueList = [];
 let chatMessages = [];
 let adminLinks = [];
+let tickets = [];
 let openLinkEditId = null;
 
 let storeSettings = {
@@ -1441,7 +1572,7 @@ function initUserScopedListeners() {
   if (!currentUser) {
     // مفيش حد مسجل دخول - نفضّي البيانات الخاصة اللي مش مسموح نشوفها دلوقتي
     allUsers = []; paymentMethods = []; orders = []; userNotis = []; adminNotis = []; chatMessages = []; adminLinks = [];
-    chatSession = { activePhone: null, activeSince: null }; chatQueueList = [];
+    chatSession = { activePhone: null, activeSince: null }; chatQueueList = []; tickets = [];
     renderAdminUsers(); renderAdminSubAdmins(); renderAdminOrders(); renderUserNotis(); renderAdminNotis(); renderAdminLinks();
     updateNotiBadges();
     return;
@@ -1493,6 +1624,12 @@ function initUserScopedListeners() {
       adminLinks = snap.docs.map(d => d.data());
       renderAdminLinks();
     }, err => console.error('adminLinks listener error:', err)));
+
+    scopedUnsubscribers.push(db.collection('tickets').onSnapshot(snap => {
+      tickets = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      updateNotiBadges();
+      if (document.getElementById('admTicketsTab') && document.getElementById('admTicketsTab').style.display !== 'none') renderAdminTickets();
+    }, err => console.error('tickets listener error:', err)));
   } else {
     // العميل يشوف طلباته هو، إشعاراته هو، ورسائله هو بس (زي قواعد الأمان بالظبط)
     scopedUnsubscribers.push(db.collection('orders').where('userPhone', '==', currentUser.phone).onSnapshot(snap => {
@@ -1521,6 +1658,12 @@ function initUserScopedListeners() {
       chatQueueList = snap.docs.map(d => d.data());
       renderChatQueueBanner();
     }, err => console.error('chatQueue listener error:', err)));
+
+    scopedUnsubscribers.push(db.collection('tickets').where('userPhone', '==', currentUser.phone).onSnapshot(snap => {
+      tickets = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      updateNotiBadges();
+      if (document.getElementById('myTicketsModal') && document.getElementById('myTicketsModal').style.display !== 'none') renderMyTickets();
+    }, err => console.error('tickets listener error:', err)));
   }
 }
 
@@ -1547,6 +1690,9 @@ function applySettings() {
   document.getElementById('stWhatsappLink').value = storeSettings.whatsappLink || '';
   document.getElementById('stFacebookLink').value = storeSettings.facebookLink || '';
   document.getElementById('stInstagramLink').value = storeSettings.instagramLink || '';
+  document.getElementById('stTelegramLink').value = storeSettings.telegramLink || '';
+  document.getElementById('stContactEmail').value = storeSettings.contactEmail || '';
+  document.getElementById('stContactPhone').value = storeSettings.contactPhone || '';
   document.getElementById('stAnnouncementEnabled').checked = !!storeSettings.announcementEnabled;
   document.getElementById('stAnnouncementText').value = storeSettings.announcementText || '';
   document.getElementById('stMaintenanceMode').checked = !!storeSettings.maintenanceMode;
@@ -1564,19 +1710,273 @@ function getCurrencySymbol() {
   return storeSettings.currencySymbol || 'ج.م';
 }
 
-/* --- أيقونات التواصل في الهيدر، بتظهر بس لو الرابط متسجّل --- */
+/* --- محتوى نافذة "تواصل معنا": بتبني قائمة قنوات التواصل ديناميكيًا من الروابط المسجّلة بس --- */
 function applySocialLinks() {
-  const map = [
-    ['socialWhatsapp', storeSettings.whatsappLink],
-    ['socialFacebook', storeSettings.facebookLink],
-    ['socialInstagram', storeSettings.instagramLink]
-  ];
-  map.forEach(([elId, url]) => {
-    const el = document.getElementById(elId);
-    if (!el) return;
-    if (url) { el.href = url; el.style.display = 'inline'; }
-    else { el.style.display = 'none'; }
+  const box = document.getElementById('contactChannelsBox');
+  if (!box) return;
+
+  const channels = [
+    { url: storeSettings.whatsappLink, icon: '💬', label: 'واتساب', color: '#25D366' },
+    { url: storeSettings.facebookLink, icon: '📘', label: 'فيسبوك', color: '#1877F2' },
+    { url: storeSettings.instagramLink, icon: '📷', label: 'إنستجرام', color: '#E1306C' },
+    { url: storeSettings.telegramLink, icon: '✈️', label: 'تليجرام', color: '#26A5E4' },
+    { url: storeSettings.contactEmail ? `mailto:${storeSettings.contactEmail}` : '', icon: '📧', label: 'البريد الإلكتروني', color: '#64748b' },
+    { url: storeSettings.contactPhone ? `tel:${storeSettings.contactPhone}` : '', icon: '📱', label: 'اتصال مباشر', color: '#0f766e' }
+  ].filter(c => c.url);
+
+  box.innerHTML = channels.length
+    ? channels.map(c => `
+        <a href="${c.url}" target="_blank" rel="noopener" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:5px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 8px;">
+          <span style="font-size:24px;">${c.icon}</span>
+          <span style="font-size:11px; font-weight:700; color:${c.color};">${c.label}</span>
+        </a>
+      `).join('')
+    : `<p style="grid-column:1/-1; text-align:center; color:var(--muted); font-size:12px;">لسه مفيش وسائل تواصل مسجّلة.</p>`;
+}
+
+/* ============================================================
+   نظام تذاكر الدعم
+   ============================================================ */
+const TICKET_STATUSES = ['🆕 جديدة', '🔄 جاري المتابعة', '⚙️ قيد التنفيذ', '✅ تم التنفيذ', '❌ مرفوضة', '🚫 ملغاة'];
+
+/* --- إدارة أنواع الشكاوى (الأدمن بس) --- */
+function renderTicketTypesManagement() {
+  const box = document.getElementById('ticketTypesList');
+  if (!box) return;
+  const types = storeSettings.ticketTypes || [];
+  box.innerHTML = types.length
+    ? types.map(t => `
+        <span style="display:inline-flex; align-items:center; gap:6px; background:#e0f2fe; color:#0369a1; padding:5px 10px; border-radius:20px; font-size:11.5px; font-weight:700;">
+          ${t} <span onclick="removeTicketType('${t.replace(/'/g, "\\'")}')" style="cursor:pointer; color:var(--red); font-weight:900;">✖</span>
+        </span>
+      `).join('')
+    : `<p style="color:var(--muted); font-size:11.5px;">لسه مفيش أنواع شكاوى مضافة.</p>`;
+}
+
+async function addTicketType() {
+  const input = document.getElementById('newTicketTypeInput');
+  const val = input.value.trim();
+  if (!val) return;
+  const types = storeSettings.ticketTypes || [];
+  if (types.includes(val)) { input.value = ''; return; }
+  try {
+    await db.collection('settings').doc('store').set({ ticketTypes: [...types, val] }, { merge: true });
+    input.value = '';
+  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
+}
+
+async function removeTicketType(name) {
+  if (!await showConfirm(`هل تريد حذف نوع الشكوى "${name}"؟`)) return;
+  const types = (storeSettings.ticketTypes || []).filter(t => t !== name);
+  try {
+    await db.collection('settings').doc('store').set({ ticketTypes: types }, { merge: true });
+  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
+}
+
+/* --- تعبئة قوائم أنواع الشكاوى (فورم الإضافة + فلاتر العرض) --- */
+function populateTicketTypeSelect() {
+  const sel = document.getElementById('ticketTypeSelect');
+  if (!sel) return;
+  const types = storeSettings.ticketTypes || [];
+  sel.innerHTML = types.length
+    ? types.map(t => `<option value="${t}">${t}</option>`).join('')
+    : `<option value="">لا توجد أنواع شكاوى متاحة حاليًا</option>`;
+}
+
+function populateTicketTypeFilters() {
+  const types = storeSettings.ticketTypes || [];
+  ['myTicketsTypeFilter', 'admTicketsTypeFilter'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = `<option value="">الكل</option>` + types.map(t => `<option value="${t}">${t}</option>`).join('');
   });
+}
+
+/* --- إضافة تذكرة جديدة (عميل) --- */
+async function submitTicket(e) {
+  e.preventDefault();
+  if (!currentUser) return openModal('loginModal');
+
+  const type = document.getElementById('ticketTypeSelect').value;
+  const title = document.getElementById('ticketTitleInput').value.trim();
+  const desc = document.getElementById('ticketDescInput').value.trim();
+  if (!type || !title || !desc) return;
+
+  const id = Date.now();
+  const ticketNo = `TKT-${String(id).slice(-6)}`;
+  try {
+    await db.collection('tickets').doc(String(id)).set({
+      id, ticketNo, userPhone: currentUser.phone, userName: currentUser.name,
+      type, title, description: desc, status: '🆕 جديدة',
+      adminReply: '', createdAt: id, updatedAt: id
+    });
+
+    await db.collection('adminNotis').doc(String(id + 1)).set({
+      id: id + 1, type: 'ticket', refId: String(id),
+      title: `🎫 تذكرة جديدة: ${ticketNo}`,
+      body: `${currentUser.name} فتح تذكرة جديدة (${type}): ${title}`,
+      date: new Date().toLocaleTimeString('ar-EG'), read: false
+    });
+
+    document.getElementById('ticketTitleInput').value = '';
+    document.getElementById('ticketDescInput').value = '';
+    closeModal('addTicketModal');
+    showAlert(`✅ تم إضافة التذكرة بنجاح، رقمها: ${ticketNo}`);
+  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
+}
+
+function getTicketStatusColor(status) {
+  if (status === '✅ تم التنفيذ') return '#15803d';
+  if (status === '❌ مرفوضة') return '#b91c1c';
+  if (status === '🚫 ملغاة') return '#64748b';
+  if (status === '⚙️ قيد التنفيذ') return '#c2410c';
+  if (status === '🔄 جاري المتابعة') return '#1d4ed8';
+  return '#7c3aed';
+}
+
+/* --- عرض تذاكر العميل، مع فلترة بالتاريخ والنوع --- */
+function renderMyTickets() {
+  const list = document.getElementById('myTicketsList');
+  if (!list) return;
+
+  const fromVal = document.getElementById('myTicketsFromDate').value;
+  const toVal = document.getElementById('myTicketsToDate').value;
+  const typeVal = document.getElementById('myTicketsTypeFilter').value;
+
+  let filtered = tickets.slice();
+  if (fromVal) filtered = filtered.filter(t => t.createdAt >= new Date(fromVal + 'T00:00:00').getTime());
+  if (toVal) filtered = filtered.filter(t => t.createdAt <= new Date(toVal + 'T23:59:59.999').getTime());
+  if (typeVal) filtered = filtered.filter(t => t.type === typeVal);
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">لا توجد تذاكر مطابقة.</p>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(t => `
+    <div onclick="viewMyTicketDetail('${t.id}')" style="cursor:pointer; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+        <b style="font-size:12.5px;">${t.ticketNo} - ${t.title}</b>
+        <span style="background:${getTicketStatusColor(t.status)}; color:#fff; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px;">${t.status}</span>
+      </div>
+      <small style="color:var(--muted);">${t.type} - ${new Date(t.createdAt).toLocaleString('ar-EG')}</small>
+    </div>
+  `).join('');
+}
+
+/* --- تفاصيل تذكرة عند العميل، مع إمكانية الإلغاء لو لسه ماتباشرش فيها --- */
+function viewMyTicketDetail(id) {
+  const t = tickets.find(x => String(x.id) === String(id));
+  if (!t) return;
+  const box = document.getElementById('ticketDetailBody');
+  box.innerHTML = `
+    <h2 style="font-size:15px; color:var(--navy); margin-bottom:6px;">🎫 ${t.ticketNo}</h2>
+    <span style="background:${getTicketStatusColor(t.status)}; color:#fff; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:10px;">${t.status}</span>
+    <p style="font-size:12.5px; color:var(--muted); margin-bottom:4px;">النوع: ${t.type}</p>
+    <p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">التاريخ: ${new Date(t.createdAt).toLocaleString('ar-EG')}</p>
+    <p style="font-weight:800; font-size:13px; margin-bottom:4px;">${t.title}</p>
+    <p style="font-size:12.5px; background:#f8fafc; padding:10px; border-radius:8px; white-space:pre-line;">${t.description}</p>
+    ${t.adminReply ? `
+      <div style="background:#ecfdf5; border:1px solid #6ee7b7; border-radius:8px; padding:10px; margin-top:10px;">
+        <p style="font-size:11.5px; font-weight:800; color:#065f46; margin-bottom:4px;">💬 رد الإدارة:</p>
+        <p style="font-size:12.5px; white-space:pre-line;">${t.adminReply}</p>
+      </div>
+    ` : ''}
+    ${(t.status === '🆕 جديدة' || t.status === '🔄 جاري المتابعة') ? `
+      <button class="btn-sm" style="background:var(--red); color:#fff; padding:8px 14px; width:100%; margin-top:12px;" onclick="cancelMyTicket('${t.id}')">🚫 إلغاء التذكرة</button>
+    ` : ''}
+  `;
+  openModal('ticketDetailModal');
+}
+
+async function cancelMyTicket(id) {
+  if (!await showConfirm("هل تريد إلغاء هذه التذكرة؟")) return;
+  try {
+    await db.collection('tickets').doc(String(id)).update({ status: '🚫 ملغاة' });
+    closeModal('ticketDetailModal');
+  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
+}
+
+/* --- عرض كل التذاكر عند الأدمن، مع فلترة بالتاريخ/النوع/الحالة --- */
+function renderAdminTickets() {
+  const list = document.getElementById('adminTicketsList');
+  if (!list) return;
+
+  const fromVal = document.getElementById('admTicketsFromDate').value;
+  const toVal = document.getElementById('admTicketsToDate').value;
+  const typeVal = document.getElementById('admTicketsTypeFilter').value;
+  const statusVal = document.getElementById('admTicketsStatusFilter').value;
+
+  let filtered = tickets.slice();
+  if (fromVal) filtered = filtered.filter(t => t.createdAt >= new Date(fromVal + 'T00:00:00').getTime());
+  if (toVal) filtered = filtered.filter(t => t.createdAt <= new Date(toVal + 'T23:59:59.999').getTime());
+  if (typeVal) filtered = filtered.filter(t => t.type === typeVal);
+  if (statusVal) filtered = filtered.filter(t => t.status === statusVal);
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">لا توجد تذاكر مطابقة.</p>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(t => `
+    <div onclick="openTicketDetailAdmin('${t.id}')" style="cursor:pointer; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+        <b style="font-size:12.5px;">${t.ticketNo} - ${t.title}</b>
+        <span style="background:${getTicketStatusColor(t.status)}; color:#fff; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px;">${t.status}</span>
+      </div>
+      <small style="color:var(--muted);">${t.userName} - ${t.type} - ${new Date(t.createdAt).toLocaleString('ar-EG')}</small>
+    </div>
+  `).join('');
+}
+
+/* --- تفاصيل تذكرة عند الأدمن: تغيير الحالة وكتابة رد --- */
+function openTicketDetailAdmin(id) {
+  const t = tickets.find(x => String(x.id) === String(id));
+  if (!t) return;
+  const box = document.getElementById('ticketDetailBody');
+  box.innerHTML = `
+    <h2 style="font-size:15px; color:var(--navy); margin-bottom:6px;">🎫 ${t.ticketNo}</h2>
+    <p style="font-size:12.5px; color:var(--muted); margin-bottom:4px;">العميل: ${t.userName} - ${t.userPhone}</p>
+    <p style="font-size:12.5px; color:var(--muted); margin-bottom:4px;">النوع: ${t.type}</p>
+    <p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">التاريخ: ${new Date(t.createdAt).toLocaleString('ar-EG')}</p>
+    <p style="font-weight:800; font-size:13px; margin-bottom:4px;">${t.title}</p>
+    <p style="font-size:12.5px; background:#f8fafc; padding:10px; border-radius:8px; white-space:pre-line; margin-bottom:10px;">${t.description}</p>
+
+    <div class="form-group">
+      <label>تغيير الحالة:</label>
+      <select id="ticketStatusUpdateSelect">
+        ${TICKET_STATUSES.map(s => `<option value="${s}" ${s === t.status ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>الرد على العميل:</label>
+      <textarea id="ticketReplyInput" rows="3" placeholder="اكتب ردك هنا...">${t.adminReply || ''}</textarea>
+    </div>
+    <button class="btn-submit" style="background:var(--navy);" onclick="saveTicketUpdate('${t.id}')">💾 حفظ وإرسال للعميل</button>
+  `;
+  openModal('ticketDetailModal');
+}
+
+async function saveTicketUpdate(id) {
+  const t = tickets.find(x => String(x.id) === String(id));
+  if (!t) return;
+  const newStatus = document.getElementById('ticketStatusUpdateSelect').value;
+  const reply = document.getElementById('ticketReplyInput').value.trim();
+
+  try {
+    await db.collection('tickets').doc(String(id)).update({ status: newStatus, adminReply: reply, updatedAt: Date.now() });
+
+    const notiId = Date.now();
+    await db.collection('userNotis').doc(String(notiId)).set({
+      id: notiId, type: 'ticket', refId: String(id), userPhone: t.userPhone,
+      title: `🎫 تحديث تذكرة: ${t.ticketNo}`,
+      body: `حالة تذكرتك الآن: ${newStatus}${reply ? `\nرد الإدارة: ${reply}` : ''}`,
+      date: new Date().toLocaleTimeString('ar-EG'), read: false
+    });
+
+    closeModal('ticketDetailModal');
+    showAlert("✅ تم حفظ التحديث وإرساله للعميل.");
+  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
 }
 
 /* --- شريط الإعلان، قابل للإغلاق لجلسة التصفح الحالية --- */
@@ -3618,6 +4018,9 @@ function goToUserNotiTarget(n) {
   } else if (n.type === 'chat') {
     closeModal('userNotiModal');
     openModal('chatModal');
+  } else if (n.type === 'ticket' && n.refId) {
+    closeModal('userNotiModal');
+    viewMyTicketDetail(n.refId);
   }
 }
 
@@ -3690,10 +4093,10 @@ async function markAdminNotiSingleRead(id) {
 
 /* --- الانتقال لتفاصيل المستخدم/الطلب عند الضغط على الإشعار --- */
 function goToNotiTarget(n) {
-  if (!n || !n.refId || (n.type !== 'user' && n.type !== 'order' && n.type !== 'chat')) return;
+  if (!n || !n.refId || (n.type !== 'user' && n.type !== 'order' && n.type !== 'chat' && n.type !== 'ticket')) return;
 
   closeModal('adminNotiModal');
-  openModal('adminDashboardModal');
+  if (n.type !== 'ticket') openModal('adminDashboardModal');
 
   if (n.type === 'user') {
     switchAdminTab('admUsers');
@@ -3730,6 +4133,10 @@ function goToNotiTarget(n) {
         loadAdminChat();
       }
     }, 60);
+  } else if (n.type === 'ticket') {
+    openModal('adminDashboardModal');
+    switchAdminTab('admTickets');
+    setTimeout(() => openTicketDetailAdmin(n.refId), 80);
   }
 }
 
@@ -3813,6 +4220,9 @@ async function saveStoreSettings(e) {
     whatsappLink: document.getElementById('stWhatsappLink').value.trim(),
     facebookLink: document.getElementById('stFacebookLink').value.trim(),
     instagramLink: document.getElementById('stInstagramLink').value.trim(),
+    telegramLink: document.getElementById('stTelegramLink').value.trim(),
+    contactEmail: document.getElementById('stContactEmail').value.trim(),
+    contactPhone: document.getElementById('stContactPhone').value.trim(),
     announcementEnabled: document.getElementById('stAnnouncementEnabled').checked,
     announcementText: document.getElementById('stAnnouncementText').value.trim(),
     maintenanceMode: document.getElementById('stMaintenanceMode').checked,
@@ -3871,7 +4281,7 @@ async function addProduct(e) {
 }
 
 function switchAdminTab(t) {
-  ['admOrders','admReports','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admLinks','admTheme','admAccount'].forEach(id => {
+  ['admOrders','admReports','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admTickets','admLinks','admTheme','admAccount'].forEach(id => {
     const el = document.getElementById(id+'Tab');
     if(el) el.style.display = (id === t) ? 'block' : 'none';
   });
@@ -3887,6 +4297,7 @@ function switchAdminTab(t) {
   if(t === 'admSubAdmins') renderAdminSubAdmins();
   if(t === 'admUsers') renderAdminUsers();
   if(t === 'admChat') loadAdminChatUsers();
+  if(t === 'admTickets') { renderTicketTypesManagement(); populateTicketTypeFilters(); renderAdminTickets(); }
   if(t === 'admLinks') renderAdminLinks();
   if(t === 'admTheme') loadThemeTab();
   if(t === 'admAccount') loadSuperAdminAccountTab();
@@ -4129,6 +4540,8 @@ function openModal(id) {
   if(id === 'userNotiModal') renderUserNotis();
   if(id === 'adminNotiModal') renderAdminNotis();
   if(id === 'chatModal') { renderChat(); ensureChatQueuePosition(); }
+  if(id === 'addTicketModal') populateTicketTypeSelect();
+  if(id === 'myTicketsModal') { populateTicketTypeFilters(); renderMyTickets(); }
   if(id === 'adminDashboardModal') {
     const orderSearch = document.getElementById('orderSearchInput');
     if (orderSearch) orderSearch.value = '';
