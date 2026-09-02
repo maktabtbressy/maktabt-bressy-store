@@ -42,8 +42,8 @@
 
   /* Containers & Modals */
   .container { max-width: 1200px; margin: 25px auto; padding: 0 15px; }
-  .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; padding: 15px; }
-  .modal-content { background: #fff; border-radius: 16px; padding: 22px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; position: relative; }
+  .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; height: 100dvh; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; padding: 15px; }
+  .modal-content { background: #fff; border-radius: 16px; padding: 22px; width: 100%; max-width: 580px; max-height: 90vh; max-height: 90dvh; overflow-y: auto; position: relative; }
   .modal-lg { max-width: 980px; }
   /* هذه النوافذ بتتفتح فوق لوحة التحكم، فلازم تبقى طبقتها أعلى من طبقة لوحة التحكم نفسها */
   #editProductModal, #editUserModal, #editSubAdminModal { z-index: 210; }
@@ -4134,10 +4134,19 @@ function openModal(id) {
     if (orderSearch) orderSearch.value = '';
     switchAdminTab('admOrders');
   }
-  document.getElementById(id).style.display = 'flex';
+  const modalEl = document.getElementById(id);
+  modalEl.style.display = 'flex';
+
+  /* ترجيع النافذة لأول سطر فيها (بدل ما تفتح وهي لسه متمررة من آخر مرة)، ومنع خلفية الصفحة من التحرك معاها على الموبايل */
+  const contentEl = modalEl.querySelector('.modal-content');
+  if (contentEl) contentEl.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
 }
 
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+  if (!document.querySelector('.modal[style*="flex"]')) document.body.style.overflow = '';
+}
 
 /* --- تصدير نسخة احتياطية بصيغة CSV (بتتفتح بسهولة في Excel) --- */
 function exportDataAsCSV(type) {
