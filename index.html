@@ -208,6 +208,7 @@
     <div style="font-size:50px; margin-bottom:15px;">🚧</div>
     <h2 style="font-size:20px; margin-bottom:10px;">المتجر مغلق مؤقتًا</h2>
     <p style="font-size:14px; opacity:0.85;">بنرجعلكم قريب، شكرًا لصبركم 🙏</p>
+    <p id="maintenanceReturnDateText" style="font-size:13px; opacity:0.85; margin-top:6px; display:none;"></p>
     <div style="margin-top:20px;">
       <button class="btn-nav" style="background:var(--orange);" onclick="openModal('adminLoginModal')">دخول الأدمن 🔐</button>
     </div>
@@ -503,6 +504,7 @@
   <div class="modal-content">
     <span class="close-btn" onclick="closeModal('chatModal')">&times;</span>
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">💬 الدعم المباشر مع إدارة المتجر</h2>
+    <div id="chatQueueBanner" style="display:none; background:#fffbeb; border:1px solid #fde68a; color:#92400e; font-size:12.5px; font-weight:700; padding:9px 12px; border-radius:8px; margin-bottom:8px; text-align:center;"></div>
     <div class="chat-box" id="chatMessages"></div>
     <div style="display:flex; gap:5px; margin-top:10px; align-items:center;">
       <input type="text" id="chatInput" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px;" placeholder="اكتب رسالتك هنا...">
@@ -972,13 +974,30 @@
           <input type="text" id="stAnnouncementText" placeholder="مثال: عرض خاص لحد آخر الشهر 🎉">
         </div>
 
-        <h3 style="font-size: 14px; margin: 15px 0 10px; color:var(--red);">🚧 وضع الصيانة</h3>
+        <h3 style="font-size: 14px; margin: 15px 0 10px; color:var(--red);">🚧 وضع الصيانة / الإجازة</h3>
         <label style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:10px; background:#fef2f2; padding:10px; border-radius:8px; border:1px solid #fecaca;">
           <input type="checkbox" id="stMaintenanceMode" style="width:18px; height:18px;"> ⚠️ إغلاق المتجر مؤقتًا عن العملاء (لوحة التحكم تفضل شغالة للأدمن)
         </label>
+        <div class="form-group">
+          <label>تاريخ الرجوع المتوقع (اختياري - هيبان للعميل في رسالة الإغلاق):</label>
+          <input type="date" id="stMaintenanceReturnDate">
+        </div>
+
+        <h3 style="font-size: 14px; margin: 15px 0 10px;">📦 تنبيه المخزون المنخفض</h3>
+        <div class="form-group">
+          <label>لما كمية أي منتج توصل للرقم ده أو أقل، هيتحط عليه علامة تنبيه ويوصلك إشعار:</label>
+          <input type="number" id="stLowStockThreshold" min="0" placeholder="مثال: 3">
+        </div>
 
         <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ التعديلات والتحديث</button>
       </form>
+
+      <h3 style="font-size: 14px; margin: 18px 0 10px;">💾 نسخة احتياطية للبيانات</h3>
+      <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn-sm btn-blue" style="padding:9px 14px;" onclick="exportDataAsCSV('products')">⬇️ تصدير المنتجات (CSV)</button>
+        <button class="btn-sm btn-blue" style="padding:9px 14px;" onclick="exportDataAsCSV('orders')">⬇️ تصدير الطلبات (CSV)</button>
+        <button class="btn-sm btn-blue" style="padding:9px 14px;" onclick="exportDataAsCSV('users')">⬇️ تصدير العملاء (CSV)</button>
+      </div>
     </div>
 
     <!-- إضافة المنتجات -->
@@ -1080,6 +1099,7 @@
 
     <!-- الشات والدعم -->
     <div id="admChatTab" style="display:none;">
+      <div id="chatQueueStatusBox" style="margin-bottom:12px;"></div>
       <div class="form-group">
         <label>🔍 دوّر عن عميل (اسم / هاتف / إيميل):</label>
         <input type="text" id="chatUserSearchInput" oninput="loadAdminChatUsers()" placeholder="اكتب للبحث...">
@@ -1125,16 +1145,8 @@
     <div id="admThemeTab" style="display:none;">
       <h3 style="font-size: 14px; margin-bottom: 12px; color: var(--navy);">🎨 مظهر المتجر</h3>
       <div style="background:#f8fafc; padding:15px; border-radius:10px; border:1px solid #e2e8f0;">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>اللون الأساسي (الهيدر والعناوين):</label>
-            <input type="color" id="themePrimaryColor" oninput="previewThemeChange()" style="height:42px; padding:2px; cursor:pointer;">
-          </div>
-          <div class="form-group">
-            <label>اللون الثانوي (الأزرار والتمييز):</label>
-            <input type="color" id="themeAccentColor" oninput="previewThemeChange()" style="height:42px; padding:2px; cursor:pointer;">
-          </div>
-        </div>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">اختار شكل جاهز ومظبوط بضغطة واحدة - كل شكل ألوانه متناسقة والنص واضح عليها دايمًا:</p>
+        <div id="themePresetsGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:10px; margin-bottom:15px;"></div>
 
         <div class="form-group">
           <label>خط المتجر:</label>
@@ -1146,18 +1158,12 @@
           </select>
         </div>
 
-        <label style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; cursor:pointer; margin:12px 0;">
-          <input type="checkbox" id="themeDarkMode" onchange="previewThemeChange()" style="width:18px; height:18px; cursor:pointer;">
-          🌙 الوضع الداكن (Dark Mode) - هيبان لكل زوار الموقع
-        </label>
-
         <div id="themePreviewBox" style="margin:12px 0; padding:15px; border-radius:10px; border:2px dashed #cbd5e1;">
           <p style="font-size:11px; color:var(--muted); margin-bottom:8px;">👁️ معاينة سريعة قبل الحفظ:</p>
           <div id="themePreviewHeader" style="padding:10px; border-radius:8px; margin-bottom:8px;">
             <span id="themePreviewHeaderText" style="font-weight:800; color:#fff;">اسم المتجر هنا</span>
           </div>
           <button id="themePreviewBtn" type="button" style="border:none; padding:8px 16px; border-radius:8px; font-weight:700; color:#fff; cursor:default;">زرار تجريبي</button>
-          <p id="themeContrastWarning" style="font-size:11px; color:var(--red); margin-top:8px; display:none; font-weight:700;"></p>
         </div>
 
         <div style="display:flex; gap:8px; margin-top:10px;">
@@ -1229,6 +1235,8 @@ let products = [];
 let orders = [];
 let userNotis = [];
 let adminNotis = [];
+let chatSession = { activePhone: null, activeSince: null };
+let chatQueueList = [];
 let chatMessages = [];
 let adminLinks = [];
 let openLinkEditId = null;
@@ -1254,6 +1262,7 @@ function getProductImages(p) {
 
 function loadCartLocal() {
   try { cart = JSON.parse(localStorage.getItem('brs_v4_cart')) || []; } catch(e) { cart = []; }
+  cart.forEach(item => { if (!item.qty || item.qty < 1) item.qty = 1; });
 }
 function saveCartLocal() {
   localStorage.setItem('brs_v4_cart', JSON.stringify(cart));
@@ -1432,6 +1441,7 @@ function initUserScopedListeners() {
   if (!currentUser) {
     // مفيش حد مسجل دخول - نفضّي البيانات الخاصة اللي مش مسموح نشوفها دلوقتي
     allUsers = []; paymentMethods = []; orders = []; userNotis = []; adminNotis = []; chatMessages = []; adminLinks = [];
+    chatSession = { activePhone: null, activeSince: null }; chatQueueList = [];
     renderAdminUsers(); renderAdminSubAdmins(); renderAdminOrders(); renderUserNotis(); renderAdminNotis(); renderAdminLinks();
     updateNotiBadges();
     return;
@@ -1469,6 +1479,16 @@ function initUserScopedListeners() {
       cleanupOldChatMessages(chatMessages);
     }, err => console.error('chatMessages listener error:', err)));
 
+    scopedUnsubscribers.push(db.collection('liveChatSession').doc('status').onSnapshot(doc => {
+      chatSession = doc.exists ? doc.data() : { activePhone: null, activeSince: null };
+      renderAdminChatQueueStatus();
+    }, err => console.error('liveChatSession listener error:', err)));
+
+    scopedUnsubscribers.push(db.collection('chatQueue').orderBy('joinedAt').onSnapshot(snap => {
+      chatQueueList = snap.docs.map(d => d.data());
+      renderAdminChatQueueStatus();
+    }, err => console.error('chatQueue listener error:', err)));
+
     scopedUnsubscribers.push(db.collection('adminLinks').onSnapshot(snap => {
       adminLinks = snap.docs.map(d => d.data());
       renderAdminLinks();
@@ -1491,6 +1511,16 @@ function initUserScopedListeners() {
       renderChat();
       cleanupOldChatMessages(chatMessages);
     }, err => console.error('chatMessages listener error:', err)));
+
+    scopedUnsubscribers.push(db.collection('liveChatSession').doc('status').onSnapshot(doc => {
+      chatSession = doc.exists ? doc.data() : { activePhone: null, activeSince: null };
+      renderChatQueueBanner();
+    }, err => console.error('liveChatSession listener error:', err)));
+
+    scopedUnsubscribers.push(db.collection('chatQueue').orderBy('joinedAt').onSnapshot(snap => {
+      chatQueueList = snap.docs.map(d => d.data());
+      renderChatQueueBanner();
+    }, err => console.error('chatQueue listener error:', err)));
   }
 }
 
@@ -1520,6 +1550,8 @@ function applySettings() {
   document.getElementById('stAnnouncementEnabled').checked = !!storeSettings.announcementEnabled;
   document.getElementById('stAnnouncementText').value = storeSettings.announcementText || '';
   document.getElementById('stMaintenanceMode').checked = !!storeSettings.maintenanceMode;
+  document.getElementById('stMaintenanceReturnDate').value = storeSettings.maintenanceReturnDate || '';
+  document.getElementById('stLowStockThreshold').value = (storeSettings.lowStockThreshold !== undefined && storeSettings.lowStockThreshold !== null) ? storeSettings.lowStockThreshold : '';
 
   applyTheme(storeSettings.theme);
   applySocialLinks();
@@ -1569,12 +1601,32 @@ function applyMaintenanceMode() {
   const overlay = document.getElementById('maintenanceOverlay');
   const isBlocked = storeSettings.maintenanceMode && !(currentUser && currentUser.isAdmin);
   overlay.style.display = isBlocked ? 'flex' : 'none';
+
+  const dateText = document.getElementById('maintenanceReturnDateText');
+  if (isBlocked && storeSettings.maintenanceReturnDate) {
+    const d = new Date(storeSettings.maintenanceReturnDate + 'T00:00:00');
+    dateText.innerText = `📅 موعد الرجوع المتوقع: ${d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+    dateText.style.display = 'block';
+  } else if (dateText) {
+    dateText.style.display = 'none';
+  }
 }
 
 /* ======================================================================
    مظهر المتجر (الثيم) - ألوان وخط ووضع داكن، يتطبق على كل الزوار
 ====================================================================== */
 const DEFAULT_THEME = { primaryColor: '#0e2a47', accentColor: '#f26522', fontFamily: 'Cairo', darkMode: false };
+
+/* --- قوالب ألوان جاهزة ومظبوطة (كل واحد متأكد إن ألوانه متناسقة والنص واضح عليها دايمًا) --- */
+const THEME_PRESETS = [
+  { name: '🔵 كلاسيكي', primaryColor: '#0e2a47', accentColor: '#f26522', darkMode: false },
+  { name: '🟢 أخضر عصري', primaryColor: '#14532d', accentColor: '#22c55e', darkMode: false },
+  { name: '🟣 بنفسجي أنيق', primaryColor: '#3b0764', accentColor: '#a855f7', darkMode: false },
+  { name: '🔴 أحمر جريء', primaryColor: '#7f1d1d', accentColor: '#ef4444', darkMode: false },
+  { name: '🟦 أزرق سماوي', primaryColor: '#0c4a6e', accentColor: '#0ea5e9', darkMode: false },
+  { name: '⚫ داكن أنيق', primaryColor: '#111827', accentColor: '#f59e0b', darkMode: true }
+];
+let selectedThemePresetIdx = 0;
 
 function applyTheme(theme) {
   const t = theme || DEFAULT_THEME;
@@ -1584,31 +1636,43 @@ function applyTheme(theme) {
   document.body.classList.toggle('dark-mode', !!t.darkMode);
 }
 
-function loadThemeTab() {
-  const t = storeSettings.theme || DEFAULT_THEME;
-  document.getElementById('themePrimaryColor').value = t.primaryColor || DEFAULT_THEME.primaryColor;
-  document.getElementById('themeAccentColor').value = t.accentColor || DEFAULT_THEME.accentColor;
-  document.getElementById('themeFontFamily').value = t.fontFamily || DEFAULT_THEME.fontFamily;
-  document.getElementById('themeDarkMode').checked = !!t.darkMode;
+function renderThemePresets() {
+  const box = document.getElementById('themePresetsGrid');
+  if (!box) return;
+  box.innerHTML = THEME_PRESETS.map((p, idx) => `
+    <div onclick="selectThemePreset(${idx})" style="cursor:pointer; border-radius:10px; padding:8px; text-align:center; border:3px solid ${idx === selectedThemePresetIdx ? 'var(--navy)' : 'transparent'}; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.1);">
+      <div style="display:flex; height:26px; border-radius:6px; overflow:hidden; margin-bottom:6px;">
+        <div style="flex:1; background:${p.primaryColor};"></div>
+        <div style="flex:1; background:${p.accentColor};"></div>
+      </div>
+      <small style="font-weight:700; font-size:11px;">${p.name}</small>
+    </div>
+  `).join('');
+}
+
+function selectThemePreset(idx) {
+  selectedThemePresetIdx = idx;
+  renderThemePresets();
   previewThemeChange();
 }
 
-/* حساب درجة سطوع اللون، لتحذير الأدمن لو اختار لون فاتح أوي (بما إن نفس اللون بيُستخدم كنص في أماكن كتير بالموقع) */
-function getColorLuminance(hex) {
-  const c = (hex || '#000000').replace('#', '');
-  const r = parseInt(c.substr(0, 2), 16) / 255;
-  const g = parseInt(c.substr(2, 2), 16) / 255;
-  const b = parseInt(c.substr(4, 2), 16) / 255;
-  return 0.299 * r + 0.587 * g + 0.114 * b;
+function loadThemeTab() {
+  const t = storeSettings.theme || DEFAULT_THEME;
+  let matchIdx = THEME_PRESETS.findIndex(p => p.primaryColor === t.primaryColor && p.accentColor === t.accentColor && p.darkMode === !!t.darkMode);
+  selectedThemePresetIdx = matchIdx >= 0 ? matchIdx : 0;
+  document.getElementById('themeFontFamily').value = t.fontFamily || DEFAULT_THEME.fontFamily;
+  renderThemePresets();
+  previewThemeChange();
 }
 
 /* معاينة فورية على شاشة الأدمن بس، قبل الحفظ */
 function previewThemeChange() {
+  const preset = THEME_PRESETS[selectedThemePresetIdx];
   const theme = {
-    primaryColor: document.getElementById('themePrimaryColor').value,
-    accentColor: document.getElementById('themeAccentColor').value,
+    primaryColor: preset.primaryColor,
+    accentColor: preset.accentColor,
     fontFamily: document.getElementById('themeFontFamily').value,
-    darkMode: document.getElementById('themeDarkMode').checked
+    darkMode: preset.darkMode
   };
   applyTheme(theme);
 
@@ -1618,24 +1682,15 @@ function previewThemeChange() {
     headerBox.style.background = theme.primaryColor;
     btn.style.background = theme.accentColor;
   }
-
-  const warning = document.getElementById('themeContrastWarning');
-  if (warning) {
-    if (getColorLuminance(theme.primaryColor) > 0.6) {
-      warning.style.display = 'block';
-      warning.innerText = '⚠️ اللون الأساسي ده فاتح أوي - نفس اللون بيُستخدم كنص في أماكن كتير في الموقع (زي عناوين المنتجات)، فهيصعب قراءته. جرّب لون أغمق شوية.';
-    } else {
-      warning.style.display = 'none';
-    }
-  }
 }
 
 async function saveThemeSettings() {
+  const preset = THEME_PRESETS[selectedThemePresetIdx];
   const theme = {
-    primaryColor: document.getElementById('themePrimaryColor').value,
-    accentColor: document.getElementById('themeAccentColor').value,
+    primaryColor: preset.primaryColor,
+    accentColor: preset.accentColor,
     fontFamily: document.getElementById('themeFontFamily').value,
-    darkMode: document.getElementById('themeDarkMode').checked
+    darkMode: preset.darkMode
   };
   try {
     await db.collection('settings').doc('store').set({ theme }, { merge: true });
@@ -1647,8 +1702,10 @@ async function saveThemeSettings() {
 
 async function resetThemeSettings() {
   if (!await showConfirm("هل تريد استرجاع مظهر المتجر الافتراضي؟")) return;
+  selectedThemePresetIdx = 0;
+  document.getElementById('themeFontFamily').value = DEFAULT_THEME.fontFamily;
+  renderThemePresets();
   applyTheme(DEFAULT_THEME);
-  loadThemeTab();
   try {
     await db.collection('settings').doc('store').set({ theme: DEFAULT_THEME }, { merge: true });
     showAlert("✅ تم استرجاع المظهر الافتراضي بنجاح.");
@@ -1812,8 +1869,9 @@ function updateUI() {
   }
 
   const cartBadge = document.getElementById('cartCount');
-  cartBadge.innerText = cart.length;
-  cartBadge.style.display = cart.length > 0 ? "inline-block" : "none";
+  const cartTotalQty = cart.reduce((s, item) => s + (item.qty || 1), 0);
+  cartBadge.innerText = cartTotalQty;
+  cartBadge.style.display = cartTotalQty > 0 ? "inline-block" : "none";
 
   updateNotiBadges();
   renderProducts(currentCategoryFilter);
@@ -1823,7 +1881,16 @@ function addToCart(id) {
   if (!currentUser) return openModal('loginModal');
   const p = products.find(p => p.id === id);
   if (!p) return;
-  cart.push({ ...p });
+
+  const existing = cart.find(item => item.id === id);
+  if (existing) {
+    if (p.quantity !== null && p.quantity !== undefined && p.quantity !== '' && existing.qty >= Number(p.quantity)) {
+      return showAlert(`❌ الكمية المتاحة من "${p.title}" هي ${p.quantity} بس.`);
+    }
+    existing.qty += 1;
+  } else {
+    cart.push({ ...p, qty: 1 });
+  }
   saveCartLocal();
   updateUI();
   showAlert("تمت الإضافة للسلة!");
@@ -1844,6 +1911,26 @@ function parsePriceNumber(priceStr) {
   return isNaN(n) ? 0 : n;
 }
 
+/* --- استيبر الكمية في السلة: + بيزود، والزرار التاني بينقص لحد ما يوصل لـ1، وبعد كده شكله بيتحول لسلة مهملات ولو ضغط عليه تاني بيحذف المنتج بالكامل --- */
+function increaseCartQty(index) {
+  const item = cart[index];
+  if (!item) return;
+  const p = products.find(x => x.id === item.id);
+  if (p && p.quantity !== null && p.quantity !== undefined && p.quantity !== '' && item.qty >= Number(p.quantity)) {
+    return showAlert(`❌ الكمية المتاحة من "${item.title}" هي ${p.quantity} بس.`);
+  }
+  item.qty += 1;
+  saveCartLocal(); updateUI(); renderCart();
+}
+
+function decreaseCartQty(index) {
+  const item = cart[index];
+  if (!item) return;
+  if (item.qty > 1) { item.qty -= 1; }
+  else { cart.splice(index, 1); }
+  saveCartLocal(); updateUI(); renderCart();
+}
+
 function renderCart() {
   const container = document.getElementById('cartItemsList');
   const totalBox = document.getElementById('cartTotalBox');
@@ -1858,9 +1945,16 @@ function renderCart() {
 
   container.innerHTML = cart.map((item, i) => `
     <div style="padding:8px 0; border-bottom:1px solid #ddd;">
-      <div style="display:flex; justify-content:space-between;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
         <div><strong>${item.title}</strong> - ${item.price}</div>
-        <button onclick="cart.splice(${i},1); saveCartLocal(); updateUI(); renderCart();" style="color:red; background:none; border:none; cursor:pointer;">حذف</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button onclick="cart.splice(${i},1); saveCartLocal(); updateUI(); renderCart();" style="color:red; background:none; border:1px solid #fca5a5; border-radius:16px; padding:4px 12px; cursor:pointer; font-size:11.5px;">حذف</button>
+          <div style="display:inline-flex; align-items:center; gap:12px; border:2px solid var(--orange); border-radius:20px; padding:4px 14px;">
+            <span onclick="increaseCartQty(${i})" style="cursor:pointer; font-size:16px; font-weight:900; color:var(--orange); user-select:none;">+</span>
+            <span style="min-width:14px; text-align:center; font-weight:800; font-size:13px;">${item.qty}</span>
+            <span onclick="decreaseCartQty(${i})" style="cursor:pointer; font-size:${item.qty > 1 ? '18px' : '14px'}; color:var(--orange); user-select:none;">${item.qty > 1 ? '−' : '🗑️'}</span>
+          </div>
+        </div>
       </div>
       ${item.requiresSerial ? `
         <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:8px; margin-top:6px;">
@@ -1874,7 +1968,7 @@ function renderCart() {
     </div>
   `).join('');
 
-  const total = cart.reduce((sum, item) => sum + parsePriceNumber(item.price), 0);
+  const total = cart.reduce((sum, item) => sum + parsePriceNumber(item.price) * item.qty, 0);
   const deliveryFee = storeSettings.deliveryFee || 0;
   const grandTotal = total + deliveryFee;
 
@@ -1907,7 +2001,7 @@ async function previewCartSerialImage(e, index) {
 function goToDeliveryInfo() {
   if (cart.length === 0) return;
 
-  const cartTotal = cart.reduce((sum, item) => sum + parsePriceNumber(item.price), 0);
+  const cartTotal = cart.reduce((sum, item) => sum + parsePriceNumber(item.price) * item.qty, 0);
   if (storeSettings.minOrderAmount && cartTotal < storeSettings.minOrderAmount) {
     return showAlert(`الحد الأدنى لقيمة الطلب هو ${storeSettings.minOrderAmount} ${getCurrencySymbol()}. أضف منتجات أكتر عشان تكمل.`);
   }
@@ -1924,22 +2018,12 @@ function goToDeliveryInfo() {
   openModal('deliveryInfoModal');
 }
 
-/* --- تجميع عناصر السلة في طلب واحد: نفس المنتج مرتين = صنف واحد بعدد 2 --- */
+/* --- تحويل عناصر السلة لأصناف طلب - كل عنصر في السلة بقى ماسك عدده (qty) بنفسه --- */
 function buildOrderItems(cartItems) {
-  const map = {};
-  cartItems.forEach(item => {
-    const key = item.id;
-    if (!map[key]) {
-      map[key] = {
-        title: item.title, price: item.price, quantity: 0,
-        requiresSerial: !!item.requiresSerial, serialText: item.serialText || '', serialImg: item.serialImg || ''
-      };
-    }
-    map[key].quantity += 1;
-    if (!map[key].serialText && item.serialText) map[key].serialText = item.serialText;
-    if (!map[key].serialImg && item.serialImg) map[key].serialImg = item.serialImg;
-  });
-  return Object.values(map);
+  return cartItems.map(item => ({
+    title: item.title, price: item.price, quantity: item.qty || 1,
+    requiresSerial: !!item.requiresSerial, serialText: item.serialText || '', serialImg: item.serialImg || ''
+  }));
 }
 
 /* --- توافق مع الطلبات القديمة اللي كانت مسجّلة بصنف واحد فقط بدل مصفوفة أصناف --- */
@@ -2234,11 +2318,13 @@ async function handleSaveProductEdit(e) {
 function renderProducts(filter = 'all') {
   let list = filter === 'all' ? products : products.filter(p => p.cat === filter);
   const defaultLogo = storeSettings.logo || 'https://via.placeholder.com/150?text=MAKTABT+BRESSY';
+  const lowStockThreshold = (storeSettings.lowStockThreshold !== undefined && storeSettings.lowStockThreshold !== null) ? storeSettings.lowStockThreshold : null;
 
   document.getElementById('productsGrid').innerHTML = list.map(p => {
     let qtyHtml = '';
+    const isLowStock = lowStockThreshold !== null && p.quantity !== null && p.quantity !== undefined && p.quantity !== '' && Number(p.quantity) <= lowStockThreshold;
     if (p.quantity !== null && p.quantity !== undefined && p.quantity !== '') {
-      qtyHtml = `<div class="card-qty">المتاح: ${p.quantity}</div>`;
+      qtyHtml = `<div class="card-qty" style="${isLowStock ? 'color:#fff; background:var(--red); display:inline-block; padding:2px 8px; border-radius:6px;' : ''}">${isLowStock ? '⚠️ ' : ''}المتاح: ${p.quantity}</div>`;
     }
 
     const images = getProductImages(p);
@@ -2266,6 +2352,35 @@ function renderProducts(filter = 'all') {
       </div>
     `;
   }).join('');
+
+  if (currentUser && currentUser.isAdmin) checkLowStockAndNotify(lowStockThreshold);
+}
+
+/* --- لو فيه منتجات وصلت لحد المخزون المنخفض، يتبعت إشعار واحد مجمّع للأدمن (مش إشعار لكل منتج لوحده تجنبًا للإزعاج)،
+   وميتكررش الإشعار نفسه تاني لحد ما يتقرأ أو المخزون يتغيّر --- */
+let __lastLowStockAlertKey = null;
+async function checkLowStockAndNotify(threshold) {
+  if (threshold === null || !currentUser.isSuperAdmin) return;
+  const lowItems = products.filter(p => p.quantity !== null && p.quantity !== undefined && p.quantity !== '' && Number(p.quantity) <= threshold);
+  if (lowItems.length === 0) { __lastLowStockAlertKey = null; return; }
+
+  const key = lowItems.map(p => `${p.id}:${p.quantity}`).sort().join('|');
+  if (key === __lastLowStockAlertKey) return; // نفس الوضع اللي اتبعت عنه إشعار قبل كده، متبعتش تاني
+  __lastLowStockAlertKey = key;
+
+  const alreadyNotified = adminNotis.some(n => n.type === 'stock' && !n.read);
+  if (alreadyNotified) return;
+
+  try {
+    const notiId = Date.now();
+    const names = lowItems.slice(0, 5).map(p => `${p.title} (${p.quantity})`).join('، ');
+    await db.collection('adminNotis').doc(String(notiId)).set({
+      id: notiId, type: 'stock',
+      title: `⚠️ مخزون منخفض في ${lowItems.length} منتج`,
+      body: `المنتجات دي وصلت لحد المخزون المنخفض: ${names}${lowItems.length > 5 ? ' وغيرهم...' : ''}`,
+      date: new Date().toLocaleTimeString('ar-EG'), read: false
+    });
+  } catch (err) { console.error('checkLowStockAndNotify error:', err); }
 }
 
 /* ======================================================================
@@ -3138,20 +3253,81 @@ async function downloadAttachment(url, filename) {
   }
 }
 
+/* --- نظام "الجلسة النشطة + طابور الانتظار" للدعم المباشر: عميل واحد بس نشط فعليًا في المرة.
+   لو مفيش حد نشط، العميل بياخد الجلسة لنفسه أول ما يفتح الشات. لو فيه حد نشط، بينضم لطابور الانتظار. --- */
+async function ensureChatQueuePosition() {
+  if (!currentUser || currentUser.isAdmin) return;
+  if (chatSession.activePhone === currentUser.phone) return;
+
+  const sessionRef = db.collection('liveChatSession').doc('status');
+  let claimed = false;
+  try {
+    claimed = await db.runTransaction(async tx => {
+      const snap = await tx.get(sessionRef);
+      const data = snap.exists ? snap.data() : { activePhone: null };
+      if (!data.activePhone) {
+        tx.set(sessionRef, { activePhone: currentUser.phone, activeSince: Date.now() });
+        return true;
+      }
+      return false;
+    });
+  } catch (err) { console.error('ensureChatQueuePosition transaction error:', err); }
+
+  if (claimed) return;
+
+  if (!chatQueueList.some(q => q.phone === currentUser.phone)) {
+    try {
+      await db.collection('chatQueue').doc(currentUser.phone).set({
+        phone: currentUser.phone, name: currentUser.name, joinedAt: Date.now()
+      });
+    } catch (err) { console.error('ensureChatQueuePosition queue join error:', err); }
+  }
+}
+
+/* --- بانر "استنى دورك" عند العميل، بيتحدث لحظيًا مع أي تغيير في الطابور --- */
+function renderChatQueueBanner() {
+  const banner = document.getElementById('chatQueueBanner');
+  if (!banner || !currentUser || currentUser.isAdmin) return;
+
+  if (chatSession.activePhone === currentUser.phone) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  const myIdx = chatQueueList.findIndex(q => q.phone === currentUser.phone);
+  banner.style.display = 'block';
+  banner.innerHTML = myIdx >= 0
+    ? `🕐 الأدمن بيتكلم مع عميل تاني حاليًا. إنت رقم <b>${myIdx + 1}</b> في قائمة الانتظار، هيوصلك دورك قريب.`
+    : `🕐 من فضلك استنى شوية، جاري وصلك بالدعم...`;
+}
+
 let pendingChatFile = null;
 
 async function handleChatFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
   const uploaded = await uploadChatFile(file, 'chatFileLabel');
-  if (uploaded) pendingChatFile = uploaded;
-  else e.target.value = '';
+  if (uploaded) {
+    pendingChatFile = uploaded;
+    document.getElementById('chatFileLabel').innerHTML = `📎 ${uploaded.name} <span onclick="cancelChatAttachment()" style="cursor:pointer; color:var(--red); font-weight:900; margin-right:8px; padding:0 4px;" title="إلغاء المرفق">✖</span>`;
+  } else {
+    e.target.value = '';
+  }
+}
+
+/* --- إلغاء المرفق المختار قبل الإرسال، لو العميل غيّر رأيه أو اختار ملف غلط --- */
+function cancelChatAttachment() {
+  pendingChatFile = null;
+  document.getElementById('chatFileInput').value = '';
+  document.getElementById('chatFileLabel').innerHTML = '';
 }
 
 async function sendChatMessage() {
   const txt = document.getElementById('chatInput').value.trim();
   if(!txt && !pendingChatFile) return;
   const id = Date.now();
+
+  await ensureChatQueuePosition();
 
   try {
     const msgData = {
@@ -3186,6 +3362,82 @@ function renderChat() {
   if (!currentUser) return;
   const myMsgs = chatMessages.filter(m => m.senderPhone === currentUser.phone);
   box.innerHTML = myMsgs.map(m => renderChatBubble(m, false)).join('');
+}
+
+/* --- عرض حالة الجلسة النشطة وطابور الانتظار عند الأدمن --- */
+function renderAdminChatQueueStatus() {
+  const box = document.getElementById('chatQueueStatusBox');
+  if (!box) return;
+
+  const activeUser = chatSession.activePhone ? allUsers.find(u => u.phone === chatSession.activePhone) : null;
+  const activeHtml = activeUser
+    ? `<div style="background:#ecfdf5; border:1px solid #6ee7b7; border-radius:8px; padding:9px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+        <span style="font-size:12.5px; font-weight:700; color:#065f46;">🟢 بيتكلم معاك دلوقتي: <b>${activeUser.name}</b></span>
+        <button class="btn-sm" style="background:var(--red); color:#fff; padding:5px 12px;" onclick="endCurrentChatSession()">🔴 إنهاء الجلسة</button>
+      </div>`
+    : (chatSession.activePhone
+      ? `<div style="background:#ecfdf5; border:1px solid #6ee7b7; border-radius:8px; padding:9px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:12.5px; font-weight:700; color:#065f46;">🟢 بيتكلم معاك دلوقتي: <b>${chatSession.activePhone}</b></span>
+          <button class="btn-sm" style="background:var(--red); color:#fff; padding:5px 12px;" onclick="endCurrentChatSession()">🔴 إنهاء الجلسة</button>
+        </div>`
+      : `<div style="background:#f1f5f9; border-radius:8px; padding:9px 12px; margin-bottom:8px; font-size:12px; color:var(--muted);">لا يوجد عميل نشط حاليًا.</div>`);
+
+  const queueHtml = chatQueueList.length > 0
+    ? `<div style="margin-bottom:4px;">
+        <div style="font-size:12px; font-weight:800; margin-bottom:5px;">⏳ قائمة الانتظار (${chatQueueList.length})</div>
+        ${chatQueueList.map((q, idx) => `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:6px 10px; margin-bottom:5px;">
+            <span style="font-size:12px;">${idx + 1}. ${q.name || q.phone}</span>
+            <button class="btn-sm btn-blue" style="padding:4px 10px;" onclick="adminSwitchActiveChat('${q.phone}')">▶️ ابدأ المحادثة معاه</button>
+          </div>
+        `).join('')}
+      </div>`
+    : '';
+
+  box.innerHTML = activeHtml + queueHtml;
+}
+
+/* --- تحويل الجلسة النشطة لعميل تاني من طابور الانتظار. العميل القديم (لو كان في جلسة) بيرجع آخر واحد في الطابور. --- */
+async function adminSwitchActiveChat(phone) {
+  const oldActive = chatSession.activePhone;
+  try {
+    if (oldActive && oldActive !== phone) {
+      const oldUser = allUsers.find(u => u.phone === oldActive);
+      await db.collection('chatQueue').doc(oldActive).set({ phone: oldActive, name: oldUser ? oldUser.name : oldActive, joinedAt: Date.now() });
+    }
+    await db.collection('liveChatSession').doc('status').set({ activePhone: phone, activeSince: Date.now() });
+    await db.collection('chatQueue').doc(phone).delete();
+
+    const sel = document.getElementById('adminChatUserSelect');
+    if (sel) { sel.value = phone; loadAdminChat(); }
+  } catch (err) { showAlert("❌ حصل خطأ أثناء تحويل الشات. " + err.message); }
+}
+
+/* --- إنهاء الجلسة الحالية: بيبلّغ العميل إن الجلسة اتقفلت، وبيرقّي أول واحد في الطابور يبقى هو النشط تلقائيًا --- */
+async function endCurrentChatSession() {
+  const endedPhone = chatSession.activePhone;
+  if (!endedPhone) return;
+  if (!await showConfirm("هل تريد إنهاء الجلسة الحالية؟ العميل هيوصله إشعار بإغلاقها.")) return;
+
+  try {
+    const msgId = Date.now();
+    await db.collection('chatMessages').doc(String(msgId)).set({
+      id: msgId, senderPhone: endedPhone, senderName: 'النظام', text: '✅ تم إنهاء الجلسة الحالية، شكرًا لتواصلك معنا 🙏',
+      isAdmin: true, isSystem: true, time: new Date().toLocaleTimeString('ar-EG')
+    });
+    await db.collection('userNotis').doc(String(msgId + 1)).set({
+      id: msgId + 1, type: 'chat', userPhone: endedPhone, title: "💬 تم إنهاء الجلسة",
+      body: "تم إنهاء جلسة الدعم الحالية معك، شكرًا لتواصلك معنا.", date: new Date().toLocaleTimeString('ar-EG'), read: false
+    });
+
+    const next = chatQueueList[0];
+    if (next) {
+      await db.collection('liveChatSession').doc('status').set({ activePhone: next.phone, activeSince: Date.now() });
+      await db.collection('chatQueue').doc(next.phone).delete();
+    } else {
+      await db.collection('liveChatSession').doc('status').set({ activePhone: null, activeSince: null });
+    }
+  } catch (err) { showAlert("❌ حصل خطأ أثناء إنهاء الجلسة. " + err.message); }
 }
 
 function loadAdminChatUsers() {
@@ -3285,8 +3537,19 @@ async function handleAdminChatFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
   const uploaded = await uploadChatFile(file, 'adminChatFileLabel');
-  if (uploaded) pendingAdminChatFile = uploaded;
-  else e.target.value = '';
+  if (uploaded) {
+    pendingAdminChatFile = uploaded;
+    document.getElementById('adminChatFileLabel').innerHTML = `📎 ${uploaded.name} <span onclick="cancelAdminChatAttachment()" style="cursor:pointer; color:var(--red); font-weight:900; margin-right:8px; padding:0 4px;" title="إلغاء المرفق">✖</span>`;
+  } else {
+    e.target.value = '';
+  }
+}
+
+/* --- إلغاء المرفق المختار قبل الإرسال، لو الأدمن غيّر رأيه أو اختار ملف غلط --- */
+function cancelAdminChatAttachment() {
+  pendingAdminChatFile = null;
+  document.getElementById('adminChatFileInput').value = '';
+  document.getElementById('adminChatFileLabel').innerHTML = '';
 }
 
 async function sendAdminChatMessage() {
@@ -3407,6 +3670,7 @@ function getVisibleAdminNotis() {
     if (n.type === 'user') return true;
     if (n.type === 'order') return true;
     if (n.type === 'chat') return !!perms.canChat;
+    if (n.type === 'stock') return !!perms.canEditProd;
     if (n.type === 'subadmin') return false;
     return true;
   });
@@ -3551,7 +3815,9 @@ async function saveStoreSettings(e) {
     instagramLink: document.getElementById('stInstagramLink').value.trim(),
     announcementEnabled: document.getElementById('stAnnouncementEnabled').checked,
     announcementText: document.getElementById('stAnnouncementText').value.trim(),
-    maintenanceMode: document.getElementById('stMaintenanceMode').checked
+    maintenanceMode: document.getElementById('stMaintenanceMode').checked,
+    maintenanceReturnDate: document.getElementById('stMaintenanceReturnDate').value || null,
+    lowStockThreshold: document.getElementById('stLowStockThreshold').value !== '' ? parseInt(document.getElementById('stLowStockThreshold').value) : null
   };
   try {
     await db.collection('settings').doc('store').set(updated, { merge: true });
@@ -3862,7 +4128,7 @@ function openModal(id) {
   if(id === 'userOrdersModal') renderUserOrders();
   if(id === 'userNotiModal') renderUserNotis();
   if(id === 'adminNotiModal') renderAdminNotis();
-  if(id === 'chatModal') renderChat();
+  if(id === 'chatModal') { renderChat(); ensureChatQueuePosition(); }
   if(id === 'adminDashboardModal') {
     const orderSearch = document.getElementById('orderSearchInput');
     if (orderSearch) orderSearch.value = '';
@@ -3872,6 +4138,44 @@ function openModal(id) {
 }
 
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+/* --- تصدير نسخة احتياطية بصيغة CSV (بتتفتح بسهولة في Excel) --- */
+function exportDataAsCSV(type) {
+  let rows = [];
+  let filename = '';
+
+  if (type === 'products') {
+    filename = 'المنتجات';
+    rows.push(['الاسم', 'القسم', 'السعر', 'الكمية', 'الوصف']);
+    products.forEach(p => {
+      const catName = (categories.find(c => c.key === p.cat) || {}).titleAr || p.cat;
+      rows.push([p.title || '', catName || '', p.price || '', (p.quantity ?? ''), (p.desc || '').replace(/\n/g, ' ')]);
+    });
+  } else if (type === 'orders') {
+    filename = 'الطلبات';
+    rows.push(['رقم الطلب', 'العميل', 'الموبايل', 'الحالة', 'الإجمالي', 'وسيلة الدفع', 'تاريخ ووقت الطلب']);
+    orders.forEach(o => {
+      rows.push([o.orderId || '', o.userName || '', o.userPhone || '', o.status || '', getOrderTotal(o), o.payMethod || '', getOrderDateTime(o)]);
+    });
+  } else if (type === 'users') {
+    filename = 'العملاء';
+    rows.push(['الاسم', 'الموبايل', 'البريد الإلكتروني', 'العنوان']);
+    allUsers.filter(u => u.role === 'customer').forEach(u => {
+      rows.push([u.name || '', u.phone || '', u.email || '', u.address || '']);
+    });
+  } else return;
+
+  const csvContent = '\uFEFF' + rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 /* --- بحث المنتجات في الواجهة الأمامية: متاح لأي زائر (حتى لو مش مسجل دخول)، بيدور في كل الأقسام
    مرة واحدة، عشان العميل يلاقي منتج شافه قبل كده حتى لو مش فاكر في أي قسم أو اتنقل لقسم تاني --- */
