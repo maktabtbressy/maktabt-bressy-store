@@ -429,6 +429,14 @@
   </div>
 </div>
 
+<!-- معرض صور الدفع (QR وغيرها) -->
+<div class="modal" id="paymentAttachmentsGalleryModal" style="z-index:213;">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal('paymentAttachmentsGalleryModal')">&times;</span>
+    <div id="paymentAttachmentsGalleryBody"></div>
+  </div>
+</div>
+
 <!-- 5. تتبع طلبات العميل -->
 <div class="modal" id="userOrdersModal">
   <div class="modal-content modal-lg">
@@ -955,18 +963,7 @@
       </form>
 
       <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">💳 طرق وأرقام الدفع الحالية</h3>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>طريقة الدفع</th>
-              <th>الأرقام/الحسابات المسجلة</th>
-              <th>إجراءات والتعديل</th>
-            </tr>
-          </thead>
-          <tbody id="adminPaymentsTable"></tbody>
-        </table>
-      </div>
+      <div id="adminPaymentsTable"></div>
     </div>
 
     <!-- إدارة الأقسام -->
@@ -2832,15 +2829,37 @@ function renderCheckoutAccounts() {
   const displayBox = document.getElementById('payAccountsDisplay');
 
   if(method && method.accounts.length > 0) {
+    const attachments = method.attachments || [];
     displayBox.innerHTML = `
       <strong>📌 قم بالتحويل على أحد الأرقام/الحسابات التالية المعتمدة:</strong>
       <ul style="margin-right: 20px; margin-top:5px;">
-        ${method.accounts.map(acc => `<li style="font-size:13px; font-weight:800; color:var(--navy);">${acc}</li>`).join('')}
+        ${method.accounts.map(acc => `<li style="font-size:13px; font-weight:800; color:var(--navy);">${linkifyText(acc)}</li>`).join('')}
       </ul>
+      ${attachments.length ? `<button type="button" class="btn-sm btn-blue" style="width:100%; margin-top:8px; padding:8px;" onclick="showPaymentAttachmentsGallery(${method.id})">📷 عرض صور الدفع (QR وغيرها)</button>` : ''}
     `;
   } else {
     displayBox.innerHTML = "لا توجد أرقام مسجلة حالياً لطريقة الدفع هذه.";
   }
+}
+
+/* --- معرض صور الدفع (QR وغيرها) للعميل، كل صورة معاها توضيح واضح عشان ميتلخبطش بين الأرقام --- */
+function showPaymentAttachmentsGallery(methodId) {
+  const method = paymentMethods.find(p => p.id === methodId);
+  if (!method || !method.attachments || method.attachments.length === 0) return;
+
+  const box = document.getElementById('paymentAttachmentsGalleryBody');
+  box.innerHTML = `
+    <h2 style="font-size:15px; color:var(--navy); margin-bottom:10px;">📷 صور الدفع - ${method.name}</h2>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      ${method.attachments.map(att => `
+        <div style="text-align:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
+          <img src="${att.img}" style="max-width:100%; max-height:260px; border-radius:8px; cursor:pointer;" onclick="showImagePreview('${att.img}')">
+          <p style="font-weight:800; font-size:13px; margin-top:8px; color:var(--navy);">${att.label}</p>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  openModal('paymentAttachmentsGalleryModal');
 }
 
 let payingForOrderId = null;
@@ -3200,7 +3219,7 @@ async function addNewPaymentMethod(e) {
   const id = Date.now();
 
   try {
-    await db.collection('paymentMethods').doc(String(id)).set({ id, name, accounts: accs });
+    await db.collection('paymentMethods').doc(String(id)).set({ id, name, accounts: accs, attachments: [] });
     document.getElementById('newPayName').value = "";
     document.getElementById('newPayAccounts').value = "";
     showAlert("تمت إضافة طريقة الدفع بنجاح!");
@@ -3229,19 +3248,83 @@ async function deletePaymentMethod(id) {
   }
 }
 
+/* --- إضافة مرفق (صورة QR مثلًا) لطريقة دفع، مع تسمية توضيحية فوقه (زي رقم المحفظة اللي بيخصه) --- */
+async function addPaymentAttachment(id, fileInputId, labelInputId) {
+  const fileInput = document.getElementById(fileInputId);
+  const labelInput = document.getElementById(labelInputId);
+  const file = fileInput.files[0];
+  const label = labelInput.value.trim();
+
+  if (!file) return showAlert("من فضلك اختار صورة الأول.");
+  if (!label) return showAlert("من فضلك اكتب توضيح فوق المرفق (زي رقم المحفظة اللي بيخصه) عشان العميل ميتلخبطش.");
+
+  try {
+    const dataUrl = await readFileAsBase64(file);
+    const method = paymentMethods.find(p => p.id === id);
+    const attachments = (method && method.attachments) || [];
+    attachments.push({ label, img: dataUrl });
+    await db.collection('paymentMethods').doc(String(id)).update({ attachments });
+    fileInput.value = '';
+    labelInput.value = '';
+  } catch (err) {
+    showAlert("❌ حصل خطأ أثناء إضافة المرفق. " + err.message);
+  }
+}
+
+async function removePaymentAttachment(id, attIdx) {
+  if (!await showConfirm("هل تريد حذف هذا المرفق؟")) return;
+  const method = paymentMethods.find(p => p.id === id);
+  if (!method) return;
+  const attachments = (method.attachments || []).filter((_, i) => i !== attIdx);
+  try {
+    await db.collection('paymentMethods').doc(String(id)).update({ attachments });
+  } catch (err) {
+    showAlert("❌ حصل خطأ. " + err.message);
+  }
+}
+
 function renderAdminPayments() {
-  document.getElementById('adminPaymentsTable').innerHTML = paymentMethods.map((p, idx) => `
-    <tr>
-      <td><b>${p.name}</b></td>
-      <td>
-        <input type="text" id="pmAcc_${idx}" value="${p.accounts.join(', ')}" style="width:100%; font-size:11px; padding:4px;">
-      </td>
-      <td>
-        <button class="btn-sm btn-blue" onclick="updatePaymentAccounts(${p.id}, 'pmAcc_${idx}')">حفظ التعديل</button>
-        <button class="btn-sm btn-danger" onclick="deletePaymentMethod(${p.id})">حذف</button>
-      </td>
-    </tr>
-  `).join('');
+  document.getElementById('adminPaymentsTable').innerHTML = paymentMethods.map((p, idx) => {
+    const attachments = p.attachments || [];
+    return `
+    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <b style="font-size:14px; color:var(--navy);">💳 ${p.name}</b>
+        <button class="btn-sm btn-danger" onclick="deletePaymentMethod(${p.id})">حذف طريقة الدفع</button>
+      </div>
+
+      <div class="form-group">
+        <label>الأرقام/الحسابات (افصل بينها بفواصل , - تقدر تحط لينك دفع زي إنستاباي كمان، هيبان قابل للضغط عند العميل):</label>
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="pmAcc_${idx}" value="${p.accounts.join(', ')}" style="flex:1; font-size:12px; padding:6px;">
+          <button class="btn-sm btn-blue" onclick="updatePaymentAccounts(${p.id}, 'pmAcc_${idx}')">حفظ</button>
+        </div>
+      </div>
+
+      <div style="background:#f8fafc; border-radius:8px; padding:10px; margin-top:8px;">
+        <p style="font-size:12px; font-weight:800; margin-bottom:8px;">📎 مرفقات (صور QR أو أي صور توضيحية للدفع)</p>
+
+        ${attachments.length ? `
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            ${attachments.map((att, attIdx) => `
+              <div style="text-align:center; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:6px; width:90px;">
+                <img src="${att.img}" style="width:100%; height:70px; object-fit:cover; border-radius:6px; cursor:pointer;" onclick="showImagePreview('${att.img}')">
+                <small style="font-size:10px; display:block; margin:4px 0; word-break:break-word;">${att.label}</small>
+                <span onclick="removePaymentAttachment(${p.id}, ${attIdx})" style="cursor:pointer; color:var(--red); font-size:11px; font-weight:800;">✖ حذف</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : `<p style="font-size:11px; color:var(--muted); margin-bottom:8px;">لسه مفيش مرفقات مضافة.</p>`}
+
+        <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+          <input type="text" id="pmAttLabel_${idx}" placeholder="توضيح المرفق (مثال: 01128670029)" style="flex:1; min-width:140px; font-size:12px; padding:6px;">
+          <input type="file" accept="image/*" id="pmAttFile_${idx}" style="font-size:11px;">
+          <button class="btn-sm btn-blue" onclick="addPaymentAttachment(${p.id}, 'pmAttFile_${idx}', 'pmAttLabel_${idx}')">➕ إضافة مرفق</button>
+        </div>
+      </div>
+    </div>
+  `;
+  }).join('');
 }
 
 async function addNewCategory(e) {
@@ -4936,7 +5019,77 @@ function closeModal(id) {
 }
 
 /* --- تصدير نسخة احتياطية بصيغة CSV (بتتفتح بسهولة في Excel) --- */
-function exportDataAsCSV(type) {
+/* ============================================================
+   حفظ الملفات على الجهاز بنافذة "حفظ باسم..." حقيقية (لو المتصفح بيدعمها)،
+   مع تذكّر آخر مكان تم الحفظ فيه عشان النافذة تفتح فيه تلقائيًا المرة الجاية.
+   المتصفحات (Chrome/Edge بس) مش بتسمح لأي موقع يشوف أو يعرض المسار الحقيقي كنص -
+   فبنقدر بس "نفتكر" المكان داخليًا من غير ما نقدر نعرضه، وده أقصى حل ممكن تقنيًا.
+   ============================================================ */
+function openHandleDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('brs_file_handles_db', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('handles');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveLastFileHandle(key, handle) {
+  try {
+    const idb = await openHandleDB();
+    const tx = idb.transaction('handles', 'readwrite');
+    tx.objectStore('handles').put(handle, key);
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+  } catch (e) { console.error('saveLastFileHandle error:', e); }
+}
+
+async function getLastFileHandle(key) {
+  try {
+    const idb = await openHandleDB();
+    const tx = idb.transaction('handles', 'readonly');
+    const req = tx.objectStore('handles').get(key);
+    return await new Promise((res, rej) => { req.onsuccess = () => res(req.result || null); req.onerror = () => rej(req.error); });
+  } catch (e) { return null; }
+}
+
+/* --- حفظ ملف: بيفتح نافذة "حفظ باسم..." حقيقية لو المتصفح بيدعمها (Chrome/Edge)، وبيرجع لتنزيل عادي في أي متصفح تاني (Safari/Firefox) --- */
+async function saveFileToDisk(content, suggestedName, mimeType, extension, handleKey) {
+  if (window.showSaveFilePicker) {
+    try {
+      const lastHandle = await getLastFileHandle(handleKey);
+      const opts = {
+        suggestedName,
+        types: [{ description: extension.toUpperCase() + ' File', accept: { [mimeType]: ['.' + extension] } }]
+      };
+      if (lastHandle) opts.startIn = lastHandle;
+
+      const handle = await window.showSaveFilePicker(opts);
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      await saveLastFileHandle(handleKey, handle);
+      return true;
+    } catch (err) {
+      if (err.name === 'AbortError') return false; // العميل قفل نافذة الاختيار من غير ما يحفظ
+      console.error('saveFileToDisk picker error:', err);
+      // نكمل على التنزيل العادي كحل بديل لو حصل أي خطأ تاني غير الإلغاء
+    }
+  }
+
+  // الطريقة العادية (تنزيل تلقائي لمجلد التحميلات) - تستخدم مع المتصفحات اللي مش بتدعم نافذة الحفظ
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = suggestedName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return true;
+}
+
+async function exportDataAsCSV(type) {
   let rows = [];
   let filename = '';
 
@@ -4962,15 +5115,7 @@ function exportDataAsCSV(type) {
   } else return;
 
   const csvContent = '\uFEFF' + rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  await saveFileToDisk(csvContent, `${filename}_${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8;', 'csv', `csv_${type}`);
 }
 
 /* --- تصدير نسخة احتياطية شاملة (JSON) لكل بيانات المتجر الأساسية.
@@ -4996,15 +5141,12 @@ async function exportFullBackupJSON() {
       storeSettings: settingsSnap.exists ? settingsSnap.data() : {}
     };
 
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `نسخة_احتياطية_شاملة_${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const saved = await saveFileToDisk(
+      JSON.stringify(backup, null, 2),
+      `نسخة_احتياطية_شاملة_${new Date().toISOString().slice(0, 10)}.json`,
+      'application/json;charset=utf-8;', 'json', 'json_full_backup'
+    );
+    if (!saved) return; // العميل لغى نافذة الحفظ، منسجّلش تاريخ نسخة وهمية
 
     // نسجّل تاريخ آخر نسخة في إعدادات المتجر، عشان التذكير يعرف يحسب صح من أي جهاز يفتح لوحة التحكم
     try { await db.collection('settings').doc('store').set({ lastBackupAt: Date.now() }, { merge: true }); } catch (e) { /* مش هيمنع نجاح النسخة نفسها */ }
@@ -5074,11 +5216,14 @@ async function restoreFromBackupJSON(e) {
       { name: 'adminLinks', current: linksSnap.docs.map(d => d.data()) }
     ];
 
+    /* --- كل مجموعة معرّف مستنداتها شكله مختلف: الأقسام بتتخزن بـ"key"، وباقي المجموعات بتتخزن بـ"id" --- */
+    const getDocId = (collectionName, item) => collectionName === 'categories' ? item.key : String(item.id);
+
     for (const col of collectionsToWipe) {
       let batch = db.batch();
       let count = 0;
       for (const item of col.current) {
-        batch.delete(db.collection(col.name).doc(String(item.id)));
+        batch.delete(db.collection(col.name).doc(getDocId(col.name, item)));
         count++;
         if (count === 450) { await batch.commit(); batch = db.batch(); count = 0; }
       }
@@ -5097,7 +5242,7 @@ async function restoreFromBackupJSON(e) {
       let batch = db.batch();
       let count = 0;
       for (const item of col.items) {
-        batch.set(db.collection(col.name).doc(String(item.id)), item);
+        batch.set(db.collection(col.name).doc(getDocId(col.name, item)), item);
         count++;
         if (count === 450) { await batch.commit(); batch = db.batch(); count = 0; }
       }
