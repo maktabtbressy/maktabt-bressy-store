@@ -4937,21 +4937,43 @@ function exportDataAsCSV(type) {
   URL.revokeObjectURL(url);
 }
 
-/* --- تصدير نسخة احتياطية شاملة (JSON) لكل بيانات المتجر الأساسية --- */
-function exportFullBackupJSON() {
-  const backup = {
-    exportedAt: new Date().toISOString(),
-    products, categories, paymentMethods, adminLinks, storeSettings
-  };
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `نسخة_احتياطية_شاملة_${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+/* --- تصدير نسخة احتياطية شاملة (JSON) لكل بيانات المتجر الأساسية.
+   بنقرأ كل مجموعة مباشرة من Firestore وقت التصدير (مش من المتغيرات المحفوظة في الذاكرة)،
+   عشان نضمن نسخة كاملة ودقيقة 100% حتى لو بعض البيانات لسه ماوصلتش للمتصفح وقت الضغط على الزرار. --- */
+async function exportFullBackupJSON() {
+  showAlert("⏳ جاري تجهيز النسخة الاحتياطية، من فضلك استنى...");
+  try {
+    const [productsSnap, categoriesSnap, paymentsSnap, linksSnap, settingsSnap] = await Promise.all([
+      db.collection('products').get(),
+      db.collection('categories').get(),
+      db.collection('paymentMethods').get(),
+      db.collection('adminLinks').get(),
+      db.collection('settings').doc('store').get()
+    ]);
+
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      products: productsSnap.docs.map(d => d.data()),
+      categories: categoriesSnap.docs.map(d => d.data()),
+      paymentMethods: paymentsSnap.docs.map(d => d.data()),
+      adminLinks: linksSnap.docs.map(d => d.data()),
+      storeSettings: settingsSnap.exists ? settingsSnap.data() : {}
+    };
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `نسخة_احتياطية_شاملة_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showAlert(`✅ تم تجهيز النسخة بنجاح: ${backup.products.length} منتج، ${backup.categories.length} قسم، ${backup.paymentMethods.length} طريقة دفع، ${backup.adminLinks.length} رابط إداري.`);
+  } catch (err) {
+    showAlert("❌ حصل خطأ أثناء تجهيز النسخة الاحتياطية. " + err.message);
+  }
 }
 
 /* --- استرداد نسخة احتياطية شاملة: بيستبدل المنتجات/الأقسام/طرق الدفع/الروابط/الإعدادات بمحتوى الملف --- */
@@ -4979,12 +5001,19 @@ async function restoreFromBackupJSON(e) {
   if (!confirmed) { e.target.value = ''; return; }
 
   try {
-    // حذف المنتجات والأقسام وطرق الدفع والروابط الحالية أولًا
+    // نجيب القوائم الحالية طازة من Firestore مباشرة (مش من الذاكرة) عشان نضمن حذف كل حاجة موجودة فعليًا، مهما كان توقيت تحميل الصفحة
+    const [productsSnap, categoriesSnap, paymentsSnap, linksSnap] = await Promise.all([
+      db.collection('products').get(),
+      db.collection('categories').get(),
+      db.collection('paymentMethods').get(),
+      db.collection('adminLinks').get()
+    ]);
+
     const collectionsToWipe = [
-      { name: 'products', current: products },
-      { name: 'categories', current: categories.filter(c => c.key !== 'all') },
-      { name: 'paymentMethods', current: paymentMethods },
-      { name: 'adminLinks', current: adminLinks }
+      { name: 'products', current: productsSnap.docs.map(d => d.data()) },
+      { name: 'categories', current: categoriesSnap.docs.map(d => d.data()).filter(c => c.key !== 'all') },
+      { name: 'paymentMethods', current: paymentsSnap.docs.map(d => d.data()) },
+      { name: 'adminLinks', current: linksSnap.docs.map(d => d.data()) }
     ];
 
     for (const col of collectionsToWipe) {
