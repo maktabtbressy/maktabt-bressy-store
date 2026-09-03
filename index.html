@@ -50,6 +50,9 @@
   #checkoutPaymentModal, #orderInvoiceModal { z-index: 212; }
   #imagePreviewModal { z-index: 220; }
   #attachmentPreviewModal { z-index: 225; }
+  #contactUsModal { z-index: 205; }
+  #myTicketsModal, #addTicketModal { z-index: 210; }
+  #ticketDetailModal { z-index: 216; }
   #adminLoginModal { z-index: 10000; }
   .close-btn { position: absolute; left: 15px; top: 15px; font-size: 20px; cursor: pointer; color: var(--muted); }
 
@@ -531,11 +534,11 @@
     <h2 style="font-size: 17px; margin-bottom: 14px; color: var(--navy);">📞 تواصل معنا</h2>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
-      <div onclick="openModal('myTicketsModal')" style="cursor:pointer; background:#fff7ed; border:1px solid #fed7aa; border-radius:12px; padding:16px 8px; text-align:center;">
+      <div onclick="openTicketsAreaGuarded('myTicketsModal')" style="cursor:pointer; background:#fff7ed; border:1px solid #fed7aa; border-radius:12px; padding:16px 8px; text-align:center;">
         <div style="font-size:30px; margin-bottom:6px;">🎫</div>
         <div style="font-size:12.5px; font-weight:800; color:#9a3412;">عرض التذاكر</div>
       </div>
-      <div onclick="openModal('addTicketModal')" style="cursor:pointer; background:#ecfdf5; border:1px solid #6ee7b7; border-radius:12px; padding:16px 8px; text-align:center;">
+      <div onclick="openTicketsAreaGuarded('addTicketModal')" style="cursor:pointer; background:#ecfdf5; border:1px solid #6ee7b7; border-radius:12px; padding:16px 8px; text-align:center;">
         <div style="font-size:30px; margin-bottom:6px;">➕</div>
         <div style="font-size:12.5px; font-weight:800; color:#065f46;">إضافة تذكرة</div>
       </div>
@@ -564,6 +567,14 @@
         <label>الوصف:</label>
         <textarea id="ticketDescInput" rows="4" placeholder="اشرح المشكلة أو الطلب بالتفصيل..." required></textarea>
       </div>
+      <div class="form-group">
+        <label>📎 إرفاق صورة أو مستند (اختياري):</label>
+        <label style="cursor:pointer; font-size:13px; background:#f1f5f9; border:1px dashed #cbd5e1; border-radius:8px; padding:10px; display:block; text-align:center;">
+          اضغط هنا لاختيار ملف
+          <input type="file" id="ticketFileInput" onchange="handleTicketFileSelect(event)" style="display:none;">
+        </label>
+        <small id="ticketFileLabel" style="font-size:11px; color:var(--navy); display:block; margin-top:4px;"></small>
+      </div>
       <button type="submit" class="btn-submit" style="background:var(--navy);">➕ إضافة</button>
     </form>
   </div>
@@ -587,6 +598,19 @@
       <div class="form-group" style="margin-bottom:0; min-width:140px;">
         <label>نوع الشكوي:</label>
         <select id="myTicketsTypeFilter"><option value="">الكل</option></select>
+      </div>
+      <div class="form-group" style="margin-bottom:0; min-width:140px;">
+        <label>حالة التذكرة:</label>
+        <select id="myTicketsStatusFilter">
+          <option value="">الكل</option>
+          <option value="🆕 جديدة">🆕 جديدة</option>
+          <option value="🔄 جاري المتابعة">🔄 جاري المتابعة</option>
+          <option value="⚙️ قيد التنفيذ">⚙️ قيد التنفيذ</option>
+          <option value="✅ تم التنفيذ">✅ تم التنفيذ</option>
+          <option value="❌ مرفوضة">❌ مرفوضة</option>
+          <option value="🚫 ملغاة">🚫 ملغاة</option>
+          <option value="🔒 مغلقة">🔒 مغلقة</option>
+        </select>
       </div>
       <button class="btn-sm btn-blue" style="padding:8px 14px;" onclick="renderMyTickets()">عرض التذاكر</button>
     </div>
@@ -1086,6 +1110,21 @@
         <button class="btn-sm btn-blue" style="padding:9px 14px;" onclick="exportDataAsCSV('orders')">⬇️ تصدير الطلبات (CSV)</button>
         <button class="btn-sm btn-blue" style="padding:9px 14px;" onclick="exportDataAsCSV('users')">⬇️ تصدير العملاء (CSV)</button>
       </div>
+
+      <h3 style="font-size: 14px; margin: 18px 0 10px;">🗂️ نسخة احتياطية شاملة (استرداد كامل)</h3>
+      <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
+        <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">
+          دي نسخة كاملة (بصيغة JSON) لكل بيانات المتجر الأساسية: المنتجات، الأقسام، طرق الدفع، الروابط الإدارية، وإعدادات المتجر - تقدر تنزّلها وتستخدمها لاسترداد المتجر لو حصل أي مشكلة. (الطلبات والعملاء مش داخلين فيها لأنهم مرتبطين بحسابات المستخدمين مباشرة).
+        </p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <button class="btn-sm" style="padding:9px 14px; background:var(--green); color:#fff;" onclick="exportFullBackupJSON()">⬇️ تنزيل نسخة شاملة (JSON)</button>
+          <label style="cursor:pointer; padding:9px 14px; background:var(--red); color:#fff; border-radius:6px; font-size:12px; font-weight:700;">
+            📥 استرداد من نسخة احتياطية
+            <input type="file" accept=".json" onchange="restoreFromBackupJSON(event)" style="display:none;">
+          </label>
+        </div>
+        <p style="font-size:11px; color:var(--red); margin-top:8px; font-weight:700;">⚠️ الاسترداد هيستبدل المنتجات والأقسام وطرق الدفع والروابط والإعدادات الحالية بالكامل بمحتوى الملف. استخدمه بحذر.</p>
+      </div>
     </div>
 
     <!-- إضافة المنتجات -->
@@ -1242,9 +1281,15 @@
             <option value="✅ تم التنفيذ">✅ تم التنفيذ</option>
             <option value="❌ مرفوضة">❌ مرفوضة</option>
             <option value="🚫 ملغاة">🚫 ملغاة</option>
+            <option value="🔒 مغلقة">🔒 مغلقة</option>
           </select>
         </div>
+        <div class="form-group" style="margin-bottom:0; min-width:150px;">
+          <label>بحث برقم التذكرة:</label>
+          <input type="text" id="admTicketsSearchInput" placeholder="مثال: TKT-558163">
+        </div>
         <button class="btn-sm btn-blue" style="padding:8px 14px;" onclick="renderAdminTickets()">عرض التذاكر</button>
+        <button class="btn-sm" style="padding:8px 14px; background:#64748b;" onclick="resetAdminTicketsFilters()">إعادة تعيين</button>
       </div>
 
       <div id="adminTicketsList"></div>
@@ -1711,43 +1756,114 @@ function getCurrencySymbol() {
 }
 
 /* --- محتوى نافذة "تواصل معنا": بتبني قائمة قنوات التواصل ديناميكيًا من الروابط المسجّلة بس --- */
+/* --- كشف هل الجهاز موبايل ولا لأ، عشان نقرر أفضل طريقة نعرض بيها الإيميل والتليفون --- */
+function isMobileDevice() {
+  return /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
+}
+
 function applySocialLinks() {
   const box = document.getElementById('contactChannelsBox');
   if (!box) return;
 
-  const channels = [
+  const socialChannels = [
     { url: storeSettings.whatsappLink, icon: '💬', label: 'واتساب', color: '#25D366' },
     { url: storeSettings.facebookLink, icon: '📘', label: 'فيسبوك', color: '#1877F2' },
     { url: storeSettings.instagramLink, icon: '📷', label: 'إنستجرام', color: '#E1306C' },
-    { url: storeSettings.telegramLink, icon: '✈️', label: 'تليجرام', color: '#26A5E4' },
-    { url: storeSettings.contactEmail ? `mailto:${storeSettings.contactEmail}` : '', icon: '📧', label: 'البريد الإلكتروني', color: '#64748b' },
-    { url: storeSettings.contactPhone ? `tel:${storeSettings.contactPhone}` : '', icon: '📱', label: 'اتصال مباشر', color: '#0f766e' }
+    { url: storeSettings.telegramLink, icon: '✈️', label: 'تليجرام', color: '#26A5E4' }
   ].filter(c => c.url);
 
-  box.innerHTML = channels.length
-    ? channels.map(c => `
+  const onMobile = isMobileDevice();
+  let directChannelsHtml = '';
+
+  if (storeSettings.contactEmail || storeSettings.contactPhone) {
+    if (onMobile) {
+      // على الموبايل: رابط عادي بيفتح تطبيق البريد/الاتصال مباشرة (زي ما هو شغال فعلاً)
+      if (storeSettings.contactEmail) socialChannels.push({ url: `mailto:${storeSettings.contactEmail}`, icon: '📧', label: 'البريد الإلكتروني', color: '#64748b' });
+      if (storeSettings.contactPhone) socialChannels.push({ url: `tel:${storeSettings.contactPhone}`, icon: '📱', label: 'اتصال مباشر', color: '#0f766e' });
+    } else {
+      // على الكمبيوتر/اللابتوب: روابط mailto/tel غالبًا مش هتفتح حاجة لأن مفيش برنامج بريد أو اتصال مربوط بالمتصفح،
+      // فبنعرض البيانات كنص واضح قابل للنسخ بدل رابط صامت مش هيحصل منه حاجة
+      directChannelsHtml = `
+        <div style="grid-column:1/-1; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-top:8px;">
+          <p style="font-size:10.5px; color:var(--muted); margin-bottom:8px;">💻 بما إنك فاتح من كمبيوتر، ده الإيميل والتليفون تقدر تنسخهم وتتواصل بيهم من برنامجك المفضل:</p>
+          ${storeSettings.contactEmail ? `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #e2e8f0;">
+              <span style="font-size:12px;">📧 ${storeSettings.contactEmail}</span>
+              <button type="button" onclick="copyContactValue('${storeSettings.contactEmail}', this)" class="btn-sm btn-blue" style="padding:4px 10px;">📋 نسخ</button>
+            </div>
+          ` : ''}
+          ${storeSettings.contactPhone ? `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0;">
+              <span style="font-size:12px;">📱 ${storeSettings.contactPhone}</span>
+              <button type="button" onclick="copyContactValue('${storeSettings.contactPhone}', this)" class="btn-sm btn-blue" style="padding:4px 10px;">📋 نسخ</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+  }
+
+  box.innerHTML = (socialChannels.length
+    ? socialChannels.map(c => `
         <a href="${c.url}" target="_blank" rel="noopener" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:5px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 8px;">
           <span style="font-size:24px;">${c.icon}</span>
           <span style="font-size:11px; font-weight:700; color:${c.color};">${c.label}</span>
         </a>
       `).join('')
-    : `<p style="grid-column:1/-1; text-align:center; color:var(--muted); font-size:12px;">لسه مفيش وسائل تواصل مسجّلة.</p>`;
+    : (directChannelsHtml ? '' : `<p style="grid-column:1/-1; text-align:center; color:var(--muted); font-size:12px;">لسه مفيش وسائل تواصل مسجّلة.</p>`)
+  ) + directChannelsHtml;
+}
+
+function copyContactValue(value, btnEl) {
+  navigator.clipboard.writeText(value).then(() => {
+    const original = btnEl.innerText;
+    btnEl.innerText = '✅ اتنسخ';
+    setTimeout(() => { btnEl.innerText = original; }, 1500);
+  }).catch(() => showAlert("❌ مقدرش أنسخ، ممكن تنسخه يدوي."));
 }
 
 /* ============================================================
    نظام تذاكر الدعم
    ============================================================ */
-const TICKET_STATUSES = ['🆕 جديدة', '🔄 جاري المتابعة', '⚙️ قيد التنفيذ', '✅ تم التنفيذ', '❌ مرفوضة', '🚫 ملغاة'];
+/* --- الزائر (مش مسجل دخول) مسموحله بس بوسائل التواصل المباشرة، أما التذاكر فمحتاجة تسجيل دخول الأول --- */
+function openTicketsAreaGuarded(modalId) {
+  if (!currentUser) {
+    closeModal('contactUsModal');
+    showAlert("🔒 لازم تسجل دخول الأول عشان تقدر تفتح أو تشوف التذاكر.");
+    openModal('loginModal');
+    return;
+  }
+  closeModal('contactUsModal');
+  openModal(modalId);
+}
+
+const TICKET_STATUSES = ['🆕 جديدة', '🔄 جاري المتابعة', '⚙️ قيد التنفيذ', '✅ تم التنفيذ', '❌ مرفوضة', '🚫 ملغاة', '🔒 مغلقة'];
 
 /* --- إدارة أنواع الشكاوى (الأدمن بس) --- */
-function renderTicketTypesManagement() {
+const DEFAULT_TICKET_TYPES = [
+  'استفسار عن منتج أو خدمة', 'مشكلة في تنفيذ الطلب', 'تأخر في التوصيل أو التنفيذ',
+  'مشكلة في الدفع أو الفاتورة', 'طلب استرجاع أو استبدال', 'شكوى بخصوص جودة الخدمة',
+  'مشكلة في الحساب أو تسجيل الدخول', 'تعديل بيانات الطلب', 'اقتراح أو ملاحظة عامة', 'شكوى أخرى'
+];
+
+async function renderTicketTypesManagement() {
   const box = document.getElementById('ticketTypesList');
   if (!box) return;
+
+  // أول مرة يفتح فيها الأدمن تبويب التذاكر ومفيش أنواع شكاوى مسجّلة أصلاً، نزرع قائمة احترافية جاهزة تلقائيًا
+  if (!storeSettings.ticketTypes || storeSettings.ticketTypes.length === 0) {
+    try { await db.collection('settings').doc('store').set({ ticketTypes: DEFAULT_TICKET_TYPES }, { merge: true }); }
+    catch (err) { console.error('seed ticket types error:', err); }
+    return; // الليسنر هيرجع ينادي الدالة دي تاني لما القيمة توصل، فمش محتاجين نكمل هنا
+  }
+
   const types = storeSettings.ticketTypes || [];
   box.innerHTML = types.length
     ? types.map(t => `
         <span style="display:inline-flex; align-items:center; gap:6px; background:#e0f2fe; color:#0369a1; padding:5px 10px; border-radius:20px; font-size:11.5px; font-weight:700;">
-          ${t} <span onclick="removeTicketType('${t.replace(/'/g, "\\'")}')" style="cursor:pointer; color:var(--red); font-weight:900;">✖</span>
+          ${t}
+          <span onclick="editTicketType('${t.replace(/'/g, "\\'")}')" style="cursor:pointer; color:var(--navy); font-weight:900;" title="تعديل">✏️</span>
+          <span onclick="removeTicketType('${t.replace(/'/g, "\\'")}')" style="cursor:pointer; color:var(--red); font-weight:900;" title="حذف">✖</span>
         </span>
       `).join('')
     : `<p style="color:var(--muted); font-size:11.5px;">لسه مفيش أنواع شكاوى مضافة.</p>`;
@@ -1762,6 +1878,23 @@ async function addTicketType() {
   try {
     await db.collection('settings').doc('store').set({ ticketTypes: [...types, val] }, { merge: true });
     input.value = '';
+  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
+}
+
+async function editTicketType(oldName) {
+  const newName = prompt("عدّل اسم نوع الشكوى:", oldName);
+  if (!newName || !newName.trim() || newName.trim() === oldName) return;
+  const trimmed = newName.trim();
+  const types = (storeSettings.ticketTypes || []).map(t => t === oldName ? trimmed : t);
+  try {
+    await db.collection('settings').doc('store').set({ ticketTypes: types }, { merge: true });
+    // نحدّث كمان أي تذاكر حالية كانت مسجلة بالاسم القديم عشان تفضل متوافقة مع الاسم الجديد
+    const matching = tickets.filter(t => t.type === oldName);
+    if (matching.length) {
+      const batch = db.batch();
+      matching.forEach(t => batch.update(db.collection('tickets').doc(String(t.id)), { type: trimmed }));
+      await batch.commit();
+    }
   } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
 }
 
@@ -1793,6 +1926,26 @@ function populateTicketTypeFilters() {
 }
 
 /* --- إضافة تذكرة جديدة (عميل) --- */
+let pendingTicketFile = null;
+
+async function handleTicketFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const uploaded = await uploadChatFile(file, 'ticketFileLabel');
+  if (uploaded) {
+    pendingTicketFile = uploaded;
+    document.getElementById('ticketFileLabel').innerHTML = `📎 ${uploaded.name} <span onclick="cancelTicketAttachment()" style="cursor:pointer; color:var(--red); font-weight:900; margin-right:8px; padding:0 4px;" title="إلغاء المرفق">✖</span>`;
+  } else {
+    e.target.value = '';
+  }
+}
+
+function cancelTicketAttachment() {
+  pendingTicketFile = null;
+  document.getElementById('ticketFileInput').value = '';
+  document.getElementById('ticketFileLabel').innerHTML = '';
+}
+
 async function submitTicket(e) {
   e.preventDefault();
   if (!currentUser) return openModal('loginModal');
@@ -1808,7 +1961,8 @@ async function submitTicket(e) {
     await db.collection('tickets').doc(String(id)).set({
       id, ticketNo, userPhone: currentUser.phone, userName: currentUser.name,
       type, title, description: desc, status: '🆕 جديدة',
-      adminReply: '', createdAt: id, updatedAt: id
+      attachment: pendingTicketFile || null,
+      adminReply: '', hasAdminUpdate: false, createdAt: id, updatedAt: id
     });
 
     await db.collection('adminNotis').doc(String(id + 1)).set({
@@ -1820,15 +1974,32 @@ async function submitTicket(e) {
 
     document.getElementById('ticketTitleInput').value = '';
     document.getElementById('ticketDescInput').value = '';
+    cancelTicketAttachment();
     closeModal('addTicketModal');
     showAlert(`✅ تم إضافة التذكرة بنجاح، رقمها: ${ticketNo}`);
   } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
+}
+
+/* --- عرض مرفق التذكرة (لو موجود) مع إمكانية فتحه/تنزيله، بنفس أسلوب مرفقات الشات --- */
+function renderTicketAttachmentHtml(t) {
+  if (!t.attachment) return '';
+  return `
+    <div style="margin-top:8px;">
+      <button type="button" class="btn-sm btn-blue" style="padding:6px 12px;" onclick="openTicketAttachment('${t.id}')">📎 عرض المرفق: ${t.attachment.name}</button>
+    </div>
+  `;
+}
+
+function openTicketAttachment(ticketId) {
+  const t = tickets.find(x => String(x.id) === String(ticketId));
+  if (t && t.attachment) openAttachmentPreview(t.attachment);
 }
 
 function getTicketStatusColor(status) {
   if (status === '✅ تم التنفيذ') return '#15803d';
   if (status === '❌ مرفوضة') return '#b91c1c';
   if (status === '🚫 ملغاة') return '#64748b';
+  if (status === '🔒 مغلقة') return '#334155';
   if (status === '⚙️ قيد التنفيذ') return '#c2410c';
   if (status === '🔄 جاري المتابعة') return '#1d4ed8';
   return '#7c3aed';
@@ -1839,17 +2010,26 @@ function renderMyTickets() {
   const list = document.getElementById('myTicketsList');
   if (!list) return;
 
+  cleanupOldTickets();
+
   const fromVal = document.getElementById('myTicketsFromDate').value;
   const toVal = document.getElementById('myTicketsToDate').value;
   const typeVal = document.getElementById('myTicketsTypeFilter').value;
+  const statusVal = document.getElementById('myTicketsStatusFilter').value;
+  const noFilterApplied = !fromVal && !toVal && !typeVal && !statusVal;
 
   let filtered = tickets.slice();
   if (fromVal) filtered = filtered.filter(t => t.createdAt >= new Date(fromVal + 'T00:00:00').getTime());
   if (toVal) filtered = filtered.filter(t => t.createdAt <= new Date(toVal + 'T23:59:59.999').getTime());
   if (typeVal) filtered = filtered.filter(t => t.type === typeVal);
+  if (statusVal) filtered = filtered.filter(t => t.status === statusVal);
+
+  /* من غير أي فلتر: نعرض بس التذاكر اللي فيها تحديث من الإدارة، عشان القايمة متتزحمش بتذاكر لسه ملهاش رد.
+     العميل يقدر يوصل لأي تذكرة تانية (حتى من غير تحديث) عن طريق تحديد تاريخ أو حالة أو نوع. */
+  if (noFilterApplied) filtered = filtered.filter(t => t.hasAdminUpdate);
 
   if (filtered.length === 0) {
-    list.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">لا توجد تذاكر مطابقة.</p>`;
+    list.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">${noFilterApplied ? 'لا توجد تذاكر عليها تحديث من الإدارة حاليًا. استخدم الفلترة فوق لعرض كل تذاكرك.' : 'لا توجد تذاكر مطابقة.'}</p>`;
     return;
   }
 
@@ -1864,11 +2044,28 @@ function renderMyTickets() {
   `).join('');
 }
 
+/* --- حذف التذاكر الأقدم من 6 شهور نهائيًا (عند العميل: تذاكره هو بس. عند الأدمن: كل التذاكر) --- */
+const TICKET_RETENTION_MS = 6 * 30 * 24 * 60 * 60 * 1000; // 6 شهور تقريبية
+let __ticketsCleanupDone = false;
+async function cleanupOldTickets() {
+  if (__ticketsCleanupDone || !currentUser) return;
+  const cutoff = Date.now() - TICKET_RETENTION_MS;
+  const expired = tickets.filter(t => t.createdAt < cutoff);
+  if (expired.length === 0) { __ticketsCleanupDone = true; return; }
+  try {
+    const batch = db.batch();
+    expired.forEach(t => batch.delete(db.collection('tickets').doc(String(t.id))));
+    await batch.commit();
+    __ticketsCleanupDone = true;
+  } catch (err) { console.error('cleanupOldTickets error:', err); }
+}
+
 /* --- تفاصيل تذكرة عند العميل، مع إمكانية الإلغاء لو لسه ماتباشرش فيها --- */
 function viewMyTicketDetail(id) {
   const t = tickets.find(x => String(x.id) === String(id));
   if (!t) return;
   const box = document.getElementById('ticketDetailBody');
+  const inProgress = (t.status === '🔄 جاري المتابعة' || t.status === '⚙️ قيد التنفيذ');
   box.innerHTML = `
     <h2 style="font-size:15px; color:var(--navy); margin-bottom:6px;">🎫 ${t.ticketNo}</h2>
     <span style="background:${getTicketStatusColor(t.status)}; color:#fff; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:10px;">${t.status}</span>
@@ -1876,25 +2073,37 @@ function viewMyTicketDetail(id) {
     <p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">التاريخ: ${new Date(t.createdAt).toLocaleString('ar-EG')}</p>
     <p style="font-weight:800; font-size:13px; margin-bottom:4px;">${t.title}</p>
     <p style="font-size:12.5px; background:#f8fafc; padding:10px; border-radius:8px; white-space:pre-line;">${t.description}</p>
+    ${renderTicketAttachmentHtml(t)}
     ${t.adminReply ? `
       <div style="background:#ecfdf5; border:1px solid #6ee7b7; border-radius:8px; padding:10px; margin-top:10px;">
         <p style="font-size:11.5px; font-weight:800; color:#065f46; margin-bottom:4px;">💬 رد الإدارة:</p>
         <p style="font-size:12.5px; white-space:pre-line;">${t.adminReply}</p>
       </div>
     ` : ''}
-    ${(t.status === '🆕 جديدة' || t.status === '🔄 جاري المتابعة') ? `
+    ${t.status === '🆕 جديدة' ? `
       <button class="btn-sm" style="background:var(--red); color:#fff; padding:8px 14px; width:100%; margin-top:12px;" onclick="cancelMyTicket('${t.id}')">🚫 إلغاء التذكرة</button>
-    ` : ''}
+    ` : (inProgress ? `
+      <p style="font-size:11.5px; color:var(--muted); background:#fff7ed; border:1px solid #fed7aa; padding:8px 10px; border-radius:8px; margin-top:12px;">
+        ℹ️ الإدارة بدأت بالفعل في متابعة تذكرتك، فمينفعش تتلغى دلوقتي. تقدر تتواصل مع الإدارة مباشرة لو حابب تعدّل أو توقف الطلب.
+      </p>
+    ` : '')}
   `;
   openModal('ticketDetailModal');
 }
 
 async function cancelMyTicket(id) {
+  const t = tickets.find(x => String(x.id) === String(id));
+  if (!t) return;
+  if (t.status !== '🆕 جديدة') {
+    return showAlert("ℹ️ الإدارة بدأت بالفعل في متابعة تذكرتك، فمينفعش تتلغى دلوقتي.");
+  }
   if (!await showConfirm("هل تريد إلغاء هذه التذكرة؟")) return;
   try {
     await db.collection('tickets').doc(String(id)).update({ status: '🚫 ملغاة' });
     closeModal('ticketDetailModal');
-  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
+  } catch (err) {
+    showAlert("ℹ️ مقدرش نلغي التذكرة دلوقتي، ممكن الإدارة تكون بدأت تتابعها بالفعل. حدّث الصفحة وجرّب تاني.");
+  }
 }
 
 /* --- عرض كل التذاكر عند الأدمن، مع فلترة بالتاريخ/النوع/الحالة --- */
@@ -1902,16 +2111,20 @@ function renderAdminTickets() {
   const list = document.getElementById('adminTicketsList');
   if (!list) return;
 
+  cleanupOldTickets();
+
   const fromVal = document.getElementById('admTicketsFromDate').value;
   const toVal = document.getElementById('admTicketsToDate').value;
   const typeVal = document.getElementById('admTicketsTypeFilter').value;
   const statusVal = document.getElementById('admTicketsStatusFilter').value;
+  const searchVal = document.getElementById('admTicketsSearchInput').value.trim().toLowerCase();
 
   let filtered = tickets.slice();
   if (fromVal) filtered = filtered.filter(t => t.createdAt >= new Date(fromVal + 'T00:00:00').getTime());
   if (toVal) filtered = filtered.filter(t => t.createdAt <= new Date(toVal + 'T23:59:59.999').getTime());
   if (typeVal) filtered = filtered.filter(t => t.type === typeVal);
   if (statusVal) filtered = filtered.filter(t => t.status === statusVal);
+  if (searchVal) filtered = filtered.filter(t => t.ticketNo && t.ticketNo.toLowerCase().includes(searchVal));
 
   if (filtered.length === 0) {
     list.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">لا توجد تذاكر مطابقة.</p>`;
@@ -1929,6 +2142,15 @@ function renderAdminTickets() {
   `).join('');
 }
 
+function resetAdminTicketsFilters() {
+  document.getElementById('admTicketsFromDate').value = '';
+  document.getElementById('admTicketsToDate').value = '';
+  document.getElementById('admTicketsTypeFilter').value = '';
+  document.getElementById('admTicketsStatusFilter').value = '';
+  document.getElementById('admTicketsSearchInput').value = '';
+  renderAdminTickets();
+}
+
 /* --- تفاصيل تذكرة عند الأدمن: تغيير الحالة وكتابة رد --- */
 function openTicketDetailAdmin(id) {
   const t = tickets.find(x => String(x.id) === String(id));
@@ -1941,6 +2163,7 @@ function openTicketDetailAdmin(id) {
     <p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">التاريخ: ${new Date(t.createdAt).toLocaleString('ar-EG')}</p>
     <p style="font-weight:800; font-size:13px; margin-bottom:4px;">${t.title}</p>
     <p style="font-size:12.5px; background:#f8fafc; padding:10px; border-radius:8px; white-space:pre-line; margin-bottom:10px;">${t.description}</p>
+    ${renderTicketAttachmentHtml(t)}
 
     <div class="form-group">
       <label>تغيير الحالة:</label>
@@ -1964,7 +2187,7 @@ async function saveTicketUpdate(id) {
   const reply = document.getElementById('ticketReplyInput').value.trim();
 
   try {
-    await db.collection('tickets').doc(String(id)).update({ status: newStatus, adminReply: reply, updatedAt: Date.now() });
+    await db.collection('tickets').doc(String(id)).update({ status: newStatus, adminReply: reply, hasAdminUpdate: true, updatedAt: Date.now() });
 
     const notiId = Date.now();
     await db.collection('userNotis').doc(String(notiId)).set({
@@ -2227,6 +2450,7 @@ function updateUI() {
   const userNotiBtn = document.getElementById('userNotiBtn');
   const adminNotiBtn = document.getElementById('adminNotiBtn');
   const cartNavBtn = document.getElementById('cartNavBtn');
+  const contactUsBtn = document.getElementById('contactUsBtn');
   const tabSubAdminsBtn = document.getElementById('tabSubAdminsBtn');
   const tabAdminAccBtn = document.getElementById('tabAdminAccBtn');
   const tabLinksBtn = document.getElementById('tabLinksBtn');
@@ -2249,6 +2473,7 @@ function updateUI() {
       if(tabAdminAccBtn) tabAdminAccBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
       if(tabLinksBtn) tabLinksBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
       if(tabThemeBtn) tabThemeBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
+      if(contactUsBtn) contactUsBtn.style.display = "none";
     } else {
       ordersBtn.style.display = "inline-flex";
       chatBtn.style.display = "inline-flex";
@@ -2421,10 +2646,13 @@ function goToDeliveryInfo() {
 /* --- تحويل عناصر السلة لأصناف طلب - كل عنصر في السلة بقى ماسك عدده (qty) بنفسه --- */
 function buildOrderItems(cartItems) {
   return cartItems.map(item => ({
-    title: item.title, price: item.price, quantity: item.qty || 1,
+    id: item.id, title: item.title, price: item.price, quantity: item.qty || 1,
     requiresSerial: !!item.requiresSerial, serialText: item.serialText || '', serialImg: item.serialImg || ''
   }));
 }
+
+/* --- حالات مسار الاسترجاع/الاستبدال --- */
+const RETURN_FLOW_STATUSES = ['🔄 قيد مراجعة استرجاع/استبدال', '↩️ تمت الموافقة - استرجاع', '🔁 تمت الموافقة - استبدال', '❌ مرفوض - استرجاع/استبدال'];
 
 /* --- توافق مع الطلبات القديمة اللي كانت مسجّلة بصنف واحد فقط بدل مصفوفة أصناف --- */
 function getOrderItems(o) {
@@ -2452,7 +2680,11 @@ function getDefaultStatusNote(status, deadlineTs) {
     'جاري التحضير والتنفيذ': 'طلبك متاح وجاري تجهيزه الآن.' + deadlineText,
     'تم الشحن / جاري التوصيل': 'طلبك في الطريق إليك الآن.',
     'تم التسليم بنجاح': 'تم تسليم طلبك بنجاح، نتمنى لك تجربة سعيدة معنا!',
-    'ملغي': 'نأسف، تم إلغاء الطلب. يرجى التواصل مع الدعم لمزيد من التفاصيل.'
+    'ملغي': 'نأسف، تم إلغاء الطلب. يرجى التواصل مع الدعم لمزيد من التفاصيل.',
+    '🔄 قيد مراجعة استرجاع/استبدال': 'تم استلام طلبك بخصوص الاسترجاع/الاستبدال، وجاري مراجعته من فريقنا.',
+    '↩️ تمت الموافقة - استرجاع': 'تمت الموافقة على استرجاع طلبك. سيتم التواصل معك بخصوص استرداد المبلغ.',
+    '🔁 تمت الموافقة - استبدال': 'تمت الموافقة على استبدال طلبك. سيتم التواصل معك لإتمام إجراءات الاستبدال.',
+    '❌ مرفوض - استرجاع/استبدال': 'نأسف، تم رفض طلب الاسترجاع/الاستبدال. يرجى التواصل مع الدعم لمزيد من التفاصيل.'
   };
   return map[status] || '';
 }
@@ -3004,14 +3236,57 @@ async function deleteCategory(key) {
   }
 }
 
+let editingCategoryKey = null;
+
 function renderAdminCategories() {
-  document.getElementById('adminCategoriesTable').innerHTML = categories.map(c => `
-    <tr>
-      <td>${c.key}</td>
-      <td>${c.titleAr}</td>
-      <td>${c.key !== 'all' ? `<button class="btn-sm btn-danger" onclick="deleteCategory('${c.key}')">حذف</button>` : 'أساسي'}</td>
-    </tr>
-  `).join('');
+  document.getElementById('adminCategoriesTable').innerHTML = categories.map(c => {
+    const isEditing = editingCategoryKey === c.key;
+    const titleCell = isEditing
+      ? `<input type="text" id="editCatTitleInput" value="${c.titleAr}" style="padding:5px; font-size:12.5px;">`
+      : c.titleAr;
+
+    let actionsCell;
+    if (c.key === 'all') {
+      actionsCell = 'أساسي';
+    } else if (isEditing) {
+      actionsCell = `
+        <button class="btn-sm btn-blue" onclick="saveCategoryEdit('${c.key}')">💾 حفظ</button>
+        <button class="btn-sm" style="background:#64748b; color:#fff;" onclick="cancelCategoryEdit()">✖ إلغاء</button>
+      `;
+    } else {
+      actionsCell = `
+        <button class="btn-sm btn-blue" onclick="startCategoryEdit('${c.key}')">✏️ تعديل</button>
+        <button class="btn-sm btn-danger" onclick="deleteCategory('${c.key}')">حذف</button>
+      `;
+    }
+
+    return `
+      <tr>
+        <td>${c.key}</td>
+        <td>${titleCell}</td>
+        <td>${actionsCell}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function startCategoryEdit(key) {
+  editingCategoryKey = key;
+  renderAdminCategories();
+}
+
+function cancelCategoryEdit() {
+  editingCategoryKey = null;
+  renderAdminCategories();
+}
+
+async function saveCategoryEdit(key) {
+  const newTitle = document.getElementById('editCatTitleInput').value.trim();
+  if (!newTitle) return;
+  try {
+    await db.collection('categories').doc(key).update({ titleAr: newTitle });
+    editingCategoryKey = null;
+  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
 }
 
 async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
@@ -3026,6 +3301,29 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
   if (newStatus !== 'تم استلام الطلب' && newStatus !== 'ملغي' && !ord.paymentSubmitted && !deadlineTs) {
     deadlineTs = Date.now() + (24 * 60 * 60 * 1000);
     updateData.paymentDeadline = deadlineTs;
+  }
+
+  // عند الموافقة على استرجاع أو استبدال: نرجّع الكمية للمخزون تلقائيًا (مرة واحدة بس، محمية بعلامة stockRestored)
+  const isApproval = (newStatus === '↩️ تمت الموافقة - استرجاع' || newStatus === '🔁 تمت الموافقة - استبدال');
+  if (isApproval && !ord.stockRestored) {
+    try {
+      const batch = db.batch();
+      let touchedAny = false;
+      getOrderItems(ord).forEach(item => {
+        const p = item.id ? products.find(x => x.id === item.id) : products.find(x => x.title === item.title);
+        if (p && p.quantity !== null && p.quantity !== undefined && p.quantity !== '') {
+          batch.update(db.collection('products').doc(String(p.id)), { quantity: Number(p.quantity) + (item.quantity || 1) });
+          touchedAny = true;
+        }
+      });
+      if (touchedAny) await batch.commit();
+      updateData.stockRestored = true;
+    } catch (err) { console.error('stock restore error:', err); }
+  }
+
+  // لو الطلب كان مدفوع واتوافق على الاسترجاع تحديدًا: نحط علامة تنبيه برد المبلغ يدويًا للأدمن
+  if (newStatus === '↩️ تمت الموافقة - استرجاع' && ord.paymentSubmitted && !ord.refundConfirmed) {
+    updateData.refundRequired = true;
   }
 
   const finalNote = noteText || getDefaultStatusNote(newStatus, deadlineTs) || ord.note;
@@ -3050,6 +3348,14 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
   } catch (err) {
     showAlert("❌ حصل خطأ أثناء التحديث. " + err.message);
   }
+}
+
+/* --- تأكيد إن الأدمن رد المبلغ للعميل يدويًا بعد الموافقة على الاسترجاع --- */
+async function confirmRefundDone(orderId) {
+  if (!await showConfirm("هل تأكدت من رد المبلغ للعميل بالفعل؟")) return;
+  try {
+    await db.collection('orders').doc(orderId).update({ refundRequired: false, refundConfirmed: true });
+  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
 }
 
 /* --- تعبئة تلقائية للتعليق حسب الحالة المختارة، تفضل قابلة للتعديل --- */
@@ -3377,7 +3683,12 @@ function renderAdminOrders() {
         <td>${o.userName}<br><small>${o.userPhone}</small>${deliveryHtml}</td>
         <td>${itemsListHtml}<br><b>الإجمالي: ${getOrderTotal(o)} ${getCurrencySymbol()}</b>${paymentHtml}${serialHtml}</td>
         <td style="white-space:nowrap;">${getOrderDateTime(o)}</td>
-        <td>${getStatusBadge(o.status)}<br><small>ملاحظة: ${o.note || 'لاشيء'}</small></td>
+        <td>${getStatusBadge(o.status)}<br><small>ملاحظة: ${o.note || 'لاشيء'}</small>${o.refundRequired ? `
+          <div style="background:#fef2f2; border:1px solid #fca5a5; border-radius:6px; padding:6px; margin-top:6px;">
+            <b style="color:var(--red); font-size:11px;">💰 مطلوب رد مبلغ ${getOrderTotal(o)} ${getCurrencySymbol()} للعميل</b>
+            <button class="btn-sm" style="background:var(--green); color:#fff; width:100%; margin-top:4px; padding:4px;" onclick="confirmRefundDone('${o.orderId}')">✅ تم رد المبلغ يدويًا</button>
+          </div>
+        ` : ''}</td>
         <td>
           <button class="btn-sm btn-blue" style="width:100%; margin-bottom:4px;" onclick="openOrderInvoice('${o.orderId}')">📋 عرض طلب</button>
           <select id="stSel_${idx}" onchange="autofillStatusNote(this, 'ntInp_${idx}', '${o.orderId}')" style="font-size:11px; padding:3px; width:100%;">
@@ -3387,6 +3698,12 @@ function renderAdminOrders() {
             <option value="تم الشحن / جاري التوصيل">🚚 جاري التوصيل</option>
             <option value="تم التسليم بنجاح">✅ تم التسليم بنجاح</option>
             <option value="ملغي">❌ إلغاء الطلب</option>
+            ${(o.status === 'تم التسليم بنجاح' || RETURN_FLOW_STATUSES.includes(o.status)) ? `
+              <option value="🔄 قيد مراجعة استرجاع/استبدال">🔄 قيد مراجعة استرجاع/استبدال</option>
+              <option value="↩️ تمت الموافقة - استرجاع">↩️ الموافقة على الاسترجاع</option>
+              <option value="🔁 تمت الموافقة - استبدال">🔁 الموافقة على الاستبدال</option>
+              <option value="❌ مرفوض - استرجاع/استبدال">❌ رفض الاسترجاع/الاستبدال</option>
+            ` : ''}
           </select>
           <input type="text" id="ntInp_${idx}" oninput="this.dataset.autofilled='false';" placeholder="التعليق هيتعبّى تلقائيًا - عدّله لو حبيت" style="font-size:11px; padding:3px; margin-top:3px; width:100%;">
           <button class="btn-sm btn-blue" onclick="updateOrderStatusWithNote('${o.orderId}', document.getElementById('stSel_${idx}').value, 'ntInp_${idx}')" style="margin-top:3px; width:100%;">تحديث</button>
@@ -3477,6 +3794,10 @@ function getStatusBadge(st) {
   if(st === 'تم الشحن / جاري التوصيل') return `<span class="badge-status st-shipped">🚚 جاري التوصيل</span>`;
   if(st === 'تم التسليم بنجاح') return `<span class="badge-status st-delivered">✅ تم التسليم</span>`;
   if(st === 'ملغي') return `<span class="badge-status st-cancelled">❌ ملغي</span>`;
+  if(st === '🔄 قيد مراجعة استرجاع/استبدال') return `<span class="badge-status" style="background:#7c2d12;">🔄 قيد مراجعة استرجاع/استبدال</span>`;
+  if(st === '↩️ تمت الموافقة - استرجاع') return `<span class="badge-status" style="background:#1e3a8a;">↩️ تمت الموافقة - استرجاع</span>`;
+  if(st === '🔁 تمت الموافقة - استبدال') return `<span class="badge-status" style="background:#581c87;">🔁 تمت الموافقة - استبدال</span>`;
+  if(st === '❌ مرفوض - استرجاع/استبدال') return `<span class="badge-status st-cancelled">❌ مرفوض استرجاع/استبدال</span>`;
   return st;
 }
 
@@ -3905,6 +4226,23 @@ function renderChatBubble(m, showDelete) {
       ${deleteHtml}<small><b>${m.isAdmin ? 'الإدارة' : m.senderName}:</b></small><br>${m.text || ''}${attachHtml}
     </div>
   `;
+}
+
+/* --- نسخة عامة من معاينة المرفق، مستخدمة لمرفقات التذاكر (بتاخد كائن المرفق مباشرة بدل ما تدور في رسائل الشات) --- */
+function openAttachmentPreview(attachment) {
+  if (!attachment || !attachment.url) return;
+
+  const isImg = attachment.type && attachment.type.startsWith('image/');
+  document.getElementById('attachmentPreviewBody').innerHTML = isImg
+    ? `<img src="${attachment.url}" style="max-width:100%; border-radius:8px;">`
+    : `<div style="padding:25px; text-align:center; font-size:44px;">📄</div>
+       <p style="text-align:center; font-size:13px; word-break:break-all;">${attachment.name}</p>
+       <button onclick="window.open('${attachment.url}','_blank')" class="btn-nav" style="background:var(--blue); width:100%; margin-top:8px;">🔗 فتح الملف (ببرنامج جهازك المناسب)</button>`;
+
+  const downloadBtn = document.getElementById('attachmentDownloadBtn');
+  downloadBtn.onclick = () => downloadAttachment(attachment.url, attachment.name);
+
+  openModal('attachmentPreviewModal');
 }
 
 function openChatAttachment(msgId) {
@@ -4597,6 +4935,98 @@ function exportDataAsCSV(type) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/* --- تصدير نسخة احتياطية شاملة (JSON) لكل بيانات المتجر الأساسية --- */
+function exportFullBackupJSON() {
+  const backup = {
+    exportedAt: new Date().toISOString(),
+    products, categories, paymentMethods, adminLinks, storeSettings
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `نسخة_احتياطية_شاملة_${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* --- استرداد نسخة احتياطية شاملة: بيستبدل المنتجات/الأقسام/طرق الدفع/الروابط/الإعدادات بمحتوى الملف --- */
+async function restoreFromBackupJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  let data;
+  try {
+    const text = await file.text();
+    data = JSON.parse(text);
+  } catch (err) {
+    e.target.value = '';
+    return showAlert("❌ الملف ده مش نسخة احتياطية صالحة (JSON غير سليم).");
+  }
+
+  if (!data || !Array.isArray(data.products) || !Array.isArray(data.categories)) {
+    e.target.value = '';
+    return showAlert("❌ الملف ده مش نسخة احتياطية متوافقة مع النظام.");
+  }
+
+  const confirmed = await showConfirm(
+    `⚠️ هيتم استبدال البيانات الحالية بالكامل بمحتوى هذا الملف (${data.products.length} منتج، ${data.categories.length} قسم، وباقي الإعدادات).\n\nالنسخة دي بتاريخ: ${data.exportedAt ? new Date(data.exportedAt).toLocaleString('ar-EG') : 'غير معروف'}.\n\nمتأكد إنك عايز تكمل؟`
+  );
+  if (!confirmed) { e.target.value = ''; return; }
+
+  try {
+    // حذف المنتجات والأقسام وطرق الدفع والروابط الحالية أولًا
+    const collectionsToWipe = [
+      { name: 'products', current: products },
+      { name: 'categories', current: categories.filter(c => c.key !== 'all') },
+      { name: 'paymentMethods', current: paymentMethods },
+      { name: 'adminLinks', current: adminLinks }
+    ];
+
+    for (const col of collectionsToWipe) {
+      let batch = db.batch();
+      let count = 0;
+      for (const item of col.current) {
+        batch.delete(db.collection(col.name).doc(String(item.id)));
+        count++;
+        if (count === 450) { await batch.commit(); batch = db.batch(); count = 0; }
+      }
+      if (count > 0) await batch.commit();
+    }
+
+    // إعادة كتابة البيانات من الملف
+    const restoreMap = [
+      { name: 'products', items: data.products },
+      { name: 'categories', items: (data.categories || []).filter(c => c.key !== 'all') },
+      { name: 'paymentMethods', items: data.paymentMethods || [] },
+      { name: 'adminLinks', items: data.adminLinks || [] }
+    ];
+
+    for (const col of restoreMap) {
+      let batch = db.batch();
+      let count = 0;
+      for (const item of col.items) {
+        batch.set(db.collection(col.name).doc(String(item.id)), item);
+        count++;
+        if (count === 450) { await batch.commit(); batch = db.batch(); count = 0; }
+      }
+      if (count > 0) await batch.commit();
+    }
+
+    if (data.storeSettings) {
+      await db.collection('settings').doc('store').set(data.storeSettings, { merge: false });
+    }
+
+    e.target.value = '';
+    showAlert("✅ تم استرداد النسخة الاحتياطية بنجاح.");
+  } catch (err) {
+    e.target.value = '';
+    showAlert("❌ حصل خطأ أثناء الاسترداد. " + err.message);
+  }
 }
 
 /* --- بحث المنتجات في الواجهة الأمامية: متاح لأي زائر (حتى لو مش مسجل دخول)، بيدور في كل الأقسام
