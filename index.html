@@ -2024,9 +2024,9 @@ function renderMyTickets() {
   if (typeVal) filtered = filtered.filter(t => t.type === typeVal);
   if (statusVal) filtered = filtered.filter(t => t.status === statusVal);
 
-  /* من غير أي فلتر: نعرض بس التذاكر اللي فيها تحديث من الإدارة، عشان القايمة متتزحمش بتذاكر لسه ملهاش رد.
-     العميل يقدر يوصل لأي تذكرة تانية (حتى من غير تحديث) عن طريق تحديد تاريخ أو حالة أو نوع. */
-  if (noFilterApplied) filtered = filtered.filter(t => t.hasAdminUpdate);
+  /* من غير أي فلتر: نعرض بس التذاكر اللي فيها تحديث من الإدارة ولسه مش مقفولة ولا ملغاة (خلصت، مش محتاجة متابعة تانية).
+     العميل يقدر يوصل لأي تذكرة تانية (حتى القديمة أو المقفولة) عن طريق تحديد تاريخ أو حالة أو نوع. */
+  if (noFilterApplied) filtered = filtered.filter(t => t.hasAdminUpdate && t.status !== '🔒 مغلقة' && t.status !== '🚫 ملغاة');
 
   if (filtered.length === 0) {
     list.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">${noFilterApplied ? 'لا توجد تذاكر عليها تحديث من الإدارة حاليًا. استخدم الفلترة فوق لعرض كل تذاكرك.' : 'لا توجد تذاكر مطابقة.'}</p>`;
