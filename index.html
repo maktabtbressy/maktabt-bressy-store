@@ -2099,7 +2099,15 @@ async function cancelMyTicket(id) {
   }
   if (!await showConfirm("هل تريد إلغاء هذه التذكرة؟")) return;
   try {
-    await db.collection('tickets').doc(String(id)).update({ status: '🚫 ملغاة' });
+    await db.collection('tickets').doc(String(id)).update({ status: '🚫 ملغاة', cancelledByCustomer: true });
+
+    await db.collection('adminNotis').doc(String(Date.now())).set({
+      id: Date.now(), type: 'ticket', refId: String(id),
+      title: `🚫 تذكرة ملغاة: ${t.ticketNo}`,
+      body: `${t.userName} ألغى تذكرته (${t.title}) بنفسه.`,
+      date: new Date().toLocaleTimeString('ar-EG'), read: false
+    });
+
     closeModal('ticketDetailModal');
   } catch (err) {
     showAlert("ℹ️ مقدرش نلغي التذكرة دلوقتي، ممكن الإدارة تكون بدأت تتابعها بالفعل. حدّث الصفحة وجرّب تاني.");
@@ -2135,7 +2143,7 @@ function renderAdminTickets() {
     <div onclick="openTicketDetailAdmin('${t.id}')" style="cursor:pointer; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; margin-bottom:8px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
         <b style="font-size:12.5px;">${t.ticketNo} - ${t.title}</b>
-        <span style="background:${getTicketStatusColor(t.status)}; color:#fff; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px;">${t.status}</span>
+        <span style="background:${getTicketStatusColor(t.status)}; color:#fff; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px;">${t.status}${(t.status === '🚫 ملغاة' && t.cancelledByCustomer) ? ' (من العميل)' : ''}</span>
       </div>
       <small style="color:var(--muted);">${t.userName} - ${t.type} - ${new Date(t.createdAt).toLocaleString('ar-EG')}</small>
     </div>
@@ -2156,26 +2164,42 @@ function openTicketDetailAdmin(id) {
   const t = tickets.find(x => String(x.id) === String(id));
   if (!t) return;
   const box = document.getElementById('ticketDetailBody');
+
+  const cancelledByCustomer = t.status === '🚫 ملغاة' && t.cancelledByCustomer;
+
   box.innerHTML = `
     <h2 style="font-size:15px; color:var(--navy); margin-bottom:6px;">🎫 ${t.ticketNo}</h2>
+    <span style="background:${getTicketStatusColor(t.status)}; color:#fff; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:10px;">${t.status}</span>
     <p style="font-size:12.5px; color:var(--muted); margin-bottom:4px;">العميل: ${t.userName} - ${t.userPhone}</p>
     <p style="font-size:12.5px; color:var(--muted); margin-bottom:4px;">النوع: ${t.type}</p>
     <p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">التاريخ: ${new Date(t.createdAt).toLocaleString('ar-EG')}</p>
     <p style="font-weight:800; font-size:13px; margin-bottom:4px;">${t.title}</p>
     <p style="font-size:12.5px; background:#f8fafc; padding:10px; border-radius:8px; white-space:pre-line; margin-bottom:10px;">${t.description}</p>
     ${renderTicketAttachmentHtml(t)}
+    ${t.adminReply ? `
+      <div style="background:#ecfdf5; border:1px solid #6ee7b7; border-radius:8px; padding:10px; margin-top:10px;">
+        <p style="font-size:11.5px; font-weight:800; color:#065f46; margin-bottom:4px;">💬 ردك السابق:</p>
+        <p style="font-size:12.5px; white-space:pre-line;">${t.adminReply}</p>
+      </div>
+    ` : ''}
 
-    <div class="form-group">
-      <label>تغيير الحالة:</label>
-      <select id="ticketStatusUpdateSelect">
-        ${TICKET_STATUSES.map(s => `<option value="${s}" ${s === t.status ? 'selected' : ''}>${s}</option>`).join('')}
-      </select>
-    </div>
-    <div class="form-group">
-      <label>الرد على العميل:</label>
-      <textarea id="ticketReplyInput" rows="3" placeholder="اكتب ردك هنا...">${t.adminReply || ''}</textarea>
-    </div>
-    <button class="btn-submit" style="background:var(--navy);" onclick="saveTicketUpdate('${t.id}')">💾 حفظ وإرسال للعميل</button>
+    ${cancelledByCustomer ? `
+      <p style="font-size:12px; background:#f1f5f9; border:1px solid #cbd5e1; color:var(--muted); padding:10px; border-radius:8px; margin-top:12px;">
+        🚫 العميل ألغى التذكرة دي بنفسه (يبدو إنه غيّر رأيه أو المشكلة اتحلت من عنده)، فمينفعش يتغيّر حالتها. دي للعرض بس عشان تعرف كانت بخصوص إيه.
+      </p>
+    ` : `
+      <div class="form-group">
+        <label>تغيير الحالة:</label>
+        <select id="ticketStatusUpdateSelect">
+          ${TICKET_STATUSES.map(s => `<option value="${s}" ${s === t.status ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>الرد على العميل:</label>
+        <textarea id="ticketReplyInput" rows="3" placeholder="اكتب ردك هنا...">${t.adminReply || ''}</textarea>
+      </div>
+      <button class="btn-submit" style="background:var(--navy);" onclick="saveTicketUpdate('${t.id}')">💾 حفظ وإرسال للعميل</button>
+    `}
   `;
   openModal('ticketDetailModal');
 }
