@@ -2126,6 +2126,7 @@ function renderAdminTickets() {
   const typeVal = document.getElementById('admTicketsTypeFilter').value;
   const statusVal = document.getElementById('admTicketsStatusFilter').value;
   const searchVal = document.getElementById('admTicketsSearchInput').value.trim().toLowerCase();
+  const noFilterApplied = !fromVal && !toVal && !typeVal && !statusVal && !searchVal;
 
   let filtered = tickets.slice();
   if (fromVal) filtered = filtered.filter(t => t.createdAt >= new Date(fromVal + 'T00:00:00').getTime());
@@ -2134,8 +2135,12 @@ function renderAdminTickets() {
   if (statusVal) filtered = filtered.filter(t => t.status === statusVal);
   if (searchVal) filtered = filtered.filter(t => t.ticketNo && t.ticketNo.toLowerCase().includes(searchVal));
 
+  /* من غير أي فلتر: التذاكر المقفولة أو الملغاة تختفي من القايمة الافتراضية (خلصت، مش محتاجة متابعة).
+     لسه متاحة برضو عن طريق فلترة الحالة صراحةً (لو عايز تراجعها). */
+  if (noFilterApplied) filtered = filtered.filter(t => t.status !== '🔒 مغلقة' && t.status !== '🚫 ملغاة');
+
   if (filtered.length === 0) {
-    list.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">لا توجد تذاكر مطابقة.</p>`;
+    list.innerHTML = `<p style="text-align:center; color:var(--muted); padding:15px;">${noFilterApplied ? 'لا توجد تذاكر تحتاج متابعة حاليًا. استخدم الفلترة فوق لعرض كل التذاكر (بما فيها المقفولة والملغاة).' : 'لا توجد تذاكر مطابقة.'}</p>`;
     return;
   }
 
