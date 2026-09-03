@@ -821,6 +821,12 @@
     <span class="close-btn" onclick="closeModal('adminDashboardModal')">&times;</span>
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">👑 لوحة الإدارة الشاملة</h2>
 
+    <!-- تذكير ذكي بالنسخة الاحتياطية لو فاتت أكتر من أسبوع من غير نسخة جديدة -->
+    <div id="backupReminderBanner" style="display:none; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:9px 12px; margin-bottom:12px; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+      <span id="backupReminderText" style="font-size:12px; font-weight:700; color:#92400e;"></span>
+      <button class="btn-sm" style="background:var(--green); color:#fff; padding:6px 12px;" onclick="exportFullBackupJSON()">⬇️ نزّل النسخة الآن</button>
+    </div>
+
     <!-- بحث شامل: بيدور في كل حاجة (منتجات بكل الأقسام، طلبات، أقسام، طرق دفع، أدمن فرعي، عملاء، روابط) مرة واحدة -->
     <div style="position:relative; margin-bottom:14px;">
       <input type="text" id="globalAdminSearchInput" oninput="runGlobalAdminSearch()" placeholder="🔍 بحث شامل في كل اللوحة... (اسم منتج، رقم طلب، عميل، قسم، رابط...)" style="width:100%; padding:11px 14px; border:2px solid var(--navy); border-radius:10px; font-size:13.5px; font-weight:700;">
@@ -4913,6 +4919,7 @@ function openModal(id) {
     const orderSearch = document.getElementById('orderSearchInput');
     if (orderSearch) orderSearch.value = '';
     switchAdminTab('admOrders');
+    checkBackupReminder();
   }
   const modalEl = document.getElementById(id);
   modalEl.style.display = 'flex';
@@ -4999,10 +5006,32 @@ async function exportFullBackupJSON() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
+    // نسجّل تاريخ آخر نسخة في إعدادات المتجر، عشان التذكير يعرف يحسب صح من أي جهاز يفتح لوحة التحكم
+    try { await db.collection('settings').doc('store').set({ lastBackupAt: Date.now() }, { merge: true }); } catch (e) { /* مش هيمنع نجاح النسخة نفسها */ }
+
     showAlert(`✅ تم تجهيز النسخة بنجاح: ${backup.products.length} منتج، ${backup.categories.length} قسم، ${backup.paymentMethods.length} طريقة دفع، ${backup.adminLinks.length} رابط إداري.`);
+    checkBackupReminder();
   } catch (err) {
     showAlert("❌ حصل خطأ أثناء تجهيز النسخة الاحتياطية. " + err.message);
   }
+}
+
+/* --- تذكير ذكي: لو عدى أكتر من 7 أيام من غير نسخة احتياطية شاملة، يظهر تنبيه في أعلى لوحة الإدارة --- */
+const BACKUP_REMINDER_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
+function checkBackupReminder() {
+  const banner = document.getElementById('backupReminderBanner');
+  const textEl = document.getElementById('backupReminderText');
+  if (!banner || !textEl) return;
+
+  const last = storeSettings.lastBackupAt || null;
+  const overdue = !last || (Date.now() - last) > BACKUP_REMINDER_INTERVAL_MS;
+
+  if (!overdue) { banner.style.display = 'none'; return; }
+
+  textEl.innerText = last
+    ? `⚠️ آخر نسخة احتياطية كانت من أكتر من أسبوع (${new Date(last).toLocaleDateString('ar-EG')}). يفضّل تاخد نسخة جديدة.`
+    : `⚠️ مفيش نسخة احتياطية شاملة اتاخدت لحد دلوقتي. يفضّل تاخد أول نسخة.`;
+  banner.style.display = 'flex';
 }
 
 /* --- استرداد نسخة احتياطية شاملة: بيستبدل المنتجات/الأقسام/طرق الدفع/الروابط/الإعدادات بمحتوى الملف --- */
