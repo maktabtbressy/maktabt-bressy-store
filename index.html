@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="siteTitle">متجر مكتبة بريسي الاحترافي | MAKTABT BRESSY</title>
+<title id="siteTitle">متجر مكتبة بريسي | MAKTABT BRESSY</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Almarai:wght@400;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -3261,6 +3261,33 @@ async function deletePaymentMethod(id) {
   }
 }
 
+/* --- نفس فكرة الرفع الذكي بتاعة الشات، لكن لمرفقات طرق الدفع (صور QR):
+   ملف صغير → base64 مباشرة، ملف كبير → Cloudinary ورابط بس يتخزن. كده مستحيل نضرب حد حجم الحقل في Firestore تاني. --- */
+async function uploadPaymentAttachmentFile(file, labelElId) {
+  const labelEl = document.getElementById(labelElId);
+  if (file.size > CHAT_FILE_MAX_BYTES) {
+    showAlert("❌ الملف كبير أوي (الحد الأقصى 10 ميجا). اختر صورة أصغر.");
+    return null;
+  }
+
+  if (labelEl) labelEl.innerText = `⏳ جاري رفع "${file.name}"...`;
+
+  try {
+    let url;
+    if (file.size <= CHAT_SMALL_FILE_THRESHOLD) {
+      url = await readFileAsBase64(file);
+    } else {
+      url = await uploadToCloudinary(file, 'paymentAttachments');
+    }
+    if (labelEl) labelEl.innerText = '';
+    return url;
+  } catch (err) {
+    if (labelEl) labelEl.innerText = '';
+    showAlert("❌ حصل خطأ أثناء رفع الصورة. " + err.message);
+    return null;
+  }
+}
+
 /* --- إضافة مرفق (صورة QR مثلًا) لطريقة دفع، مع تسمية توضيحية فوقه (زي رقم المحفظة اللي بيخصه).
    المرفقات بتتخزن في مجموعة فرعية منفصلة (مش مصفوفة جوه نفس المستند)، عشان الصور الكبيرة
    ماتتكدسش في مستند واحد وتتخطى الحد المسموح لحجم المستند في Firestore. --- */
@@ -3273,10 +3300,13 @@ async function addPaymentAttachment(id, fileInputId, labelInputId) {
   if (!file) return showAlert("من فضلك اختار صورة الأول.");
   if (!label) return showAlert("من فضلك اكتب توضيح فوق المرفق (زي رقم المحفظة اللي بيخصه) عشان العميل ميتلخبطش.");
 
+  const statusLabelId = fileInputId + '_status';
   try {
-    const dataUrl = await readFileAsBase64(file);
+    const url = await uploadPaymentAttachmentFile(file, statusLabelId);
+    if (!url) return; // فشل الرفع أو اتلغى، الرسالة بالفعل ظهرت لوحدها
+
     const attId = Date.now();
-    await db.collection('paymentMethods').doc(String(id)).collection('attachments').doc(String(attId)).set({ id: attId, label, img: dataUrl });
+    await db.collection('paymentMethods').doc(String(id)).collection('attachments').doc(String(attId)).set({ id: attId, label, img: url });
     fileInput.value = '';
     labelInput.value = '';
     await renderAdminPaymentAttachments(id);
@@ -3343,6 +3373,7 @@ function renderAdminPayments() {
           <input type="text" id="pmAttLabel_${idx}" placeholder="توضيح المرفق (مثال: 01128670029)" style="flex:1; min-width:140px; font-size:12px; padding:6px;">
           <input type="file" accept="image/*" id="pmAttFile_${idx}" style="font-size:11px;">
           <button class="btn-sm btn-blue" onclick="addPaymentAttachment(${p.id}, 'pmAttFile_${idx}', 'pmAttLabel_${idx}')">➕ إضافة مرفق</button>
+          <small id="pmAttFile_${idx}_status" style="width:100%; color:var(--navy); font-weight:700;"></small>
         </div>
       </div>
     </div>
@@ -4057,11 +4088,11 @@ function readFileAsBase64(file) {
   });
 }
 
-async function uploadToCloudinary(file) {
+async function uploadToCloudinary(file, folder = 'chatAttachments') {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-  formData.append('folder', 'chatAttachments');
+  formData.append('folder', folder);
   const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: formData });
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.error?.message || 'فشل الرفع على Cloudinary');
