@@ -2829,13 +2829,12 @@ function renderCheckoutAccounts() {
   const displayBox = document.getElementById('payAccountsDisplay');
 
   if(method && method.accounts.length > 0) {
-    const attachments = method.attachments || [];
     displayBox.innerHTML = `
       <strong>📌 قم بالتحويل على أحد الأرقام/الحسابات التالية المعتمدة:</strong>
       <ul style="margin-right: 20px; margin-top:5px;">
         ${method.accounts.map(acc => `<li style="font-size:13px; font-weight:800; color:var(--navy);">${linkifyText(acc)}</li>`).join('')}
       </ul>
-      ${attachments.length ? `<button type="button" class="btn-sm btn-blue" style="width:100%; margin-top:8px; padding:8px;" onclick="showPaymentAttachmentsGallery(${method.id})">📷 عرض صور الدفع (QR وغيرها)</button>` : ''}
+      <button type="button" class="btn-sm btn-blue" style="width:100%; margin-top:8px; padding:8px;" onclick="showPaymentAttachmentsGallery(${method.id})">📷 عرض صور الدفع (QR وغيرها)</button>
     `;
   } else {
     displayBox.innerHTML = "لا توجد أرقام مسجلة حالياً لطريقة الدفع هذه.";
@@ -2843,23 +2842,37 @@ function renderCheckoutAccounts() {
 }
 
 /* --- معرض صور الدفع (QR وغيرها) للعميل، كل صورة معاها توضيح واضح عشان ميتلخبطش بين الأرقام --- */
-function showPaymentAttachmentsGallery(methodId) {
+async function showPaymentAttachmentsGallery(methodId) {
   const method = paymentMethods.find(p => p.id === methodId);
-  if (!method || !method.attachments || method.attachments.length === 0) return;
+  if (!method) return;
 
   const box = document.getElementById('paymentAttachmentsGalleryBody');
-  box.innerHTML = `
-    <h2 style="font-size:15px; color:var(--navy); margin-bottom:10px;">📷 صور الدفع - ${method.name}</h2>
-    <div style="display:flex; flex-direction:column; gap:12px;">
-      ${method.attachments.map(att => `
-        <div style="text-align:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
-          <img src="${att.img}" style="max-width:100%; max-height:260px; border-radius:8px; cursor:pointer;" onclick="showImagePreview('${att.img}')">
-          <p style="font-weight:800; font-size:13px; margin-top:8px; color:var(--navy);">${att.label}</p>
-        </div>
-      `).join('')}
-    </div>
-  `;
+  box.innerHTML = `<p style="text-align:center; color:var(--muted); padding:20px;">⏳ جاري تحميل الصور...</p>`;
   openModal('paymentAttachmentsGalleryModal');
+
+  try {
+    const snap = await db.collection('paymentMethods').doc(String(methodId)).collection('attachments').get();
+    const attachments = snap.docs.map(d => d.data());
+
+    if (attachments.length === 0) {
+      box.innerHTML = `<p style="text-align:center; color:var(--muted); padding:20px;">لا توجد صور مسجّلة حاليًا.</p>`;
+      return;
+    }
+
+    box.innerHTML = `
+      <h2 style="font-size:15px; color:var(--navy); margin-bottom:10px;">📷 صور الدفع - ${method.name}</h2>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        ${attachments.map(att => `
+          <div style="text-align:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
+            <img src="${att.img}" style="max-width:100%; max-height:260px; border-radius:8px; cursor:pointer;" onclick="showImagePreview('${att.img}')">
+            <p style="font-weight:800; font-size:13px; margin-top:8px; color:var(--navy);">${att.label}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch (err) {
+    box.innerHTML = `<p style="text-align:center; color:var(--red); padding:20px;">تعذّر تحميل الصور.</p>`;
+  }
 }
 
 let payingForOrderId = null;
@@ -3219,7 +3232,7 @@ async function addNewPaymentMethod(e) {
   const id = Date.now();
 
   try {
-    await db.collection('paymentMethods').doc(String(id)).set({ id, name, accounts: accs, attachments: [] });
+    await db.collection('paymentMethods').doc(String(id)).set({ id, name, accounts: accs });
     document.getElementById('newPayName').value = "";
     document.getElementById('newPayAccounts').value = "";
     showAlert("تمت إضافة طريقة الدفع بنجاح!");
@@ -3248,7 +3261,9 @@ async function deletePaymentMethod(id) {
   }
 }
 
-/* --- إضافة مرفق (صورة QR مثلًا) لطريقة دفع، مع تسمية توضيحية فوقه (زي رقم المحفظة اللي بيخصه) --- */
+/* --- إضافة مرفق (صورة QR مثلًا) لطريقة دفع، مع تسمية توضيحية فوقه (زي رقم المحفظة اللي بيخصه).
+   المرفقات بتتخزن في مجموعة فرعية منفصلة (مش مصفوفة جوه نفس المستند)، عشان الصور الكبيرة
+   ماتتكدسش في مستند واحد وتتخطى الحد المسموح لحجم المستند في Firestore. --- */
 async function addPaymentAttachment(id, fileInputId, labelInputId) {
   const fileInput = document.getElementById(fileInputId);
   const labelInput = document.getElementById(labelInputId);
@@ -3260,33 +3275,51 @@ async function addPaymentAttachment(id, fileInputId, labelInputId) {
 
   try {
     const dataUrl = await readFileAsBase64(file);
-    const method = paymentMethods.find(p => p.id === id);
-    const attachments = (method && method.attachments) || [];
-    attachments.push({ label, img: dataUrl });
-    await db.collection('paymentMethods').doc(String(id)).update({ attachments });
+    const attId = Date.now();
+    await db.collection('paymentMethods').doc(String(id)).collection('attachments').doc(String(attId)).set({ id: attId, label, img: dataUrl });
     fileInput.value = '';
     labelInput.value = '';
+    await renderAdminPaymentAttachments(id);
   } catch (err) {
     showAlert("❌ حصل خطأ أثناء إضافة المرفق. " + err.message);
   }
 }
 
-async function removePaymentAttachment(id, attIdx) {
+async function removePaymentAttachment(id, attId) {
   if (!await showConfirm("هل تريد حذف هذا المرفق؟")) return;
-  const method = paymentMethods.find(p => p.id === id);
-  if (!method) return;
-  const attachments = (method.attachments || []).filter((_, i) => i !== attIdx);
   try {
-    await db.collection('paymentMethods').doc(String(id)).update({ attachments });
+    await db.collection('paymentMethods').doc(String(id)).collection('attachments').doc(String(attId)).delete();
+    await renderAdminPaymentAttachments(id);
   } catch (err) {
     showAlert("❌ حصل خطأ. " + err.message);
   }
 }
 
+/* --- جلب وعرض مرفقات طريقة دفع معينة بس (بعد إضافة/حذف مرفق)، من غير ما نعيد رسم كل الصفحة --- */
+async function renderAdminPaymentAttachments(id) {
+  const box = document.getElementById('pmAttachments_' + id);
+  if (!box) return;
+  try {
+    const snap = await db.collection('paymentMethods').doc(String(id)).collection('attachments').get();
+    const attachments = snap.docs.map(d => d.data());
+    box.innerHTML = attachments.length ? `
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+        ${attachments.map(att => `
+          <div style="text-align:center; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:6px; width:90px;">
+            <img src="${att.img}" style="width:100%; height:70px; object-fit:cover; border-radius:6px; cursor:pointer;" onclick="showImagePreview('${att.img}')">
+            <small style="font-size:10px; display:block; margin:4px 0; word-break:break-word;">${att.label}</small>
+            <span onclick="removePaymentAttachment(${id}, ${att.id})" style="cursor:pointer; color:var(--red); font-size:11px; font-weight:800;">✖ حذف</span>
+          </div>
+        `).join('')}
+      </div>
+    ` : `<p style="font-size:11px; color:var(--muted); margin-bottom:8px;">لسه مفيش مرفقات مضافة.</p>`;
+  } catch (err) {
+    box.innerHTML = `<p style="font-size:11px; color:var(--red);">تعذّر تحميل المرفقات.</p>`;
+  }
+}
+
 function renderAdminPayments() {
-  document.getElementById('adminPaymentsTable').innerHTML = paymentMethods.map((p, idx) => {
-    const attachments = p.attachments || [];
-    return `
+  document.getElementById('adminPaymentsTable').innerHTML = paymentMethods.map((p, idx) => `
     <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:12px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
         <b style="font-size:14px; color:var(--navy);">💳 ${p.name}</b>
@@ -3304,17 +3337,7 @@ function renderAdminPayments() {
       <div style="background:#f8fafc; border-radius:8px; padding:10px; margin-top:8px;">
         <p style="font-size:12px; font-weight:800; margin-bottom:8px;">📎 مرفقات (صور QR أو أي صور توضيحية للدفع)</p>
 
-        ${attachments.length ? `
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-            ${attachments.map((att, attIdx) => `
-              <div style="text-align:center; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:6px; width:90px;">
-                <img src="${att.img}" style="width:100%; height:70px; object-fit:cover; border-radius:6px; cursor:pointer;" onclick="showImagePreview('${att.img}')">
-                <small style="font-size:10px; display:block; margin:4px 0; word-break:break-word;">${att.label}</small>
-                <span onclick="removePaymentAttachment(${p.id}, ${attIdx})" style="cursor:pointer; color:var(--red); font-size:11px; font-weight:800;">✖ حذف</span>
-              </div>
-            `).join('')}
-          </div>
-        ` : `<p style="font-size:11px; color:var(--muted); margin-bottom:8px;">لسه مفيش مرفقات مضافة.</p>`}
+        <div id="pmAttachments_${p.id}"><p style="font-size:11px; color:var(--muted);">⏳ جاري التحميل...</p></div>
 
         <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
           <input type="text" id="pmAttLabel_${idx}" placeholder="توضيح المرفق (مثال: 01128670029)" style="flex:1; min-width:140px; font-size:12px; padding:6px;">
@@ -3323,8 +3346,9 @@ function renderAdminPayments() {
         </div>
       </div>
     </div>
-  `;
-  }).join('');
+  `).join('');
+
+  paymentMethods.forEach(p => renderAdminPaymentAttachments(p.id));
 }
 
 async function addNewCategory(e) {
@@ -5132,11 +5156,19 @@ async function exportFullBackupJSON() {
       db.collection('settings').doc('store').get()
     ]);
 
+    // مرفقات كل طريقة دفع (من الـ subcollection الخاصة بيها) بتترفق مع نفس مستند طريقة الدفع في الملف بس
+    const paymentMethodsWithAttachments = await Promise.all(paymentsSnap.docs.map(async d => {
+      const method = d.data();
+      const attSnap = await d.ref.collection('attachments').get();
+      method.attachments = attSnap.docs.map(a => a.data());
+      return method;
+    }));
+
     const backup = {
       exportedAt: new Date().toISOString(),
       products: productsSnap.docs.map(d => d.data()),
       categories: categoriesSnap.docs.map(d => d.data()),
-      paymentMethods: paymentsSnap.docs.map(d => d.data()),
+      paymentMethods: paymentMethodsWithAttachments,
       adminLinks: linksSnap.docs.map(d => d.data()),
       storeSettings: settingsSnap.exists ? settingsSnap.data() : {}
     };
@@ -5223,6 +5255,15 @@ async function restoreFromBackupJSON(e) {
       let batch = db.batch();
       let count = 0;
       for (const item of col.current) {
+        // لو طريقة دفع، نمسح مرفقاتها القديمة (الـ subcollection) الأول
+        if (col.name === 'paymentMethods') {
+          try {
+            const attSnap = await db.collection('paymentMethods').doc(getDocId(col.name, item)).collection('attachments').get();
+            const attBatch = db.batch();
+            attSnap.docs.forEach(a => attBatch.delete(a.ref));
+            if (attSnap.docs.length > 0) await attBatch.commit();
+          } catch (e) { /* نكمل حتى لو فشل مسح مرفقات طريقة دفع معينة */ }
+        }
         batch.delete(db.collection(col.name).doc(getDocId(col.name, item)));
         count++;
         if (count === 450) { await batch.commit(); batch = db.batch(); count = 0; }
@@ -5230,11 +5271,11 @@ async function restoreFromBackupJSON(e) {
       if (count > 0) await batch.commit();
     }
 
-    // إعادة كتابة البيانات من الملف
+    // إعادة كتابة البيانات من الملف (مرفقات طرق الدفع بتتفصل عن المستند الأساسي وترجع لمكانها الصحيح تحت)
     const restoreMap = [
       { name: 'products', items: data.products },
       { name: 'categories', items: (data.categories || []).filter(c => c.key !== 'all') },
-      { name: 'paymentMethods', items: data.paymentMethods || [] },
+      { name: 'paymentMethods', items: (data.paymentMethods || []).map(({ attachments, ...rest }) => rest) },
       { name: 'adminLinks', items: data.adminLinks || [] }
     ];
 
@@ -5243,6 +5284,20 @@ async function restoreFromBackupJSON(e) {
       let count = 0;
       for (const item of col.items) {
         batch.set(db.collection(col.name).doc(getDocId(col.name, item)), item);
+        count++;
+        if (count === 450) { await batch.commit(); batch = db.batch(); count = 0; }
+      }
+      if (count > 0) await batch.commit();
+    }
+
+    // استرداد مرفقات طرق الدفع (صور QR وغيرها) لمكانها الصحيح تحت كل طريقة دفع
+    for (const method of (data.paymentMethods || [])) {
+      const atts = method.attachments || [];
+      if (atts.length === 0) continue;
+      let batch = db.batch();
+      let count = 0;
+      for (const att of atts) {
+        batch.set(db.collection('paymentMethods').doc(String(method.id)).collection('attachments').doc(String(att.id || Date.now() + count)), att);
         count++;
         if (count === 450) { await batch.commit(); batch = db.batch(); count = 0; }
       }
