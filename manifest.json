@@ -1,0 +1,23 @@
+{
+  "name": "مكتبة بريسي",
+  "short_name": "بريسي",
+  "description": "متجر مكتبة بريسي - تسوّق منتجاتنا وخدماتنا بسهولة",
+  "start_url": "./store.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0e2a47",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192?text=MB",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512?text=MB",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
