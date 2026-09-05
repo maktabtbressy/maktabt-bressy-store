@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="siteTitle">متجر مكتبة بريسي | MAKTABT BRESSY</title>
+
+<!-- Open Graph: بتحسّن شكل الرابط لما يتشارك في واتساب/فيسبوك (عنوان + وصف + صورة بدل رابط عادي) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="متجر مكتبة بريسي ">
+<meta property="og:description" content="تسوّق منتجاتنا وخدماتنا بسهولة، مع دعم مباشر ونظام طلبات متكامل.">
+<meta property="og:image" content="https://via.placeholder.com/512?text=MAKTABT+BRESSY">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- PWA: يسمح للعميل "يثبّت" المتجر على شاشة موبايله زي أي تطبيق عادي -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e2a47">
+<link rel="apple-touch-icon" href="https://via.placeholder.com/192?text=MB">
+
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Almarai:wght@400;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -368,6 +381,13 @@
     <span class="close-btn" onclick="closeModal('cartModal')">&times;</span>
     <h2 style="font-size: 17px; margin-bottom: 12px; color: var(--navy);">🛒 سلة المشتريات</h2>
     <div id="cartItemsList"></div>
+
+    <div style="display:flex; gap:6px; margin-top:10px;">
+      <input type="text" id="couponCodeInput" placeholder="🎟️ عندك كود خصم؟ اكتبه هنا" style="flex:1; text-transform:uppercase;">
+      <button class="btn-sm btn-blue" style="padding:8px 14px;" onclick="applyCouponCode()">تطبيق</button>
+    </div>
+    <div id="couponStatusBox" style="font-size:12px; margin-top:4px;"></div>
+
     <div id="cartTotalBox" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid #eee; font-weight:800; color:var(--navy); text-align:left; font-size:14px;"></div>
     <button class="btn-submit" id="cartNextBtn" style="display:none;" onclick="goToDeliveryInfo()">متابعة الطلب ▶ (بيانات التوصيل)</button>
   </div>
@@ -784,6 +804,23 @@
     </div>
     <p id="prodDetailsDesc" style="line-height:1.8; font-size:14px; color:var(--text); white-space:pre-wrap;"></p>
     <button id="prodDetailsOrderBtn" class="btn-submit" style="margin-top:12px;">طلب الخدمة 🛒</button>
+
+    <!-- التقييمات والمراجعات -->
+    <div style="margin-top:18px; border-top:1px solid #e2e8f0; padding-top:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="font-size:14px; color:var(--navy);">⭐ التقييمات والمراجعات</h3>
+        <div id="prodReviewsSummary" style="font-size:12.5px; font-weight:800;"></div>
+      </div>
+
+      <div id="prodAddReviewBox" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-bottom:12px;">
+        <label style="font-size:12px; font-weight:700; display:block; margin-bottom:6px;">قيّم المنتج ده:</label>
+        <div id="prodReviewStarsInput" style="font-size:24px; cursor:pointer; margin-bottom:8px;"></div>
+        <textarea id="prodReviewComment" rows="2" placeholder="اكتب رأيك (اختياري)..." style="font-size:12.5px;"></textarea>
+        <button class="btn-sm btn-blue" style="margin-top:6px; padding:8px 14px;" onclick="submitProductReview()">إرسال التقييم</button>
+      </div>
+
+      <div id="prodReviewsList"></div>
+    </div>
   </div>
 </div>
 
@@ -849,9 +886,11 @@
       <button class="tab-btn" data-tab="admSettings" onclick="switchAdminTab('admSettings')">⚙️ بيانات ومتجر بريسي</button>
       <button class="tab-btn" data-tab="admProducts" onclick="switchAdminTab('admProducts')">➕ المنتجات</button>
       <button class="tab-btn" data-tab="admSubAdmins" onclick="switchAdminTab('admSubAdmins')" id="tabSubAdminsBtn">👥 الأدمن الفرعي</button>
+      <button class="tab-btn" data-tab="admActivityLog" onclick="switchAdminTab('admActivityLog')" id="tabActivityLogBtn">📝 سجل النشاط</button>
       <button class="tab-btn" data-tab="admUsers" onclick="switchAdminTab('admUsers')">👥 العملاء</button>
       <button class="tab-btn" data-tab="admChat" onclick="switchAdminTab('admChat')">💬 الدعم</button>
       <button class="tab-btn" data-tab="admTickets" onclick="switchAdminTab('admTickets')" id="tabTicketsBtn">🎫 التذاكر</button>
+      <button class="tab-btn" data-tab="admCoupons" onclick="switchAdminTab('admCoupons')">🎟️ الكوبونات</button>
       <button class="tab-btn" data-tab="admLinks" onclick="switchAdminTab('admLinks')" id="tabLinksBtn">🔗 روابط إدارية</button>
       <button class="tab-btn" data-tab="admTheme" onclick="switchAdminTab('admTheme')" id="tabThemeBtn">🎨 الإعدادات</button>
       <button class="tab-btn" data-tab="admAccount" onclick="switchAdminTab('admAccount')" id="tabAdminAccBtn" style="background:#0f172a; color:#fff;">🔐 حسابي الأدمن</button>
@@ -937,10 +976,26 @@
       </div>
 
       <h3 style="font-size:14px; margin-bottom:8px; color:var(--navy);">💳 توزيع الطلبات حسب وسيلة الدفع</h3>
-      <div style="overflow-x:auto;">
+      <div style="overflow-x:auto; margin-bottom:20px;">
         <table>
           <thead><tr><th>وسيلة الدفع</th><th>عدد الطلبات المدفوعة بها</th><th>إجمالي القيمة</th></tr></thead>
           <tbody id="reportPaymentTable"></tbody>
+        </table>
+      </div>
+
+      <h3 style="font-size:14px; margin-bottom:8px; color:var(--navy);">🏆 أفضل المنتجات مبيعًا</h3>
+      <div style="overflow-x:auto; margin-bottom:20px;">
+        <table>
+          <thead><tr><th>#</th><th>المنتج</th><th>عدد القطع المباعة</th><th>إجمالي القيمة</th></tr></thead>
+          <tbody id="reportTopProductsTable"></tbody>
+        </table>
+      </div>
+
+      <h3 style="font-size:14px; margin-bottom:8px; color:var(--navy);">👑 أفضل العملاء</h3>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>#</th><th>العميل</th><th>عدد الطلبات</th><th>إجمالي ما أنفقه</th></tr></thead>
+          <tbody id="reportTopCustomersTable"></tbody>
         </table>
       </div>
     </div>
@@ -1298,6 +1353,42 @@
       <div id="adminTicketsList"></div>
     </div>
 
+    <!-- الكوبونات -->
+    <div id="admCouponsTab" style="display:none;">
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">➕ إضافة كود خصم جديد</h3>
+      <form onsubmit="addCoupon(event)" style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:16px;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>الكود (هيتحول لحروف كبيرة تلقائيًا):</label>
+            <input type="text" id="newCouponCode" placeholder="مثال: WELCOME10" required style="text-transform:uppercase;">
+          </div>
+          <div class="form-group">
+            <label>نوع الخصم:</label>
+            <select id="newCouponType">
+              <option value="percent">نسبة مئوية %</option>
+              <option value="fixed">مبلغ ثابت</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>القيمة:</label>
+            <input type="number" id="newCouponValue" min="0" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label>أقصى عدد استخدام (اختياري - سيبه فاضي = بلا حدود):</label>
+            <input type="number" id="newCouponMaxUses" min="1">
+          </div>
+          <div class="form-group">
+            <label>تاريخ انتهاء الصلاحية (اختياري):</label>
+            <input type="date" id="newCouponExpiry">
+          </div>
+        </div>
+        <button type="submit" class="btn-submit" style="background:var(--navy);">➕ إضافة الكود</button>
+      </form>
+
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">🎟️ أكواد الخصم الحالية</h3>
+      <div id="adminCouponsList"></div>
+    </div>
+
     <!-- روابط إدارية -->
     <div id="admLinksTab" style="display:none;">
       <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">➕ إضافة رابط إداري جديد</h3>
@@ -1367,6 +1458,13 @@
         <p style="font-size:11.5px; color:var(--muted); margin-top:-4px;">📌 لتغيير كلمة المرور، استخدم رابط "نسيت كلمة المرور؟" من شاشة دخول الأدمن.</p>
         <button type="submit" class="btn-submit" style="background:var(--navy);">حفظ الاسم</button>
       </form>
+    </div>
+
+    <!-- سجل نشاط الأدمن -->
+    <div id="admActivityLogTab" style="display:none;">
+      <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">📝 سجل نشاط الأدمن (آخر الحركات)</h3>
+      <p style="font-size:11.5px; color:var(--muted); margin-bottom:10px;">بيوضح مين عدّل/حذف/غيّر إيه من الأدمن الفرعي (أو الرئيسي) وإمتى.</p>
+      <div id="adminActivityLogList"></div>
     </div>
 
   </div>
@@ -1720,6 +1818,13 @@ function applySettings() {
   document.getElementById('storeDisplayTitle').innerText = storeSettings.titleAr;
   document.getElementById('storeDisplayDesc').innerText = storeSettings.descAr;
 
+  // تحديث بيانات مشاركة الرابط (Open Graph) وعنوان الصفحة بالبيانات الحقيقية للمتجر
+  document.getElementById('siteTitle').innerText = storeSettings.titleAr || 'متجر إلكتروني';
+  const setMeta = (selector, attr, value) => { const el = document.querySelector(selector); if (el && value) el.setAttribute(attr, value); };
+  setMeta('meta[property="og:title"]', 'content', storeSettings.titleAr);
+  setMeta('meta[property="og:description"]', 'content', storeSettings.descAr);
+  if (storeSettings.logo) setMeta('meta[property="og:image"]', 'content', storeSettings.logo);
+
   const addrText = storeSettings.addressAr ? `📍 ${storeSettings.addressAr}` : '📍 متجر الكتروني';
   document.getElementById('navStoreAddress').innerText = addrText;
   document.getElementById('storeDisplayAddr').innerText = addrText;
@@ -1848,6 +1953,133 @@ const DEFAULT_TICKET_TYPES = [
   'مشكلة في الدفع أو الفاتورة', 'طلب استرجاع أو استبدال', 'شكوى بخصوص جودة الخدمة',
   'مشكلة في الحساب أو تسجيل الدخول', 'تعديل بيانات الطلب', 'اقتراح أو ملاحظة عامة', 'شكوى أخرى'
 ];
+
+/* ============================================================
+   سجل نشاط الأدمن: تسجيل بسيط لأهم الحركات (حذف/تعديل/تغيير حالة)
+   ============================================================ */
+async function logAdminActivity(action, target) {
+  if (!currentUser || !currentUser.isAdmin) return;
+  try {
+    const id = Date.now();
+    await db.collection('activityLog').doc(String(id)).set({
+      id, adminName: currentUser.name, adminPhone: currentUser.phone,
+      isSuperAdmin: !!currentUser.isSuperAdmin,
+      action, target, timestamp: id
+    });
+  } catch (err) { console.error('logAdminActivity error:', err); }
+}
+
+async function renderAdminActivityLog() {
+  const box = document.getElementById('adminActivityLogList');
+  if (!box) return;
+  box.innerHTML = `<p style="color:var(--muted); font-size:12px;">⏳ جاري التحميل...</p>`;
+
+  try {
+    const snap = await db.collection('activityLog').orderBy('timestamp', 'desc').limit(200).get();
+    const logs = snap.docs.map(d => d.data());
+
+    if (logs.length === 0) {
+      box.innerHTML = `<p style="color:var(--muted); font-size:12px;">لسه مفيش حركات مسجّلة.</p>`;
+      return;
+    }
+
+    box.innerHTML = logs.map(l => `
+      <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:9px 12px; margin-bottom:6px; font-size:12px;">
+        <b style="color:var(--navy);">${l.isSuperAdmin ? '👑' : '🛡️'} ${l.adminName}</b> - ${l.action}
+        ${l.target ? `<span style="color:var(--muted);"> (${l.target})</span>` : ''}
+        <br><small style="color:var(--muted);">${new Date(l.timestamp).toLocaleString('ar-EG')}</small>
+      </div>
+    `).join('');
+  } catch (err) {
+    box.innerHTML = `<p style="color:var(--red); font-size:12px;">تعذّر تحميل السجل.</p>`;
+  }
+}
+
+/* ============================================================
+   نظام أكواد الخصم (كوبونات)
+   ============================================================ */
+let coupons = [];
+
+async function addCoupon(e) {
+  e.preventDefault();
+  const code = document.getElementById('newCouponCode').value.trim().toUpperCase();
+  const type = document.getElementById('newCouponType').value;
+  const value = parseFloat(document.getElementById('newCouponValue').value);
+  const maxUsesRaw = document.getElementById('newCouponMaxUses').value;
+  const expiryRaw = document.getElementById('newCouponExpiry').value;
+
+  if (!code || isNaN(value) || value <= 0) return;
+
+  try {
+    await db.collection('coupons').doc(code).set({
+      code, type, value,
+      maxUses: maxUsesRaw ? parseInt(maxUsesRaw) : null,
+      expiresAt: expiryRaw ? new Date(expiryRaw + 'T23:59:59').getTime() : null,
+      usedCount: 0, active: true, createdAt: Date.now()
+    });
+    document.getElementById('newCouponCode').value = '';
+    document.getElementById('newCouponValue').value = '';
+    document.getElementById('newCouponMaxUses').value = '';
+    document.getElementById('newCouponExpiry').value = '';
+    showAlert(`✅ تم إضافة كود "${code}" بنجاح.`);
+    renderAdminCoupons();
+  } catch (err) {
+    showAlert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+async function toggleCouponActive(code, newState) {
+  try {
+    await db.collection('coupons').doc(code).update({ active: newState });
+    renderAdminCoupons();
+  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
+}
+
+async function deleteCoupon(code) {
+  if (!await showConfirm(`هل تريد حذف كود "${code}" نهائيًا؟`)) return;
+  try {
+    await db.collection('coupons').doc(code).delete();
+    logAdminActivity('حذف كود خصم', code);
+    renderAdminCoupons();
+  } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
+}
+
+async function renderAdminCoupons() {
+  const box = document.getElementById('adminCouponsList');
+  if (!box) return;
+  box.innerHTML = `<p style="color:var(--muted); font-size:12px;">⏳ جاري التحميل...</p>`;
+
+  try {
+    const snap = await db.collection('coupons').orderBy('createdAt', 'desc').get();
+    coupons = snap.docs.map(d => d.data());
+
+    if (coupons.length === 0) {
+      box.innerHTML = `<p style="color:var(--muted); font-size:12px;">لسه مفيش أكواد خصم مضافة.</p>`;
+      return;
+    }
+
+    box.innerHTML = coupons.map(c => {
+      const expired = c.expiresAt && Date.now() > c.expiresAt;
+      const usedUp = c.maxUses !== null && c.maxUses !== undefined && c.usedCount >= c.maxUses;
+      const statusLabel = !c.active ? '⏸️ متوقف' : expired ? '⌛ منتهي' : usedUp ? '🚫 خلص الاستخدام' : '✅ شغال';
+      return `
+        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <b style="font-size:14px; color:var(--navy);">${c.code}</b>
+            <span style="font-size:11.5px; color:var(--muted);"> - ${c.type === 'percent' ? c.value + '%' : c.value + ' ' + getCurrencySymbol()} - استُخدم ${c.usedCount || 0}${c.maxUses ? ' / ' + c.maxUses : ''} مرة</span>
+            <br><small style="color:var(--muted);">${statusLabel}${c.expiresAt ? ' - ينتهي في ' + new Date(c.expiresAt).toLocaleDateString('ar-EG') : ''}</small>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-sm" style="background:${c.active ? '#64748b' : 'var(--green)'}; color:#fff; padding:5px 10px;" onclick="toggleCouponActive('${c.code}', ${!c.active})">${c.active ? 'إيقاف' : 'تفعيل'}</button>
+            <button class="btn-sm btn-danger" onclick="deleteCoupon('${c.code}')">حذف</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    box.innerHTML = `<p style="color:var(--red); font-size:12px;">تعذّر تحميل الأكواد.</p>`;
+  }
+}
 
 async function renderTicketTypesManagement() {
   const box = document.getElementById('ticketTypesList');
@@ -2487,6 +2719,7 @@ function updateUI() {
   const tabAdminAccBtn = document.getElementById('tabAdminAccBtn');
   const tabLinksBtn = document.getElementById('tabLinksBtn');
   const tabThemeBtn = document.getElementById('tabThemeBtn');
+  const tabActivityLogBtn = document.getElementById('tabActivityLogBtn');
 
   if (currentUser) {
     greeting.innerText = currentUser.isAdmin ? `👑 ${currentUser.name}` : `👤 ${currentUser.name}`;
@@ -2505,6 +2738,7 @@ function updateUI() {
       if(tabAdminAccBtn) tabAdminAccBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
       if(tabLinksBtn) tabLinksBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
       if(tabThemeBtn) tabThemeBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
+      if(tabActivityLogBtn) tabActivityLogBtn.style.display = currentUser.isSuperAdmin ? "inline-block" : "none";
       if(contactUsBtn) contactUsBtn.style.display = "none";
     } else {
       ordersBtn.style.display = "inline-flex";
@@ -2588,6 +2822,54 @@ function decreaseCartQty(index) {
   saveCartLocal(); updateUI(); renderCart();
 }
 
+let appliedCoupon = null; // { code, type, value, discountAmount }
+
+/* --- التحقق من كود الخصم وتطبيقه على السلة الحالية --- */
+async function applyCouponCode() {
+  const input = document.getElementById('couponCodeInput');
+  const statusBox = document.getElementById('couponStatusBox');
+  const code = input.value.trim().toUpperCase();
+  if (!code) return;
+
+  statusBox.innerHTML = `<span style="color:var(--muted);">⏳ جاري التحقق من الكود...</span>`;
+
+  try {
+    const doc = await db.collection('coupons').doc(code).get();
+    if (!doc.exists) {
+      appliedCoupon = null;
+      statusBox.innerHTML = `<span style="color:var(--red); font-weight:700;">❌ الكود ده مش موجود.</span>`;
+      renderCart();
+      return;
+    }
+
+    const c = doc.data();
+    if (!c.active) {
+      appliedCoupon = null;
+      statusBox.innerHTML = `<span style="color:var(--red); font-weight:700;">❌ الكود ده متوقف حاليًا.</span>`;
+    } else if (c.expiresAt && Date.now() > c.expiresAt) {
+      appliedCoupon = null;
+      statusBox.innerHTML = `<span style="color:var(--red); font-weight:700;">❌ انتهت صلاحية الكود ده.</span>`;
+    } else if (c.maxUses !== null && c.maxUses !== undefined && (c.usedCount || 0) >= c.maxUses) {
+      appliedCoupon = null;
+      statusBox.innerHTML = `<span style="color:var(--red); font-weight:700;">❌ الكود ده وصل لأقصى عدد استخدام مسموح.</span>`;
+    } else {
+      appliedCoupon = { code, type: c.type, value: c.value };
+      statusBox.innerHTML = `<span style="color:var(--green); font-weight:700;">✅ تم تطبيق الخصم: ${c.type === 'percent' ? c.value + '%' : c.value + ' ' + getCurrencySymbol()}</span>`;
+    }
+  } catch (err) {
+    appliedCoupon = null;
+    statusBox.innerHTML = `<span style="color:var(--red);">❌ حصل خطأ أثناء التحقق من الكود.</span>`;
+  }
+  renderCart();
+}
+
+/* --- حساب قيمة الخصم الفعلية بناءً على إجمالي السلة الحالي --- */
+function calculateCouponDiscount(subtotal) {
+  if (!appliedCoupon) return 0;
+  let discount = appliedCoupon.type === 'percent' ? (subtotal * appliedCoupon.value / 100) : appliedCoupon.value;
+  return Math.min(discount, subtotal); // الخصم منعدم يعدي إجمالي المنتجات نفسه
+}
+
 function renderCart() {
   const container = document.getElementById('cartItemsList');
   const totalBox = document.getElementById('cartTotalBox');
@@ -2627,11 +2909,16 @@ function renderCart() {
 
   const total = cart.reduce((sum, item) => sum + parsePriceNumber(item.price) * item.qty, 0);
   const deliveryFee = storeSettings.deliveryFee || 0;
-  const grandTotal = total + deliveryFee;
+  const discount = calculateCouponDiscount(total);
+  const grandTotal = total + deliveryFee - discount;
 
-  totalBox.innerHTML = deliveryFee
-    ? `الإجمالي: ${total} ${getCurrencySymbol()} + رسوم توصيل ${deliveryFee} ${getCurrencySymbol()} = <b>${grandTotal} ${getCurrencySymbol()}</b>`
-    : `الإجمالي التقريبي: ${total} ${getCurrencySymbol()}`;
+  let totalHtml = '';
+  if (discount > 0) totalHtml += `الإجمالي قبل الخصم: ${total} ${getCurrencySymbol()}<br>🎟️ خصم الكوبون: -${discount.toFixed(2)} ${getCurrencySymbol()}<br>`;
+  else totalHtml += deliveryFee ? `الإجمالي: ${total} ${getCurrencySymbol()}<br>` : '';
+  if (deliveryFee) totalHtml += `رسوم توصيل: ${deliveryFee} ${getCurrencySymbol()}<br>`;
+  totalHtml += `<b>الإجمالي النهائي: ${grandTotal.toFixed(2)} ${getCurrencySymbol()}</b>`;
+
+  totalBox.innerHTML = totalHtml;
   totalBox.style.display = "block";
   nextBtn.style.display = "block";
 }
@@ -2774,7 +3061,8 @@ async function submitOrderProcess() {
   const items = buildOrderItems(cart);
   const itemsTotal = items.reduce((sum, it) => sum + parsePriceNumber(it.price) * it.quantity, 0);
   const deliveryFee = storeSettings.deliveryFee || 0;
-  const total = itemsTotal + deliveryFee;
+  const discount = calculateCouponDiscount(itemsTotal);
+  const total = itemsTotal + deliveryFee - discount;
   const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
   const notiId = Date.now();
 
@@ -2782,6 +3070,7 @@ async function submitOrderProcess() {
     orderId,
     userName: currentUser.name, userPhone: currentUser.phone,
     items, total, deliveryFee,
+    couponCode: appliedCoupon ? appliedCoupon.code : null, discount,
     deliveryName: name, deliveryPhone: phone, deliveryAddress: address, deliveryDiffers,
     status: 'تم استلام الطلب',
     note: getDefaultStatusNote('تم استلام الطلب'),
@@ -2796,6 +3085,27 @@ async function submitOrderProcess() {
   if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "⏳ جاري الإرسال..."; }
 
   try {
+    // لو فيه كوبون مطبّق، نتحقق ونزوّد عدد استخدامه جوه transaction، عشان نمنع أي استغلال لو حد فتح صفحتين مع بعض
+    if (appliedCoupon) {
+      const couponRef = db.collection('coupons').doc(appliedCoupon.code);
+      const stillValid = await db.runTransaction(async tx => {
+        const snap = await tx.get(couponRef);
+        if (!snap.exists) return false;
+        const c = snap.data();
+        if (!c.active) return false;
+        if (c.expiresAt && Date.now() > c.expiresAt) return false;
+        if (c.maxUses !== null && c.maxUses !== undefined && (c.usedCount || 0) >= c.maxUses) return false;
+        tx.update(couponRef, { usedCount: (c.usedCount || 0) + 1 });
+        return true;
+      });
+      if (!stillValid) {
+        orderSubmitInProgress = false;
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "تأكيد وإرسال الطلب"; }
+        appliedCoupon = null;
+        return showAlert("❌ كود الخصم بقى غير صالح (ممكن يكون خلص أو انتهت صلاحيته). احذفه وابعت الطلب تاني من غيره أو بكود تاني.");
+      }
+    }
+
     await db.collection('orders').doc(orderId).set(ord);
     await db.collection('adminNotis').doc(String(notiId)).set({
       id: notiId, type: 'order', refId: orderId, title: "📦 طلب جديد وارد",
@@ -2803,6 +3113,7 @@ async function submitOrderProcess() {
       date: new Date().toLocaleTimeString('ar-EG'), read: false
     });
     setLastOrderTime();
+    appliedCoupon = null;
   } catch (err) {
     const isNetworkErr = err.code === 'unavailable' || !navigator.onLine || !firestoreConnected;
     return showAlert(
@@ -3194,6 +3505,7 @@ async function deleteSubAdmin(uid) {
 
   try {
     await db.collection('users').doc(uid).delete();
+    logAdminActivity('حذف أدمن فرعي', s ? s.name : uid);
   } catch (err) {
     return showAlert("❌ حصل خطأ أثناء الحذف. " + err.message);
   }
@@ -3254,8 +3566,10 @@ async function updatePaymentAccounts(id, inputId) {
 
 async function deletePaymentMethod(id) {
   if(!await showConfirm("هل أنت تأكد من حذف طريقة الدفع هذه؟")) return;
+  const method = paymentMethods.find(p => p.id === id);
   try {
     await db.collection('paymentMethods').doc(String(id)).delete();
+    logAdminActivity('حذف طريقة دفع', method ? method.name : String(id));
   } catch (err) {
     showAlert("❌ حصل خطأ. " + err.message);
   }
@@ -3404,6 +3718,7 @@ async function deleteCategory(key) {
   if(!await showConfirm("هل تريد حذف هذا القسم؟")) return;
   try {
     await db.collection('categories').doc(key).delete();
+    logAdminActivity('حذف قسم', key);
   } catch (err) {
     showAlert("❌ حصل خطأ. " + err.message);
   }
@@ -3517,6 +3832,7 @@ async function updateOrderStatusWithNote(orderId, newStatus, noteInputId) {
       read: false
     });
 
+    logAdminActivity('تغيير حالة طلب', `${orderId} → ${newStatus}`);
     showAlert("تم التحديث وإبلاغ العميل!");
   } catch (err) {
     showAlert("❌ حصل خطأ أثناء التحديث. " + err.message);
@@ -3778,7 +4094,98 @@ function openProductDetails(id) {
     orderBtn.onclick = () => { closeModal('productDetailsModal'); addToCart(p.id); };
   }
 
+  loadProductReviews(id);
   openModal('productDetailsModal');
+}
+
+/* ============================================================
+   تقييمات ومراجعات المنتجات
+   ============================================================ */
+let currentReviewProductId = null;
+let selectedReviewStars = 0;
+
+async function loadProductReviews(productId) {
+  currentReviewProductId = productId;
+  const listBox = document.getElementById('prodReviewsList');
+  const summaryBox = document.getElementById('prodReviewsSummary');
+  const addBox = document.getElementById('prodAddReviewBox');
+
+  listBox.innerHTML = `<p style="color:var(--muted); font-size:12px;">⏳ جاري تحميل التقييمات...</p>`;
+
+  // العميل بس (مش الأدمن، ومش زائر) يقدر يضيف تقييم
+  if (currentUser && !currentUser.isAdmin) {
+    addBox.style.display = 'block';
+    selectedReviewStars = 0;
+    document.getElementById('prodReviewComment').value = '';
+    renderReviewStarsInput();
+  } else {
+    addBox.style.display = 'none';
+  }
+
+  try {
+    const snap = await db.collection('reviews').where('productId', '==', productId).get();
+    const reviews = snap.docs.map(d => d.data()).sort((a, b) => b.createdAt - a.createdAt);
+
+    if (reviews.length === 0) {
+      summaryBox.innerText = '';
+      listBox.innerHTML = `<p style="color:var(--muted); font-size:12.5px;">لسه مفيش تقييمات لهذا المنتج.</p>`;
+      return;
+    }
+
+    const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+    summaryBox.innerText = `${'⭐'.repeat(Math.round(avg))} ${avg.toFixed(1)} (${reviews.length} تقييم)`;
+
+    listBox.innerHTML = reviews.map(r => `
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:9px 12px; margin-bottom:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <b style="font-size:12.5px;">${r.userName}</b>
+          <span style="color:#f59e0b; font-size:13px;">${'⭐'.repeat(r.rating)}</span>
+        </div>
+        ${r.comment ? `<p style="font-size:12.5px; margin-top:4px;">${r.comment}</p>` : ''}
+        <small style="color:var(--muted);">${new Date(r.createdAt).toLocaleDateString('ar-EG')}</small>
+        ${(currentUser && currentUser.isAdmin) ? `<div><button class="btn-sm btn-danger" style="padding:3px 9px; margin-top:5px;" onclick="deleteProductReview('${r.id}')">حذف</button></div>` : ''}
+      </div>
+    `).join('');
+  } catch (err) {
+    listBox.innerHTML = `<p style="color:var(--red); font-size:12px;">تعذّر تحميل التقييمات.</p>`;
+  }
+}
+
+function renderReviewStarsInput() {
+  const box = document.getElementById('prodReviewStarsInput');
+  box.innerHTML = [1, 2, 3, 4, 5].map(n => `
+    <span onclick="selectedReviewStars=${n}; renderReviewStarsInput();" style="cursor:pointer; color:${n <= selectedReviewStars ? '#f59e0b' : '#cbd5e1'};">⭐</span>
+  `).join('');
+}
+
+async function submitProductReview() {
+  if (!currentUser) return openModal('loginModal');
+  if (selectedReviewStars === 0) return showAlert("من فضلك اختار عدد النجوم الأول.");
+
+  const comment = document.getElementById('prodReviewComment').value.trim();
+  const id = `${currentReviewProductId}_${currentUser.phone}`;
+
+  try {
+    await db.collection('reviews').doc(id).set({
+      id, productId: currentReviewProductId, userPhone: currentUser.phone, userName: currentUser.name,
+      rating: selectedReviewStars, comment, createdAt: Date.now()
+    });
+    showAlert("✅ شكرًا لتقييمك!");
+    loadProductReviews(currentReviewProductId);
+  } catch (err) {
+    showAlert("❌ حصل خطأ. " + err.message);
+  }
+}
+
+async function deleteProductReview(id) {
+  if (!await showConfirm("هل تريد حذف هذا التقييم؟")) return;
+  try {
+    await db.collection('reviews').doc(id).delete();
+    logAdminActivity('حذف تقييم منتج', id);
+    loadProductReviews(currentReviewProductId);
+  } catch (err) {
+    showAlert("❌ حصل خطأ. " + err.message);
+  }
 }
 
 function renderAdminOrders() {
@@ -4068,6 +4475,41 @@ function renderAdminReports() {
         <tr><td><b>${name}</b></td><td>${byMethod[name].count}</td><td>${byMethod[name].total} ${getCurrencySymbol()}</td></tr>
       `).join('');
     }
+  }
+
+  // أفضل المنتجات مبيعًا (حسب عدد القطع في الطلبات المفلترة، بعيدًا عن الطلبات الملغاة)
+  const topProductsTable = document.getElementById('reportTopProductsTable');
+  if (topProductsTable) {
+    const activeList = list.filter(o => o.status !== 'ملغي');
+    const byProduct = {};
+    activeList.forEach(o => {
+      getOrderItems(o).forEach(item => {
+        if (!byProduct[item.title]) byProduct[item.title] = { qty: 0, total: 0 };
+        byProduct[item.title].qty += (item.quantity || 1);
+        byProduct[item.title].total += parsePriceNumber(item.price) * (item.quantity || 1);
+      });
+    });
+    const topProducts = Object.entries(byProduct).sort((a, b) => b[1].qty - a[1].qty).slice(0, 10);
+    topProductsTable.innerHTML = topProducts.length
+      ? topProducts.map(([title, d], i) => `<tr><td>${i + 1}</td><td>${title}</td><td>${d.qty}</td><td>${d.total} ${getCurrencySymbol()}</td></tr>`).join('')
+      : `<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:12px;">لا توجد بيانات كافية.</td></tr>`;
+  }
+
+  // أفضل العملاء (حسب إجمالي الإنفاق في الطلبات المفلترة، بعيدًا عن الملغاة)
+  const topCustomersTable = document.getElementById('reportTopCustomersTable');
+  if (topCustomersTable) {
+    const activeList = list.filter(o => o.status !== 'ملغي');
+    const byCustomer = {};
+    activeList.forEach(o => {
+      const key = o.userPhone || o.userName;
+      if (!byCustomer[key]) byCustomer[key] = { name: o.userName, count: 0, total: 0 };
+      byCustomer[key].count += 1;
+      byCustomer[key].total += getOrderTotal(o);
+    });
+    const topCustomers = Object.values(byCustomer).sort((a, b) => b.total - a.total).slice(0, 10);
+    topCustomersTable.innerHTML = topCustomers.length
+      ? topCustomers.map((c, i) => `<tr><td>${i + 1}</td><td>${c.name}</td><td>${c.count}</td><td>${c.total} ${getCurrencySymbol()}</td></tr>`).join('')
+      : `<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:12px;">لا توجد بيانات كافية.</td></tr>`;
   }
 }
 
@@ -4792,7 +5234,7 @@ async function addProduct(e) {
 }
 
 function switchAdminTab(t) {
-  ['admOrders','admReports','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admTickets','admLinks','admTheme','admAccount'].forEach(id => {
+  ['admOrders','admReports','admPayments','admCategories','admSettings','admProducts','admSubAdmins','admUsers','admChat','admTickets','admCoupons','admLinks','admTheme','admAccount','admActivityLog'].forEach(id => {
     const el = document.getElementById(id+'Tab');
     if(el) el.style.display = (id === t) ? 'block' : 'none';
   });
@@ -4809,6 +5251,8 @@ function switchAdminTab(t) {
   if(t === 'admUsers') renderAdminUsers();
   if(t === 'admChat') loadAdminChatUsers();
   if(t === 'admTickets') { renderTicketTypesManagement(); populateTicketTypeFilters(); renderAdminTickets(); }
+  if(t === 'admCoupons') renderAdminCoupons();
+  if(t === 'admActivityLog') renderAdminActivityLog();
   if(t === 'admLinks') renderAdminLinks();
   if(t === 'admTheme') loadThemeTab();
   if(t === 'admAccount') loadSuperAdminAccountTab();
@@ -4858,6 +5302,7 @@ async function deleteUserAccount(uid) {
 
   try {
     await db.collection('users').doc(uid).delete();
+    logAdminActivity('حذف حساب عميل', u ? u.name : uid);
   } catch (err) {
     return showAlert("❌ حصل خطأ. " + err.message);
   }
@@ -4940,8 +5385,10 @@ async function saveAdminLinkEdit(id) {
 
 async function deleteAdminLink(id) {
   if (!await showConfirm("متأكد من حذف الرابط ده؟")) return;
+  const link = adminLinks.find(l => l.id === id);
   try {
     await db.collection('adminLinks').doc(String(id)).delete();
+    logAdminActivity('حذف رابط إداري', link ? link.name : String(id));
   } catch (err) {
     showAlert("❌ حصل خطأ. " + err.message);
   }
@@ -5340,6 +5787,7 @@ async function restoreFromBackupJSON(e) {
     }
 
     e.target.value = '';
+    logAdminActivity('استرداد نسخة احتياطية شاملة', `${data.products.length} منتج، ${(data.categories || []).length} قسم`);
     showAlert("✅ تم استرداد النسخة الاحتياطية بنجاح.");
   } catch (err) {
     e.target.value = '';
@@ -5549,6 +5997,14 @@ function closeCustomAlert(result) {
 }
 
 /* --- بداية تشغيل التطبيق --- */
+
+/* --- تسجيل Service Worker عشان الموقع يبقى قابل للتثبيت كتطبيق (PWA) --- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.error('Service worker registration failed:', err));
+  });
+}
+
 /* --- كشف انقطاع/عدم استقرار الاتصال، وإظهار تنبيه ثابت لحد ما يرجع فعليًا ---
    بنعتمد على شرطين مع بعض:
    1) navigator.onLine: هل الجهاز متصل بشبكة أصلاً
