@@ -4133,13 +4133,15 @@ async function loadProductReviews(productId) {
     }
 
     const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
-    summaryBox.innerText = `${'⭐'.repeat(Math.round(avg))} ${avg.toFixed(1)} (${reviews.length} تقييم)`;
+    const avgRounded = Math.round(avg);
+    const avgStarsHtml = [1, 2, 3, 4, 5].map(n => `<span style="color:${n <= avgRounded ? '#f59e0b' : '#cbd5e1'};">★</span>`).join('');
+    summaryBox.innerHTML = `${avgStarsHtml} ${avg.toFixed(1)} (${reviews.length} تقييم)`;
 
     listBox.innerHTML = reviews.map(r => `
       <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:9px 12px; margin-bottom:8px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <b style="font-size:12.5px;">${r.userName}</b>
-          <span style="color:#f59e0b; font-size:13px;">${'⭐'.repeat(r.rating)}</span>
+          <span style="font-size:14px;">${[1, 2, 3, 4, 5].map(n => `<span style="color:${n <= r.rating ? '#f59e0b' : '#cbd5e1'};">★</span>`).join('')}</span>
         </div>
         ${r.comment ? `<p style="font-size:12.5px; margin-top:4px;">${r.comment}</p>` : ''}
         <small style="color:var(--muted);">${new Date(r.createdAt).toLocaleDateString('ar-EG')}</small>
@@ -4154,7 +4156,7 @@ async function loadProductReviews(productId) {
 function renderReviewStarsInput() {
   const box = document.getElementById('prodReviewStarsInput');
   box.innerHTML = [1, 2, 3, 4, 5].map(n => `
-    <span onclick="selectedReviewStars=${n}; renderReviewStarsInput();" style="cursor:pointer; color:${n <= selectedReviewStars ? '#f59e0b' : '#cbd5e1'};">⭐</span>
+    <span onclick="selectedReviewStars=${n}; renderReviewStarsInput();" style="cursor:pointer; color:${n <= selectedReviewStars ? '#f59e0b' : '#cbd5e1'}; margin-left:2px;">★</span>
   `).join('');
 }
 
