@@ -262,7 +262,7 @@
         <input type="text" id="storeSearchInput" oninput="runStoreSearch()" placeholder="🔍 دور على منتج..." style="width:150px; padding:7px 10px; border-radius:20px; border:1px solid #cbd5e1; font-size:12px;">
         <div id="storeSearchResults" style="display:none; position:absolute; top:110%; right:0; width:260px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.18); max-height:320px; overflow-y:auto; z-index:500;"></div>
       </div>
-      <button class="btn-nav" id="installAppBtn" onclick="triggerAppInstall()" style="display:none; background:#15803d; padding:7px 12px; font-size:12px;">📲 تثبيت التطبيق</button>
+      <button class="btn-nav" id="installAppBtn" onclick="triggerAppInstall()" style="display:none; background:#15803d; padding:7px 12px; font-size:12px;">📲 ثبّت التطبيق</button>
       <button class="btn-nav" id="contactUsBtn" onclick="openModal('contactUsModal')" style="background:#0f766e; padding:7px 12px; font-size:12px;">📞 تواصل معنا</button>
       <span id="userGreeting" style="font-size: 12px; font-weight: 700;"></span>
       
@@ -1085,7 +1085,7 @@
           </div>
           <div class="form-group">
             <label>عنوان المتجر الجغرافي (بالعربية):</label>
-            <input type="text" id="stAddressAr" placeholder=" الزوك الشرقيه - المنشاه - سوهاج - مصر">
+            <input type="text" id="stAddressAr" placeholder="سوهاج - طهطا">
           </div>
           <div class="form-group">
             <label>عنوان المتجر (English):</label>
@@ -2489,12 +2489,43 @@ function applyAnnouncementBar() {
     return;
   }
 
-  textEl.innerText = `${storeSettings.announcementText}   ؛   ${storeSettings.announcementText}   ؛   `;
-  // سرعة ثابتة تقريبًا مهما كان طول النص (كل ما النص أطول، الوقت يزيد عشان السرعة تفضل متقاربة)
-  const duration = Math.max(10, storeSettings.announcementText.length * 0.44);
-  textEl.style.animation = `marquee-scroll ${duration}s linear infinite`;
-
+  bar.style.display = 'block'; // لازم يبقى ظاهر الأول عشان نقدر نقيس عرضه وعرض النص صح
+  buildAnnouncementMarquee(storeSettings.announcementText);
   startAnnouncementCycle();
+}
+
+/* --- بناء الشريط بحيث يضمن تغطية عرض الشريط بالكامل ذهابًا وإيابًا (مهما كان طول النص قصير أو الشاشة كبيرة)،
+   عن طريق قياس عرض نسخة واحدة من النص فعليًا، وتكرارها العدد الكافي لضمان حركة متصلة على طول الشريط كله. --- */
+function buildAnnouncementMarquee(text) {
+  const bar = document.getElementById('announcementBar');
+  const textEl = document.getElementById('announcementText');
+
+  // قياس عرض نسخة واحدة من النص (بمسافة فاصلة) قبل ما نقرر عدد التكرارات المطلوبة
+  const unit = `${text}   ؛   `;
+  textEl.style.animation = 'none';
+  textEl.innerText = unit;
+  const unitWidth = textEl.offsetWidth || 1;
+  const barWidth = bar.offsetWidth || window.innerWidth;
+
+  // نكرر النص لحد ما إجمالي العرض يبقى ضعف عرض الشريط على الأقل (هامش أمان يضمن الاتصال والاستمرارية)
+  const repeatCount = Math.min(30, Math.max(2, Math.ceil((barWidth * 2) / unitWidth) + 1));
+  textEl.innerText = unit.repeat(repeatCount);
+
+  // سرعة ثابتة تقريبًا مهما كان عدد التكرارات أو طول النص
+  const totalWidth = unitWidth * repeatCount;
+  const duration = Math.max(8, totalWidth / 90); // بكسل تقريبي في الثانية، عشان السرعة تفضل متقاربة دايمًا
+  const shiftPercent = (100 / repeatCount).toFixed(4);
+
+  // نبني keyframes ديناميكي بنسبة الإزاحة الصح (100/عدد التكرارات) عشان يلف من غير أي قفزة محسوسة
+  let styleTag = document.getElementById('marqueeDynamicStyle');
+  if (!styleTag) {
+    styleTag = document.createElement('style');
+    styleTag.id = 'marqueeDynamicStyle';
+    document.head.appendChild(styleTag);
+  }
+  styleTag.innerText = `@keyframes marquee-scroll-dynamic { 0% { transform: translateX(-${shiftPercent}%); } 100% { transform: translateX(0%); } }`;
+
+  textEl.style.animation = `marquee-scroll-dynamic ${duration}s linear infinite`;
 }
 
 function startAnnouncementCycle() {
