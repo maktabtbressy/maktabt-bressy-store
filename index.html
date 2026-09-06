@@ -20,6 +20,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Almarai:wght@400;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+  @keyframes marquee-scroll {
+    0% { transform: translateX(100vw); }
+    100% { transform: translateX(-100%); }
+  }
   :root {
     --navy: #0e2a47;
     --orange: #f26522;
@@ -213,9 +217,9 @@
 </div>
 
 <!-- شريط الإعلان -->
-<div id="announcementBar" style="display:none; background:var(--orange); color:#fff; text-align:center; padding:8px 30px 8px 10px; font-size:12.5px; font-weight:700; position:relative;">
-  <span id="announcementText"></span>
-  <span onclick="dismissAnnouncement()" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:16px; line-height:1;">&times;</span>
+<div id="announcementBar" style="display:none; background:var(--orange); color:#fff; padding:8px 30px 8px 10px; font-size:12.5px; font-weight:700; position:relative; overflow:hidden; white-space:nowrap;">
+  <span id="announcementText" style="display:inline-block; will-change:transform;"></span>
+  <span onclick="dismissAnnouncement()" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:16px; line-height:1; background:rgba(0,0,0,0.15); border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center;">&times;</span>
 </div>
 
 <!-- نافذة وضع الصيانة -->
@@ -941,6 +945,7 @@
 
     <!-- التقرير الشامل -->
     <div id="admReportsTab" style="display:none;">
+      <p style="font-size:11px; color:var(--muted); margin-bottom:8px;">📌 التقرير بيفتح افتراضيًا على الشهر الحالي بس (وبيتصفر تلقائيًا مع كل شهر جديد). عايز تشوف شهر سابق أو فترة تانية؟ غيّر التاريخ تحت واضغط "توليد التقرير".</p>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
         <div class="form-group" style="margin-bottom:0;">
           <label>من تاريخ:</label>
@@ -2466,21 +2471,45 @@ async function saveTicketUpdate(id) {
   } catch (err) { showAlert("❌ حصل خطأ. " + err.message); }
 }
 
-/* --- شريط الإعلان، قابل للإغلاق لجلسة التصفح الحالية --- */
-let announcementDismissed = false;
+/* --- شريط الإعلان: شكل شريط أخبار متحرك، وبيشتغل في دورة تلقائية (شغال 15 دقيقة، مختفي 10 دقايق، وهكذا)
+   طول ما التفعيل شغال والنص موجود. زرار الإغلاق بيقفله فورًا وبيبدأ فترة الاختفاء (10 دقايق) بدري. --- */
+let announcementCycleTimer = null;
+const ANNOUNCEMENT_ON_MS = 15 * 60 * 1000;
+const ANNOUNCEMENT_OFF_MS = 10 * 60 * 1000;
+
 function applyAnnouncementBar() {
   const bar = document.getElementById('announcementBar');
-  const show = storeSettings.announcementEnabled && storeSettings.announcementText && !announcementDismissed;
-  if (show) {
-    document.getElementById('announcementText').innerText = storeSettings.announcementText;
-    bar.style.display = 'block';
-  } else {
+  const textEl = document.getElementById('announcementText');
+
+  if (announcementCycleTimer) { clearTimeout(announcementCycleTimer); announcementCycleTimer = null; }
+
+  if (!storeSettings.announcementEnabled || !storeSettings.announcementText) {
     bar.style.display = 'none';
+    return;
   }
+
+  textEl.innerText = storeSettings.announcementText;
+  // سرعة ثابتة تقريبًا مهما كان طول النص (كل ما النص أطول، الوقت يزيد عشان السرعة تفضل متقاربة)
+  const duration = Math.max(10, storeSettings.announcementText.length * 0.22);
+  textEl.style.animation = `marquee-scroll ${duration}s linear infinite`;
+
+  startAnnouncementCycle();
 }
+
+function startAnnouncementCycle() {
+  const bar = document.getElementById('announcementBar');
+  bar.style.display = 'block';
+  announcementCycleTimer = setTimeout(() => {
+    bar.style.display = 'none';
+    announcementCycleTimer = setTimeout(startAnnouncementCycle, ANNOUNCEMENT_OFF_MS);
+  }, ANNOUNCEMENT_ON_MS);
+}
+
 function dismissAnnouncement() {
-  announcementDismissed = true;
-  applyAnnouncementBar();
+  const bar = document.getElementById('announcementBar');
+  bar.style.display = 'none';
+  if (announcementCycleTimer) clearTimeout(announcementCycleTimer);
+  announcementCycleTimer = setTimeout(startAnnouncementCycle, ANNOUNCEMENT_OFF_MS);
 }
 
 /* --- وضع الصيانة: يقفل الموقع عن العملاء بس، الأدمن يفضل يقدر يدخل --- */
@@ -4399,10 +4428,20 @@ function getAdminOrderRowClass(st) {
 }
 
 function clearAdminReportFilter() {
-  document.getElementById('reportFromDate').value = '';
-  document.getElementById('reportToDate').value = '';
+  setReportDatesToCurrentMonth();
   document.getElementById('reportStatusFilter').value = '';
   renderAdminReports();
+}
+
+/* --- التقرير الشامل الافتراضي بيغطي الشهر الحالي بس (من أول يوم فيه)، وبيتصفر تلقائيًا مع كل شهر جديد.
+   لو الأدمن عايز يشوف شهر سابق أو فترة تانية، يقدر يغيّر التاريخ يدويًا من فوق. --- */
+function setReportDatesToCurrentMonth() {
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const yyyy = firstDay.getFullYear();
+  const mm = String(firstDay.getMonth() + 1).padStart(2, '0');
+  document.getElementById('reportFromDate').value = `${yyyy}-${mm}-01`;
+  document.getElementById('reportToDate').value = '';
 }
 
 /* --- التقرير الشامل: بيجمع كل الطلبات (أو المفلترة بتاريخ/حالة) ويوريها كملخص + توزيع بالحالة + توزيع بوسيلة الدفع --- */
@@ -5246,7 +5285,12 @@ function switchAdminTab(t) {
   });
 
   if(t === 'admOrders') renderAdminOrders();
-  if(t === 'admReports') renderAdminReports();
+  if(t === 'admReports') {
+    if (!document.getElementById('reportFromDate').value && !document.getElementById('reportToDate').value) {
+      setReportDatesToCurrentMonth();
+    }
+    renderAdminReports();
+  }
   if(t === 'admPayments') renderAdminPayments();
   if(t === 'admCategories') renderAdminCategories();
   if(t === 'admSubAdmins') renderAdminSubAdmins();
