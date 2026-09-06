@@ -21,8 +21,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Almarai:wght@400;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   @keyframes marquee-scroll {
-    0% { transform: translateX(100vw); }
-    100% { transform: translateX(-100%); }
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0%); }
   }
   :root {
     --navy: #0e2a47;
@@ -2488,9 +2488,9 @@ function applyAnnouncementBar() {
     return;
   }
 
-  textEl.innerText = storeSettings.announcementText;
+  textEl.innerText = `${storeSettings.announcementText}   ؛   ${storeSettings.announcementText}   ؛   `;
   // سرعة ثابتة تقريبًا مهما كان طول النص (كل ما النص أطول، الوقت يزيد عشان السرعة تفضل متقاربة)
-  const duration = Math.max(10, storeSettings.announcementText.length * 0.22);
+  const duration = Math.max(10, storeSettings.announcementText.length * 0.44);
   textEl.style.animation = `marquee-scroll ${duration}s linear infinite`;
 
   startAnnouncementCycle();
