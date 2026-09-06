@@ -9,13 +9,13 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="متجر مكتبة بريسي ">
 <meta property="og:description" content="تسوّق منتجاتنا وخدماتنا بسهولة، مع دعم مباشر ونظام طلبات متكامل.">
-<meta property="og:image" content="https://via.placeholder.com/512?text=MAKTABT+BRESSY">
+<meta property="og:image" content="icon-512.png">
 <meta name="twitter:card" content="summary_large_image">
 
 <!-- PWA: يسمح للعميل "يثبّت" المتجر على شاشة موبايله زي أي تطبيق عادي -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0e2a47">
-<link rel="apple-touch-icon" href="https://via.placeholder.com/192?text=MB">
+<link rel="apple-touch-icon" href="icon-192.png">
 
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Almarai:wght@400;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
@@ -249,7 +249,7 @@
 <header>
   <div class="nav-container">
     <div class="brand-box">
-      <img src="https://via.placeholder.com/50" id="mainLogo" class="brand-logo" alt="Logo">
+      <img src="icon-192.png" id="mainLogo" class="brand-logo" alt="Logo">
       <div>
         <div class="brand-title" id="navStoreTitle">مكتبة بريسي</div>
         <div class="brand-sub">MAKTABT BRESSY STORE</div>
@@ -3357,7 +3357,7 @@ async function handleSaveProductEdit(e) {
 
 function renderProducts(filter = 'all') {
   let list = filter === 'all' ? products : products.filter(p => p.cat === filter);
-  const defaultLogo = storeSettings.logo || 'https://via.placeholder.com/150?text=MAKTABT+BRESSY';
+  const defaultLogo = storeSettings.logo || 'icon-512.png';
   const lowStockThreshold = (storeSettings.lowStockThreshold !== undefined && storeSettings.lowStockThreshold !== null) ? storeSettings.lowStockThreshold : null;
 
   document.getElementById('productsGrid').innerHTML = list.map(p => {
@@ -4097,7 +4097,7 @@ function openProductDetails(id) {
   if (!p) return;
 
   const images = getProductImages(p);
-  const defaultLogo = storeSettings.logo || 'https://via.placeholder.com/150?text=MAKTABT+BRESSY';
+  const defaultLogo = storeSettings.logo || 'icon-512.png';
   const galleryImages = images.length ? images : [defaultLogo];
 
   document.getElementById('prodDetailsTitle').innerText = p.title;
@@ -5861,7 +5861,7 @@ function runStoreSearch() {
     return;
   }
 
-  const defaultLogo = storeSettings.logo || 'https://via.placeholder.com/60';
+  const defaultLogo = storeSettings.logo || 'icon-192.png';
   box.innerHTML = matches.map(p => {
     const catName = (categories.find(c => c.key === p.cat) || {}).titleAr || p.cat;
     const images = getProductImages(p);
