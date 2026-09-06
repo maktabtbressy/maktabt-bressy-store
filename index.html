@@ -262,6 +262,7 @@
         <input type="text" id="storeSearchInput" oninput="runStoreSearch()" placeholder="🔍 دور على منتج..." style="width:150px; padding:7px 10px; border-radius:20px; border:1px solid #cbd5e1; font-size:12px;">
         <div id="storeSearchResults" style="display:none; position:absolute; top:110%; right:0; width:260px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.18); max-height:320px; overflow-y:auto; z-index:500;"></div>
       </div>
+      <button class="btn-nav" id="installAppBtn" onclick="triggerAppInstall()" style="display:none; background:#15803d; padding:7px 12px; font-size:12px;">📲 ثبّت التطبيق</button>
       <button class="btn-nav" id="contactUsBtn" onclick="openModal('contactUsModal')" style="background:#0f766e; padding:7px 12px; font-size:12px;">📞 تواصل معنا</button>
       <span id="userGreeting" style="font-size: 12px; font-weight: 700;"></span>
       
@@ -6050,6 +6051,32 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(err => console.error('Service worker registration failed:', err));
   });
 }
+
+/* --- زرار تثبيت التطبيق: بيظهر بس لو المتصفح فعليًا بيسمح بالتثبيت (Chrome/Edge على أندرويد وويندوز بس -
+   Safari على الآيفون مبيدعمش الزرار ده خالص، والتثبيت بيبقى يدوي من "مشاركة" ← "إضافة للشاشة الرئيسية"). --- */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('installAppBtn');
+  if (btn) btn.style.display = 'inline-flex';
+});
+
+function triggerAppInstall() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.finally(() => {
+    deferredInstallPrompt = null;
+    const btn = document.getElementById('installAppBtn');
+    if (btn) btn.style.display = 'none';
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('installAppBtn');
+  if (btn) btn.style.display = 'none';
+  deferredInstallPrompt = null;
+});
 
 /* --- كشف انقطاع/عدم استقرار الاتصال، وإظهار تنبيه ثابت لحد ما يرجع فعليًا ---
    بنعتمد على شرطين مع بعض:
