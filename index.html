@@ -1469,7 +1469,21 @@
     <!-- سجل نشاط الأدمن -->
     <div id="admActivityLogTab" style="display:none;">
       <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--navy);">📝 سجل نشاط الأدمن (آخر الحركات)</h3>
-      <p style="font-size:11.5px; color:var(--muted); margin-bottom:10px;">بيوضح مين عدّل/حذف/غيّر إيه من الأدمن الفرعي (أو الرئيسي) وإمتى.</p>
+      <p style="font-size:11.5px; color:var(--muted); margin-bottom:10px;">بيوضح مين عدّل/حذف/غيّر إيه من الأدمن الفرعي (أو الرئيسي) وإمتى. بيفتح افتراضيًا على الشهر الحالي بس، والسجلات بتتحذف تلقائيًا بعد مرور 12 شهر عليها.</p>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>من الفترة:</label>
+          <input type="date" id="activityLogFromDate">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>الي الفترة:</label>
+          <input type="date" id="activityLogToDate">
+        </div>
+        <button class="btn-sm btn-blue" style="padding:8px 14px;" onclick="renderAdminActivityLog()">عرض السجل</button>
+        <button class="btn-sm" style="padding:8px 14px; background:#64748b;" onclick="resetActivityLogFilter()">إعادة تعيين</button>
+      </div>
+
       <div id="adminActivityLogList"></div>
     </div>
 
@@ -1975,17 +1989,63 @@ async function logAdminActivity(action, target) {
   } catch (err) { console.error('logAdminActivity error:', err); }
 }
 
+/* --- سجل النشاط: بيفتح افتراضيًا على الشهر الحالي بس (بيتصفر تلقائيًا كل شهر)، وبيتحذف نهائيًا بعد 12 شهر --- */
+function setActivityLogDatesToCurrentMonth() {
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const yyyy = firstDay.getFullYear();
+  const mm = String(firstDay.getMonth() + 1).padStart(2, '0');
+  document.getElementById('activityLogFromDate').value = `${yyyy}-${mm}-01`;
+  document.getElementById('activityLogToDate').value = '';
+}
+
+function resetActivityLogFilter() {
+  setActivityLogDatesToCurrentMonth();
+  renderAdminActivityLog();
+}
+
+const ACTIVITY_LOG_RETENTION_MS = 12 * 30 * 24 * 60 * 60 * 1000; // 12 شهر تقريبية
+let __activityLogCleanupDone = false;
+async function cleanupOldActivityLog() {
+  if (__activityLogCleanupDone || !currentUser || !currentUser.isSuperAdmin) return;
+  __activityLogCleanupDone = true; // نمنع أي تكرار في نفس الجلسة حتى لو الاستعلام فشل
+  try {
+    const cutoff = Date.now() - ACTIVITY_LOG_RETENTION_MS;
+    const snap = await db.collection('activityLog').where('timestamp', '<', cutoff).get();
+    if (snap.docs.length === 0) return;
+    let batch = db.batch();
+    let count = 0;
+    for (const doc of snap.docs) {
+      batch.delete(doc.ref);
+      count++;
+      if (count === 450) { await batch.commit(); batch = db.batch(); count = 0; }
+    }
+    if (count > 0) await batch.commit();
+  } catch (err) { console.error('cleanupOldActivityLog error:', err); }
+}
+
 async function renderAdminActivityLog() {
   const box = document.getElementById('adminActivityLogList');
   if (!box) return;
   box.innerHTML = `<p style="color:var(--muted); font-size:12px;">⏳ جاري التحميل...</p>`;
 
+  cleanupOldActivityLog();
+
+  if (!document.getElementById('activityLogFromDate').value && !document.getElementById('activityLogToDate').value) {
+    setActivityLogDatesToCurrentMonth();
+  }
+  const fromVal = document.getElementById('activityLogFromDate').value;
+  const toVal = document.getElementById('activityLogToDate').value;
+
   try {
-    const snap = await db.collection('activityLog').orderBy('timestamp', 'desc').limit(200).get();
-    const logs = snap.docs.map(d => d.data());
+    const snap = await db.collection('activityLog').orderBy('timestamp', 'desc').limit(500).get();
+    let logs = snap.docs.map(d => d.data());
+
+    if (fromVal) logs = logs.filter(l => l.timestamp >= new Date(fromVal + 'T00:00:00').getTime());
+    if (toVal) logs = logs.filter(l => l.timestamp <= new Date(toVal + 'T23:59:59.999').getTime());
 
     if (logs.length === 0) {
-      box.innerHTML = `<p style="color:var(--muted); font-size:12px;">لسه مفيش حركات مسجّلة.</p>`;
+      box.innerHTML = `<p style="color:var(--muted); font-size:12px;">لا توجد حركات مسجّلة في الفترة دي.</p>`;
       return;
     }
 
